@@ -1,15 +1,18 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Application, Assets, Sprite, Container } from 'pixi.js'
+import { Application, Assets, Sprite, Container, Graphics } from 'pixi.js'
 
 export default function Home() {
   const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
+  const reelsRef = useRef<Container[]>([])
+  const isSpinningRef = useRef(false)
 
   useEffect(() => {
     let app: Application | null = null
     let destroyed = false
+    let keydownHandler: ((event: KeyboardEvent) => void) | null = null
 
     const init = async () => {
       app = new Application()
@@ -80,6 +83,13 @@ export default function Home() {
           const reel = new Container()
           reel.x = i * (SYMBOL_WIDTH + REEL_GAP)
 
+          // Create mask for this reel to hide overflow
+          const mask = new Graphics()
+          mask.rect(0, 0, SYMBOL_WIDTH, SYMBOLS_PER_REEL * SYMBOL_HEIGHT)
+          mask.fill(0xFFFFFF)
+          reel.mask = mask
+          reel.addChild(mask)
+
           for (let j = 0; j < SYMBOLS_PER_REEL; j++) {
             const textureName = symbolSequence[i][j]
             const texture = reelAtlas.textures[textureName]
@@ -93,6 +103,7 @@ export default function Home() {
             }
           }
 
+          reelsRef.current[i] = reel
           reelContainer.addChild(reel)
         }
 
@@ -114,6 +125,142 @@ export default function Home() {
         border.y = (1080 - border.height) / 2
         app.stage.addChild(border)
 
+        // Add keyboard event listener for space key
+        keydownHandler = (event: KeyboardEvent) => {
+          if (event.code === 'Space' && !isSpinningRef.current) {
+            event.preventDefault()
+            spinReels()
+          }
+        }
+
+        const spinReels = () => {
+          if (isSpinningRef.current) return
+          
+          isSpinningRef.current = true
+          
+          // Available symbols for random spinning
+          const availableSymbols = ['00.png', '01.png', '02.png', '03.png', '04.png', '05.png', '06.png', '07.png', '08.png', '09.png', '10.png']
+          
+          reelsRef.current.forEach((reel, index) => {
+            if (reel) {
+              // Frame-perfect timing based on 60fps reference
+              const bounceStartTimes = [533, 883, 1233, 1583, 1933] // Frame 32, 53, 74, 95, 116
+              const bounceEndTimes = [867, 1217, 1567, 1917, 2267] // Frame 52, 73, 94, 115, 136
+              
+              const spinDuration = bounceStartTimes[index]
+              const bounceEndTime = bounceEndTimes[index]
+              const spinSpeed = 20
+              
+              // Add extra symbols for spinning effect
+              const originalSymbolCount = reel.children.length - 1 // -1 for mask
+              
+              // Add symbols above the visible area
+              for (let i = 0; i < 5; i++) {
+                const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
+                const texture = reelAtlas.textures[randomSymbolName]
+                if (texture) {
+                  const symbol = new Sprite(texture)
+                  symbol.width = SYMBOL_WIDTH
+                  symbol.height = SYMBOL_HEIGHT
+                  symbol.x = 0
+                  symbol.y = (-5 + i) * SYMBOL_HEIGHT // Position above visible area
+                  reel.addChild(symbol)
+                }
+              }
+              
+              // Add symbols below the visible area
+              for (let i = 0; i < 5; i++) {
+                const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
+                const texture = reelAtlas.textures[randomSymbolName]
+                if (texture) {
+                  const symbol = new Sprite(texture)
+                  symbol.width = SYMBOL_WIDTH
+                  symbol.height = SYMBOL_HEIGHT
+                  symbol.x = 0
+                  symbol.y = (originalSymbolCount + i) * SYMBOL_HEIGHT
+                  reel.addChild(symbol)
+                }
+              }
+              
+              let elapsed = 0
+              const startTime = Date.now()
+              
+              const animate = () => {
+                elapsed = Date.now() - startTime
+                
+                if (elapsed < bounceEndTime) {
+                  if (elapsed < spinDuration) {
+                    // Spin the reel at full speed until bounce starts
+                    for (let i = 1; i < reel.children.length; i++) {
+                      const symbol = reel.children[i]
+                      symbol.y += spinSpeed
+                      // When symbol goes below visible area, wrap it to the top seamlessly
+                      if (symbol.y >= (SYMBOLS_PER_REEL + 5) * SYMBOL_HEIGHT) {
+                        symbol.y -= (SYMBOLS_PER_REEL + 10) * SYMBOL_HEIGHT
+                      }
+                    }
+                    requestAnimationFrame(animate)
+                  } else {
+                    // Continuous bounce phase - from overshoot back to final position
+                    
+                    // Setup final symbols if not done yet
+                    if (reel.children.length > originalSymbolCount + 1) {
+                      // Remove extra symbols, keep only mask + 3 final symbols  
+                      while (reel.children.length > originalSymbolCount + 1) {
+                        reel.removeChildAt(reel.children.length - 1)
+                      }
+                      
+                      // Replace with random final symbols
+                      for (let i = 1; i < reel.children.length; i++) {
+                        const symbol = reel.children[i] as Sprite
+                        const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
+                        const newTexture = reelAtlas.textures[randomSymbolName]
+                        if (newTexture) {
+                          symbol.texture = newTexture
+                        }
+                      }
+                    }
+                    
+                    // Calculate bounce progress (0 to 1 over 333ms)
+                    const bounceDuration = bounceEndTime - spinDuration // 333ms
+                    const bounceProgress = (elapsed - spinDuration) / bounceDuration
+                    
+                    // Smooth bounce curve - starts at overshoot, ends at target
+                    const overshootAmount = 100 // 100px overshoot
+                    const targetPositions = [0, SYMBOL_HEIGHT, 2 * SYMBOL_HEIGHT]
+                    
+                    // Use sine wave for natural bounce motion
+                    const bounceOffset = Math.sin(Math.PI * bounceProgress) * overshootAmount * (1 - bounceProgress)
+                    
+                    // Apply bounce to all symbols as one unit
+                    for (let i = 1; i < reel.children.length; i++) {
+                      const targetY = targetPositions[i - 1]
+                      reel.children[i].y = targetY + bounceOffset
+                    }
+                    
+                    requestAnimationFrame(animate)
+                  }
+                } else {
+                  // Bounce complete - ensure final positions are exact
+                  const targetPositions = [0, SYMBOL_HEIGHT, 2 * SYMBOL_HEIGHT]
+                  for (let i = 1; i < reel.children.length; i++) {
+                    reel.children[i].y = targetPositions[i - 1]
+                  }
+                  
+                  // Check if all reels have finished bouncing
+                  if (index === REEL_COUNT - 1) {
+                    isSpinningRef.current = false
+                  }
+                }
+              }
+              
+              animate()
+            }
+          })
+        }
+
+        window.addEventListener('keydown', keydownHandler)
+
       } catch (err) {
         console.error('❌ Asset loading failed:', err)
       }
@@ -123,6 +270,10 @@ export default function Home() {
 
     return () => {
       if (!destroyed && appRef.current) {
+        // Clean up keyboard event listener
+        if (keydownHandler) {
+          window.removeEventListener('keydown', keydownHandler)
+        }
         appRef.current.destroy(true, { children: true })
         destroyed = true
         appRef.current = null
