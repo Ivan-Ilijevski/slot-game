@@ -1,9 +1,22 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { Application, Assets, Sprite, Container, Graphics } from 'pixi.js'
+import { useEffect, useRef, useState } from 'react'
+import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 
 export default function Home() {
+  // Helper function to format numbers with spaces instead of commas
+  const formatNumberWithSpaces = (num: number): string => {
+    return num.toLocaleString().replace(/,/g, ' ')
+  }
+
+  // Bet management state
+  const [currentBet, setCurrentBet] = useState(100)
+  const [totalCredits, setTotalCredits] = useState(10000)
+  const [lastWin, setLastWin] = useState(0)
+  
+  // Available bet options (like EGT slots)
+  const BET_OPTIONS = [1, 5, 10, 20, 50, 100, 200, 500, 1000]
+  
   const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const reelsRef = useRef<Container[]>([])
@@ -21,17 +34,57 @@ export default function Home() {
   const wildExpandSoundRef = useRef<HTMLAudioElement | null>(null)
   const wildReelSoundRef = useRef<HTMLAudioElement | null>(null)
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const uiUpdateRef = useRef<((credits: number, bet: number, win: number) => void) | null>(null)
+
+  // Bet management functions
+  const increaseBet = () => {
+    const currentIndex = BET_OPTIONS.indexOf(currentBet)
+    if (currentIndex < BET_OPTIONS.length - 1) {
+      const newBet = BET_OPTIONS[currentIndex + 1]
+      if (newBet <= totalCredits) {
+        setCurrentBet(newBet)
+      }
+    }
+  }
+
+  const decreaseBet = () => {
+    const currentIndex = BET_OPTIONS.indexOf(currentBet)
+    if (currentIndex > 0) {
+      setCurrentBet(BET_OPTIONS[currentIndex - 1])
+    }
+  }
+
+  const setMaxBet = () => {
+    const maxAffordableBet = BET_OPTIONS.filter(bet => bet <= totalCredits).pop() || BET_OPTIONS[0]
+    setCurrentBet(maxAffordableBet)
+  }
 
   useEffect(() => {
     let app: Application | null = null
     let destroyed = false
     let keydownHandler: ((event: KeyboardEvent) => void) | null = null
+    let handleResize: (() => void) | null = null
 
     const init = async () => {
       app = new Application()
+      
+      // Get viewport dimensions
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      
+      // Calculate scale to fit 1920x1080 design into viewport while maintaining aspect ratio
+      const designWidth = 1920
+      const designHeight = 1080
+      const scaleX = viewportWidth / designWidth
+      const scaleY = viewportHeight / designHeight
+      const scale = Math.min(scaleX, scaleY)
+      
+      const canvasWidth = designWidth * scale
+      const canvasHeight = designHeight * scale
+      
       await app.init({
-        width: 1920,
-        height: 1080,
+        width: canvasWidth,
+        height: canvasHeight,
         backgroundColor: 0x1a1a2e,
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
@@ -42,7 +95,33 @@ export default function Home() {
       if (pixiContainer.current && app.canvas) {
         pixiContainer.current.innerHTML = ''
         pixiContainer.current.appendChild(app.canvas)
+        
+        // Center the canvas
+        app.canvas.style.display = 'block'
+        app.canvas.style.margin = 'auto'
       }
+      
+      // Scale the entire stage to match the canvas scaling
+      app.stage.scale.set(scale)
+      
+      // Add resize handler
+      handleResize = () => {
+        if (!app || destroyed) return
+        
+        const newViewportWidth = window.innerWidth
+        const newViewportHeight = window.innerHeight
+        const newScaleX = newViewportWidth / designWidth
+        const newScaleY = newViewportHeight / designHeight
+        const newScale = Math.min(newScaleX, newScaleY)
+        
+        const newCanvasWidth = designWidth * newScale
+        const newCanvasHeight = designHeight * newScale
+        
+        app.renderer.resize(newCanvasWidth, newCanvasHeight)
+        app.stage.scale.set(newScale)
+      }
+      
+      window.addEventListener('resize', handleResize)
 
       try {
         await Assets.load([
@@ -61,7 +140,8 @@ export default function Home() {
           '/assets/06-0.json', // Watermelon win animation
           '/assets/07-0.json', // Seven win animation
           '/assets/09-0.json', // Star win animation
-          '/assets/10-0.json'  // Crown win animation
+          '/assets/10-0.json', // Crown win animation
+          '/assets/ui-cabinet-overlay.png' // UI cabinet overlay
         ])
 
         // Load reel stop sound
@@ -187,10 +267,12 @@ export default function Home() {
         
         console.log('📋 Symbol name mapping:', symbolNameToNumber)
 
-        // Main background
+        // Main background - use full screen
         const mainBackground = new Sprite(backgroundAtlas.textures['background.png'])
-        mainBackground.x = (1920 - mainBackground.width) / 2
-        mainBackground.y = (1080 - mainBackground.height) / 2
+        mainBackground.width = 1920
+        mainBackground.height = 1080
+        mainBackground.x = 0
+        mainBackground.y = 0
         app.stage.addChild(mainBackground)
 
         // Reel background - centered
@@ -199,15 +281,20 @@ export default function Home() {
         reelBackground.y = (1080 - reelBackground.height) / 2
         app.stage.addChild(reelBackground)
 
-        // === Reels Setup ===
-        const SYMBOL_WIDTH = 198
-        const SYMBOL_HEIGHT = 198
+        // === Reels Setup === (Make larger to fill more screen space)
+        const SYMBOL_WIDTH = 260 // Increased from 198
+        const SYMBOL_HEIGHT = 260 // Increased from 198
         const REEL_COUNT = 5
         const SYMBOLS_PER_REEL = 3
-        const REEL_GAP = 24
+        const REEL_GAP = 28 // Reduced by 5px from 32
 
-        const REEL_OFFSET_X = (1920 - (REEL_COUNT * SYMBOL_WIDTH + (REEL_COUNT - 1) * REEL_GAP)) / 2
-        const REEL_OFFSET_Y = (1080 - (SYMBOLS_PER_REEL * SYMBOL_HEIGHT)) / 2 -1
+        // Calculate total reel area dimensions
+        const totalReelWidth = REEL_COUNT * SYMBOL_WIDTH + (REEL_COUNT - 1) * REEL_GAP
+        const totalReelHeight = SYMBOLS_PER_REEL * SYMBOL_HEIGHT
+        
+        // Position reels to center them exactly with the border (960, 470)
+        const REEL_OFFSET_X = (1920 / 2) - (totalReelWidth / 2)
+        const REEL_OFFSET_Y = (1080 / 2 - 70) - (totalReelHeight / 2)
         
         // Payline colors for highlighting wins
         const PAYLINE_COLORS = [
@@ -288,77 +375,252 @@ export default function Home() {
           reelContainer.addChild(reel)
         }
 
-        // Game logo at the top
-        const gameLogo = new Sprite(mainAtlas.textures['gameName.png'])
-        gameLogo.x = (1920 - gameLogo.width) / 2
-        gameLogo.y = 170
-        app.stage.addChild(gameLogo)
+        // Logo removed - will be replaced with reference graphics
         
-        // Create last win display
-        const lastWinDisplay = document.createElement('div')
-        lastWinDisplay.id = 'lastWinDisplay'
-        lastWinDisplay.style.cssText = `
-          position: absolute;
-          top: 50px;
-          right: 50px;
-          background: rgba(0, 0, 0, 0.8);
-          color: #FFD700;
-          padding: 15px 25px;
-          border-radius: 10px;
-          font-family: Arial, sans-serif;
-          font-size: 24px;
-          font-weight: bold;
-          text-align: center;
-          border: 2px solid #FFD700;
-          z-index: 1000;
-        `
-        lastWinDisplay.innerHTML = `
-          <div style="font-size: 16px; color: #FFFFFF; margin-bottom: 5px;">LAST WIN</div>
-          <div style="font-size: 28px;">${lastWinRef.current}</div>
-        `
+        // All UI will be created within PIXI canvas - remove HTML overlay
         
-        // Add to the main container
-        if (pixiContainer.current) {
-          pixiContainer.current.appendChild(lastWinDisplay)
+        // Create win line display container - positioned below reels
+        const winLineDisplayContainer = new Container()
+        const winLineDisplayY = REEL_OFFSET_Y + totalReelHeight + 20 // 20px below reels
+        winLineDisplayContainer.x = 1920 / 2 // Center horizontally
+        winLineDisplayContainer.y = winLineDisplayY
+        winLineDisplayContainer.visible = false // Initially hidden
+        app.stage.addChild(winLineDisplayContainer)
+        
+        // UI text styles are now defined inline for each element
+        
+        // Based on reference image - bottom UI should be much lower and larger
+        const UI_Y_BASE = 980 // Move much lower to bottom of screen
+        
+        // UI positioning helpers for overlay alignment
+        const OVERLAY_POSITIONS = {
+          CREDIT: { x: 600, y: UI_Y_BASE -20 },    // Adjust these coordinates to match overlay
+          BET: { x: 950, y: UI_Y_BASE -20 },       // Adjust these coordinates to match overlay  
+          WIN: { x: 1340, y: UI_Y_BASE-20},      // Adjust these coordinates to match overlay
+          MORE_GAMES: { x: 100, y: UI_Y_BASE }, // Adjust these coordinates to match overlay
+          DENOM: { x: 240, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
+          INFO: { x: 1600, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
+          FLAG: { x: 1740, y: UI_Y_BASE }      // Adjust these coordinates to match overlay
         }
         
-        // Create win info display at bottom
-        const winInfoDisplay = document.createElement('div')
-        winInfoDisplay.id = 'winInfoDisplay'
-        winInfoDisplay.style.cssText = `
-          position: absolute;
-          bottom: 100px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(0, 0, 0, 0.9);
-          color: #FFD700;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-family: Arial, sans-serif;
-          font-size: 18px;
-          font-weight: bold;
-          text-align: center;
-          border: 2px solid #FFD700;
-          z-index: 1000;
-          display: none;
-        `
-        winInfoDisplayRef.current = winInfoDisplay
+        // Create PIXI-based UI elements container (will be added to stage after overlay)
+        const uiContainer = new Container()
         
-        if (pixiContainer.current) {
-          pixiContainer.current.appendChild(winInfoDisplay)
+        // LEFT SIDE: More Games button (no panel - using overlay)
+        
+        const moreGamesText = new Text('MORE\nGAMES', { 
+          fontFamily: 'Arial', 
+          fontSize: 16, 
+          fill: 0xFFFFFF, 
+          fontWeight: 'bold' as const,
+          align: 'center'
+        })
+        moreGamesText.anchor.set(0.5)
+        moreGamesText.x = OVERLAY_POSITIONS.MORE_GAMES.x
+        moreGamesText.y = OVERLAY_POSITIONS.MORE_GAMES.y
+        uiContainer.addChild(moreGamesText)
+        
+        // Change Denomination button (no panel - using overlay)
+        
+        const changeDenomText = new Text('$ 0.01\nCHANGE DENOM', { 
+          fontFamily: 'Arial', 
+          fontSize: 14, 
+          fill: 0xFFFFFF, 
+          fontWeight: 'bold' as const,
+          align: 'center'
+        })
+        changeDenomText.anchor.set(0.5)
+        changeDenomText.x = OVERLAY_POSITIONS.DENOM.x
+        changeDenomText.y = OVERLAY_POSITIONS.DENOM.y
+        uiContainer.addChild(changeDenomText)
+        
+        // CENTER: CREDIT display (no panel - using overlay)
+        
+        // Yellow dollar amount on top
+        const creditDollarText = new Text(`$ ${(totalCredits * 0.01).toFixed(2)}`, {
+          fontFamily: 'Arial Black',
+          fontSize: 40,
+          fill: 0xFFFF00, // Yellow
+          fontWeight: '900' as const, // Extra-bold for thickness
+          stroke: { color: 0x000000, width: 3 } // Small black stroke
+        })
+        creditDollarText.anchor.set(0.5, 0)
+        creditDollarText.x = OVERLAY_POSITIONS.CREDIT.x
+        creditDollarText.y = OVERLAY_POSITIONS.CREDIT.y - 25
+        uiContainer.addChild(creditDollarText)
+        
+        // Large white credit amount
+        const creditAmountText = new Text(formatNumberWithSpaces(totalCredits), {
+          fontFamily: 'Arial Black',
+          fontSize: 50,
+          fill: 0xFFFFFF, // White
+          fontWeight: '900' as const // Extra-bold for thickness
+        })
+        creditAmountText.anchor.set(0.5, 0)
+        creditAmountText.x = OVERLAY_POSITIONS.CREDIT.x - 2
+        creditAmountText.y = OVERLAY_POSITIONS.CREDIT.y +10
+        uiContainer.addChild(creditAmountText)
+        
+        // BET display (no panel - using overlay)
+        
+        // Yellow dollar amount on top
+        const betDollarText = new Text(`$ ${(currentBet * 0.01).toFixed(2)}`, {
+          fontFamily: 'Arial Black',
+          fontSize: 40,
+          fill: 0xFFFF00, // Yellow
+          fontWeight: '900' as const, // Extra-bold for thickness
+          stroke: { color: 0x000000, width: 3 } // Small black stroke
+        })
+        betDollarText.anchor.set(0.5, 0)
+        betDollarText.x = OVERLAY_POSITIONS.BET.x
+        betDollarText.y = OVERLAY_POSITIONS.BET.y - 25
+        uiContainer.addChild(betDollarText)
+        
+        // Large white bet amount
+        const betAmountText = new Text(formatNumberWithSpaces(currentBet), {
+          fontFamily: 'Arial Black',
+          fontSize: 50,
+          fill: 0xFFFFFF, // White
+          fontWeight: '900' as const // Extra-bold for thickness
+        })
+        betAmountText.anchor.set(0.5, 0)
+        betAmountText.x = OVERLAY_POSITIONS.BET.x
+        betAmountText.y = OVERLAY_POSITIONS.BET.y +10
+        uiContainer.addChild(betAmountText)
+        
+        // Bet up/down arrows (larger and positioned on the right edge)
+        const betUpArrow = new Text('▲', {
+          fontFamily: 'Arial',
+          fontSize: 24,
+          fill: 0xFFFFFF,
+          fontWeight: 'bold' as const
+        })
+        betUpArrow.anchor.set(0.5)
+        betUpArrow.x = 840
+        betUpArrow.y = UI_Y_BASE + 25
+        betUpArrow.interactive = true
+        betUpArrow.cursor = 'pointer'
+        betUpArrow.on('pointerdown', increaseBet)
+        uiContainer.addChild(betUpArrow)
+        
+        const betDownArrow = new Text('▼', {
+          fontFamily: 'Arial',
+          fontSize: 24,
+          fill: 0xFFFFFF,
+          fontWeight: 'bold' as const
+        })
+        betDownArrow.anchor.set(0.5)
+        betDownArrow.x = 1100
+        betDownArrow.y = UI_Y_BASE +25
+        betDownArrow.interactive = true
+        betDownArrow.cursor = 'pointer'
+        betDownArrow.on('pointerdown', decreaseBet)
+        uiContainer.addChild(betDownArrow)
+        
+        // WIN display (no panel - using overlay)
+        
+        // Yellow dollar amount on top
+        const winDollarText = new Text(`$ ${(lastWin * 0.01).toFixed(2)}`, {
+          fontFamily: 'Arial Black',
+          fontSize: 40,
+          fill: 0xFFFF00, // Yellow
+          fontWeight: '900' as const, // Extra-bold for thickness
+          stroke: { color: 0x000000, width: 3 } // Small black stroke
+        })
+        winDollarText.anchor.set(0.5, 0)
+        winDollarText.x = OVERLAY_POSITIONS.WIN.x
+        winDollarText.y = OVERLAY_POSITIONS.WIN.y - 25
+        uiContainer.addChild(winDollarText)
+        
+        // Large white win amount
+        const winAmountText = new Text(formatNumberWithSpaces(lastWin), {
+          fontFamily: 'Arial Black',
+          fontSize: 50,
+          fill: 0xFFFFFF, // White
+          fontWeight: '900' as const // Extra-bold for thickness
+        })
+        winAmountText.anchor.set(0.5, 0)
+        winAmountText.x = OVERLAY_POSITIONS.WIN.x
+        winAmountText.y = OVERLAY_POSITIONS.WIN.y +10
+        uiContainer.addChild(winAmountText)
+        
+        // RIGHT SIDE: Info button (no panel - using overlay)
+        
+        const infoText = new Text('i', {
+          fontFamily: 'Arial',
+          fontSize: 32,
+          fill: 0xFFFFFF,
+          fontWeight: 'bold' as const
+        })
+        infoText.anchor.set(0.5)
+        infoText.x = OVERLAY_POSITIONS.INFO.x
+        infoText.y = OVERLAY_POSITIONS.INFO.y
+        uiContainer.addChild(infoText)
+        
+        // Language flag (no panel - using overlay)
+        
+        const flagText = new Text('🇬🇧', {
+          fontFamily: 'Arial',
+          fontSize: 24,
+          fill: 0xFFFFFF
+        })
+        flagText.anchor.set(0.5)
+        flagText.x = OVERLAY_POSITIONS.FLAG.x
+        flagText.y = OVERLAY_POSITIONS.FLAG.y
+        uiContainer.addChild(flagText)
+        
+        // Function to update UI displays
+        const updateUIDisplays = (credits: number, bet: number, win: number) => {
+          creditDollarText.text = `$ ${(credits * 0.01).toFixed(2)}`
+          creditAmountText.text = formatNumberWithSpaces(credits)
+          betDollarText.text = `$ ${(bet * 0.01).toFixed(2)}`
+          betAmountText.text = formatNumberWithSpaces(bet)
+          winDollarText.text = `$ ${(win * 0.01).toFixed(2)}`
+          winAmountText.text = formatNumberWithSpaces(win)
+          
+          // Update arrow states
+          const betIndex = BET_OPTIONS.indexOf(bet)
+          betUpArrow.alpha = (betIndex === BET_OPTIONS.length - 1 || bet >= credits) ? 0.5 : 1.0
+          betDownArrow.alpha = (betIndex === 0) ? 0.5 : 1.0
         }
+        
+        // Store UI update function in ref for external access
+        uiUpdateRef.current = updateUIDisplays
+        
+        // Initial UI update
+        updateUIDisplays(10000, 100, 0) // Use initial values
 
-        // Lines indicator on the left of reels
-        const linesIndicator = new Sprite(mainAtlas.textures['linesIndicator.png'])
-        linesIndicator.x = REEL_OFFSET_X - linesIndicator.width - 35
-        linesIndicator.y = REEL_OFFSET_Y + (SYMBOLS_PER_REEL * SYMBOL_HEIGHT - linesIndicator.height) / 2
-        app.stage.addChild(linesIndicator)
+        // Lines indicators on both sides of reels (like in reference image)
+        const leftLinesIndicator = new Sprite(mainAtlas.textures['linesIndicator.png'])
+        leftLinesIndicator.x = REEL_OFFSET_X - leftLinesIndicator.width - 35
+        leftLinesIndicator.y = REEL_OFFSET_Y + (SYMBOLS_PER_REEL * SYMBOL_HEIGHT - leftLinesIndicator.height) / 2
+        app.stage.addChild(leftLinesIndicator)
+        
+        // Right side lines indicator (same orientation as left, not mirrored)
+        const rightLinesIndicator = new Sprite(mainAtlas.textures['linesIndicator.png'])
+        rightLinesIndicator.x = REEL_OFFSET_X + (REEL_COUNT * SYMBOL_WIDTH + (REEL_COUNT - 1) * REEL_GAP) + 35
+        rightLinesIndicator.y = REEL_OFFSET_Y + (SYMBOLS_PER_REEL * SYMBOL_HEIGHT - rightLinesIndicator.height) / 2
+        app.stage.addChild(rightLinesIndicator)
 
-        // Reel border overlay - centered
+        // UI Cabinet overlay - full screen overlay (loaded directly as PNG) - ADD BEFORE UI ELEMENTS
+        const uiCabinetTexture = Assets.cache.get('/assets/ui-cabinet-overlay.png')
+        const uiCabinetOverlay = new Sprite(uiCabinetTexture)
+        uiCabinetOverlay.width = 1920
+        uiCabinetOverlay.height = 1080
+        uiCabinetOverlay.x = 0
+        uiCabinetOverlay.y = 0
+        app.stage.addChild(uiCabinetOverlay)
+
+        // Reel border overlay - centered and scaled
         const border = new Sprite(mainAtlas.textures['reelBorder.png'])
-        border.x = (1920 - border.width) / 2
-        border.y = (1080 - border.height) / 2
+        border.anchor.set(0.5) // Set anchor to center
+        border.scale.set(1.30) // Scale from center
+        border.x = 1920 / 2  // Center horizontally
+        border.y = 1080 / 2 - 70 // Center vertically
         app.stage.addChild(border)
+
+        // Add UI container to stage AFTER overlay - so text appears on top
+        app.stage.addChild(uiContainer)
 
         // Add keyboard event listener for space key
         keydownHandler = (event: KeyboardEvent) => {
@@ -380,6 +642,15 @@ export default function Home() {
 
         const spinReels = async () => {
           if (isSpinningRef.current) return
+          
+          // Check if player has enough credits
+          if (currentBet > totalCredits) {
+            console.log('Insufficient credits for bet')
+            return
+          }
+          
+          // Deduct bet amount
+          setTotalCredits(prev => prev - currentBet)
           
           isSpinningRef.current = true
           stopRequestedRef.current = false
@@ -437,13 +708,20 @@ export default function Home() {
               headers: {
                 'Content-Type': 'application/json',
               },
+              body: JSON.stringify({ bet: currentBet }),
             })
             const data = await response.json()
             if (data.success) {
               serverResults = data
               // Update last win amount
-              lastWinRef.current = data.totalWin || 0
-              console.log('Win amount:', data.totalWin, 'Win lines:', data.winLines)
+              const winAmount = data.totalWin || 0
+              lastWinRef.current = winAmount
+              setLastWin(winAmount)
+              // Add winnings to total credits
+              if (winAmount > 0) {
+                setTotalCredits(prev => prev + winAmount)
+              }
+              console.log('Win amount:', winAmount, 'Win lines:', data.winLines)
             }
           } catch (error) {
             console.error('Failed to get server results:', error)
@@ -656,13 +934,9 @@ export default function Home() {
                   if (reelsStoppedCountRef.current === REEL_COUNT) {
                     isSpinningRef.current = false
                     
-                    // Update last win display
-                    const lastWinDisplay = document.getElementById('lastWinDisplay')
-                    if (lastWinDisplay) {
-                      lastWinDisplay.innerHTML = `
-                        <div style="font-size: 16px; color: #FFFFFF; margin-bottom: 5px;">LAST WIN</div>
-                        <div style="font-size: 28px;">${lastWinRef.current}</div>
-                      `
+                    // Update UI displays with current values  
+                    if (uiUpdateRef.current) {
+                      // Note: We'll need to get current state values externally
                     }
                     
                     // Check for wild animations based on server results (only if there are actual wins)
@@ -1057,10 +1331,92 @@ export default function Home() {
           })
           winHighlightsRef.current = []
           
+          // Hide win line display
+          winLineDisplayContainer.visible = false
+          
           // Hide win info display
           if (winInfoDisplayRef.current) {
             winInfoDisplayRef.current.style.display = 'none'
           }
+        }
+        
+        // Function to show win line display (e.g., "Line 3 3x [cherry icon] = 1.00 FUN")
+        const showWinLineDisplay = (winLine: { payline: number, symbols: string[], count: number, symbol: string, payout: number }) => {
+          // Clear existing content
+          winLineDisplayContainer.removeChildren()
+          
+          // Create container for the single line display
+          const lineContainer = new Container()
+          
+          let currentX = 0
+          
+          // "Line X Yx" text
+          const lineText = new Text({
+            text: `Line ${winLine.payline} ${winLine.count}x`,
+            style: {
+              fontFamily: 'Arial',
+              fontSize: 18,
+              fill: 0xFFFFFF,
+              fontWeight: 'bold'
+            }
+          })
+          lineText.x = currentX
+          lineText.y = 0
+          lineContainer.addChild(lineText)
+          currentX += lineText.width + 10 // 10px spacing
+          
+          // Symbol icon - convert to reelImages.json format (sXX.png)
+          let symbolTexture = null
+          
+          // Convert symbol name to number format used in reelImages.json
+          const cleanSymbolName = winLine.symbol.replace('.png', '')
+          const symbolNumber = symbolNameToNumber[cleanSymbolName] || cleanSymbolName
+          const reelImageSymbolName = `s${symbolNumber}.png`
+          
+          console.log(`🔍 Converting symbol: ${winLine.symbol} -> ${cleanSymbolName} -> ${symbolNumber} -> ${reelImageSymbolName}`)
+          
+          // Try to find the symbol in reelImages.json format
+          if (reelAtlas.textures[reelImageSymbolName]) {
+            symbolTexture = reelAtlas.textures[reelImageSymbolName]
+            console.log(`✅ Found reel symbol texture: ${reelImageSymbolName}`)
+          } else {
+            console.log(`❌ Reel symbol texture not found: ${reelImageSymbolName}`)
+            console.log('Available reel textures:', Object.keys(reelAtlas.textures).filter(name => name.startsWith('s')))
+          }
+          
+          if (symbolTexture) {
+            const symbolIcon = new Sprite(symbolTexture)
+            symbolIcon.width = 24 // Small icon size
+            symbolIcon.height = 24
+            symbolIcon.x = currentX
+            symbolIcon.y = -2 // Slight vertical adjustment to align with text
+            lineContainer.addChild(symbolIcon)
+            currentX += 30 // Icon width + spacing
+          } else {
+            // Add spacing even if no icon to maintain layout
+            currentX += 10
+          }
+          
+          // "= X.XX FUN" text
+          const payoutText = new Text({
+            text: `= ${(winLine.payout * 0.01).toFixed(2)} FUN`,
+            style: {
+              fontFamily: 'Arial',
+              fontSize: 18,
+              fill: 0xFFFFFF,
+              fontWeight: 'bold'
+            }
+          })
+          payoutText.x = currentX
+          payoutText.y = 0
+          lineContainer.addChild(payoutText)
+          
+          // Center the entire line container
+          lineContainer.x = -(lineContainer.width / 2)
+          lineContainer.y = 0
+          
+          winLineDisplayContainer.addChild(lineContainer)
+          winLineDisplayContainer.visible = true
         }
         
         // Function to show win highlights with cycling
@@ -1114,13 +1470,8 @@ export default function Home() {
               console.error('❌ Win animation error:', error)
             })
             
-            // Calculate animation duration: 57 frames at 80ms = ~4.56 seconds (then loops)
-            const animationDuration = 57 * 80 // ~4560ms
-            
-            // Show highlights after win animations complete
-            setTimeout(() => {
-              showWinHighlightsAfterAnimation(winLines)
-            }, animationDuration)
+            // Start payline highlights and win line display simultaneously with win animations
+            showWinHighlightsAfterAnimation(winLines)
           } else {
             console.log('🚫 Win animations disabled or no positions:', { enabled: ENABLE_WIN_ANIMATIONS, positions: winningPositions.length })
             // Show highlights immediately without animations
@@ -1150,6 +1501,9 @@ export default function Home() {
             const positions = PAYLINES_VISUAL[paylineIndex]
             
             if (!positions) return
+            
+            // Show win line display
+            showWinLineDisplay(winLine)
             
             // Create highlight container
             const highlightContainer = new Container()
@@ -1329,12 +1683,23 @@ export default function Home() {
         if (keydownHandler) {
           window.removeEventListener('keydown', keydownHandler)
         }
+        // Clean up resize event listener
+        if (handleResize) {
+          window.removeEventListener('resize', handleResize)
+        }
         appRef.current.destroy(true, { children: true })
         destroyed = true
         appRef.current = null
       }
     }
   }, [])
+
+  // Update UI when state changes
+  useEffect(() => {
+    if (uiUpdateRef.current) {
+      uiUpdateRef.current(totalCredits, currentBet, lastWin)
+    }
+  }, [totalCredits, currentBet, lastWin])
 
   return (
     <div
@@ -1352,12 +1717,13 @@ export default function Home() {
         ref={pixiContainer}
         style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: '1920px',
-          height: '1080px',
-          transform: 'translate(-50%, -50%) scale(0.46875)',
-          transformOrigin: 'center center',
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       />
     </div>

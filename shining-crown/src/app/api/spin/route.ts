@@ -147,12 +147,13 @@ function expandWildsOnReels(reelResults: string[][]): { expandedResults: string[
   return { expandedResults, expandedReels }
 }
 
-function calculateWins(reelResults: string[][]): { winLines: WinLine[], totalWin: number } {
+function calculateWins(reelResults: string[][], betMultiplier: number): { winLines: WinLine[], totalWin: number } {
   const winLines: WinLine[] = []
   let totalWin = 0
 
   console.log('=== PAYLINE CALCULATION DEBUG ===')
   console.log('Reel Results:', reelResults)
+  console.log('Bet Multiplier:', betMultiplier)
 
   // Check each payline
   for (let paylineIndex = 0; paylineIndex < PAYLINES.length; paylineIndex++) {
@@ -168,9 +169,9 @@ function calculateWins(reelResults: string[][]): { winLines: WinLine[], totalWin
     console.log(`Payline ${paylineIndex + 1}:`, paylineSymbols)
     
     // Calculate wins for this payline
-    const win = calculatePaylineWin(paylineSymbols, paylineIndex + 1)
+    const win = calculatePaylineWin(paylineSymbols, paylineIndex + 1, betMultiplier)
     if (win) {
-      console.log(`  WIN: ${win.count}x ${win.symbol} = ${win.payout} credits`)
+      console.log(`  WIN: ${win.count}x ${win.symbol} = ${win.payout} credits (base: ${win.payout / betMultiplier}, bet: ${betMultiplier})`)
       winLines.push(win)
       totalWin += win.payout
     } else {
@@ -185,7 +186,7 @@ function calculateWins(reelResults: string[][]): { winLines: WinLine[], totalWin
   return { winLines, totalWin }
 }
 
-function calculatePaylineWin(symbols: string[], paylineNumber: number): WinLine | null {
+function calculatePaylineWin(symbols: string[], paylineNumber: number, betMultiplier: number): WinLine | null {
   // Convert symbols to names for paytable lookup
   const symbolNames = symbols.map(symbol => SYMBOL_NAMES[symbol] || 'Unknown')
   
@@ -224,8 +225,9 @@ function calculatePaylineWin(symbols: string[], paylineNumber: number): WinLine 
     // Check if this forms a winning combination
     const symbolPaytable = PAYTABLE[baseSymbol]
     if (symbolPaytable && symbolPaytable[count]) {
-      const payout = symbolPaytable[count]
-      console.log(`    ${baseSymbol} forms valid win: ${count}x = ${payout} credits`)
+      const basePayout = symbolPaytable[count]
+      const payout = basePayout * betMultiplier // Apply bet multiplier
+      console.log(`    ${baseSymbol} forms valid win: ${count}x = ${basePayout} base * ${betMultiplier} bet = ${payout} credits`)
       
       // Keep track of the best (highest paying) combination
       if (!bestWin || payout > bestWin.payout) {
@@ -250,9 +252,13 @@ function calculatePaylineWin(symbols: string[], paylineNumber: number): WinLine 
   return null
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     loadGameData()
+    
+    // Parse request body to get bet amount
+    const body = await request.json()
+    const betAmount = body.bet || 1 // Default to 1 if no bet specified
     
     if (!virtualReels || !symbolMapping) {
       return NextResponse.json({ error: 'Game data not loaded' }, { status: 500 })
@@ -291,8 +297,8 @@ export async function POST(_request: NextRequest) {
     // Expand wilds on reels 2, 3, and 4 (index 1, 2, 3) before calculating wins
     const { expandedResults, expandedReels } = expandWildsOnReels(reelResults)
     
-    // Calculate wins with expanded wilds
-    const { winLines, totalWin } = calculateWins(expandedResults)
+    // Calculate wins with expanded wilds and bet multiplier
+    const { winLines, totalWin } = calculateWins(expandedResults, betAmount)
     
     // Add small delay to simulate server processing
     await new Promise(resolve => setTimeout(resolve, 100))
