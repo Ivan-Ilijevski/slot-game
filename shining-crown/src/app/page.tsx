@@ -19,6 +19,7 @@ export default function Home() {
   const winHighlightsRef = useRef<Container[]>([])
   const winInfoDisplayRef = useRef<HTMLDivElement | null>(null)
   const wildExpandSoundRef = useRef<HTMLAudioElement | null>(null)
+  const wildReelSoundRef = useRef<HTMLAudioElement | null>(null)
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -49,7 +50,18 @@ export default function Home() {
           '/assets/reelImages.json', 
           '/assets/background.json', 
           '/assets/expand-0.json', 
-          '/assets/08-0.json' // Wild expanding animation
+          '/assets/08-0.json', // Wild expanding animation
+          // Load all symbol win animations
+          '/assets/00-0.json', // Cherry win animation
+          '/assets/01-0.json', // Lemon win animation  
+          '/assets/02-0.json', // Orange win animation
+          '/assets/03-0.json', // Plum win animation
+          '/assets/04-0.json', // Bell win animation
+          '/assets/05-0.json', // Grapes win animation
+          '/assets/06-0.json', // Watermelon win animation
+          '/assets/07-0.json', // Seven win animation
+          '/assets/09-0.json', // Star win animation
+          '/assets/10-0.json'  // Crown win animation
         ])
 
         // Load reel stop sound
@@ -59,6 +71,10 @@ export default function Home() {
         // Load wild expansion sound
         wildExpandSoundRef.current = new Audio('/assets/winSounds.mp3')
         wildExpandSoundRef.current.preload = 'auto'
+        
+        // Load wild reel sound
+        wildReelSoundRef.current = new Audio('/assets/shortSounds.mp3')
+        wildReelSoundRef.current.preload = 'auto'
         
         // Set up sound to play only a small portion (e.g., 0.2 seconds from start)
         const playReelStopSound = () => {
@@ -79,6 +95,36 @@ export default function Home() {
               soundTimeoutRef.current = null
             }, 300)
           }
+        }
+        
+        // Function to play wild reel sound (1 second from shortSounds.mp3)
+        const playWildReelSound = () => {
+          if (wildReelSoundRef.current) {
+            wildReelSoundRef.current.currentTime = 0 // Start from beginning
+            wildReelSoundRef.current.play().catch(console.error)
+            
+            // Stop after 1 second
+            setTimeout(() => {
+              if (wildReelSoundRef.current) {
+                wildReelSoundRef.current.pause()
+              }
+            }, 1000)
+          }
+        }
+        
+        // Function to check if a reel contains wild symbols
+        const reelHasWild = (reelIndex: number): boolean => {
+          const reel = reelsRef.current[reelIndex]
+          if (!reel) return false
+          
+          // Check all symbol positions in this reel (skip mask at 0 and overshoot at 1)
+          for (let i = 2; i < reel.children.length; i++) {
+            const symbolSprite = reel.children[i] as Sprite
+            if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
+              return true
+            }
+          }
+          return false
         }
         
         // Function to play wild expansion sound
@@ -102,10 +148,44 @@ export default function Home() {
         const expandAtlas = Assets.cache.get('/assets/expand-0.json')
         const wildAtlas = Assets.cache.get('/assets/08-0.json')
         
+        // Win animation atlases (all symbols)
+        const winAtlases: { [key: string]: { textures: { [key: string]: import('pixi.js').Texture } } } = {
+          '00': Assets.cache.get('/assets/00-0.json'),
+          '01': Assets.cache.get('/assets/01-0.json'),
+          '02': Assets.cache.get('/assets/02-0.json'),
+          '03': Assets.cache.get('/assets/03-0.json'),
+          '04': Assets.cache.get('/assets/04-0.json'),
+          '05': Assets.cache.get('/assets/05-0.json'),
+          '06': Assets.cache.get('/assets/06-0.json'),
+          '07': Assets.cache.get('/assets/07-0.json'),
+          '08': Assets.cache.get('/assets/08-0.json'), // Wild win animation (not expand)
+          '09': Assets.cache.get('/assets/09-0.json'),
+          '10': Assets.cache.get('/assets/10-0.json')
+        }
+        
         if (!mainAtlas?.textures || !reelAtlas?.textures || !backgroundAtlas?.textures || !expandAtlas?.textures || !wildAtlas?.textures) {
           console.error('❌ Missing textures')
           return
         }
+        
+        console.log('✅ Win animation atlases loaded:', Object.keys(winAtlases).map(key => `${key}: ${winAtlases[key]?.textures ? 'OK' : 'MISSING'}`).join(', '))
+        
+        // Symbol name to number mapping
+        const symbolNameToNumber: { [key: string]: string } = {
+          'Cherry': '00',
+          'Lemon': '01', 
+          'Orange': '02',
+          'Plum': '03',
+          'Bell': '04',
+          'Grapes': '05',
+          'Watermelon': '06',
+          'Seven': '07',
+          'Wild': '08',
+          'Star': '09',
+          'Crown': '10'
+        }
+        
+        console.log('📋 Symbol name mapping:', symbolNameToNumber)
 
         // Main background
         const mainBackground = new Sprite(backgroundAtlas.textures['background.png'])
@@ -313,6 +393,29 @@ export default function Home() {
           // Clear win highlights when starting new spin
           clearWinHighlights()
           
+          // Stop all running win animations
+          Object.keys(runningWinAnimations).forEach(key => {
+            delete runningWinAnimations[key]
+          })
+          console.log('⏹️ Stopped all running win animations')
+          
+          // Clear any pending win animation timeouts
+          reelsRef.current.forEach((reel) => {
+            if (reel) {
+              // Clean up any leftover win animation sprites
+              for (let i = reel.children.length - 1; i >= 0; i--) {
+                const child = reel.children[i]
+                if (child && child !== reel.children[0] && child !== reel.children[1] && // Don't remove mask and overshoot
+                    i >= 5) { // Only remove extra children beyond base 5 (mask + overshoot + 3 symbols)
+                  reel.removeChild(child)
+                  if (child.destroy) {
+                    child.destroy()
+                  }
+                }
+              }
+            }
+          })
+          
           // Ensure all reel symbols are visible when starting a new spin
           reelsRef.current.forEach((reel) => {
             if (reel) {
@@ -363,11 +466,11 @@ export default function Home() {
               let soundPlayed = false
               let acceleratedMode = false
               
-              // Add extra symbols for spinning effect
+              // Add fewer extra symbols for spinning effect (reduced from 5+5 to 2+2)
               const originalSymbolCount = reel.children.length - 2 // -2 for mask and overshoot symbol
               
-              // Add symbols above the visible area
-              for (let i = 0; i < 5; i++) {
+              // Add symbols above the visible area (reduced count)
+              for (let i = 0; i < 2; i++) {
                 const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
                 const texture = reelAtlas.textures[randomSymbolName]
                 if (texture) {
@@ -375,13 +478,13 @@ export default function Home() {
                   symbol.width = SYMBOL_WIDTH
                   symbol.height = SYMBOL_HEIGHT
                   symbol.x = 0
-                  symbol.y = (-5 + i) * SYMBOL_HEIGHT // Position above visible area
+                  symbol.y = (-2 + i) * SYMBOL_HEIGHT // Position above visible area
                   reel.addChild(symbol)
                 }
               }
               
-              // Add symbols below the visible area
-              for (let i = 0; i < 5; i++) {
+              // Add symbols below the visible area (reduced count)
+              for (let i = 0; i < 2; i++) {
                 const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
                 const texture = reelAtlas.textures[randomSymbolName]
                 if (texture) {
@@ -431,8 +534,8 @@ export default function Home() {
                       const symbol = reel.children[i]
                       symbol.y += spinSpeed
                       // When symbol goes below visible area, wrap it to the top seamlessly
-                      if (symbol.y >= (SYMBOLS_PER_REEL + 5) * SYMBOL_HEIGHT) {
-                        symbol.y -= (SYMBOLS_PER_REEL + 10) * SYMBOL_HEIGHT
+                      if (symbol.y >= (SYMBOLS_PER_REEL + 2) * SYMBOL_HEIGHT) {
+                        symbol.y -= (SYMBOLS_PER_REEL + 4) * SYMBOL_HEIGHT
                       }
                     }
                     requestAnimationFrame(animate)
@@ -443,7 +546,11 @@ export default function Home() {
                     if (reel.children.length > 5) { // Keep only mask + overshoot + 3 final symbols (total 5)
                       // Remove extra spinning symbols
                       while (reel.children.length > 5) {
-                        reel.removeChildAt(reel.children.length - 1)
+                        const childToRemove = reel.children[reel.children.length - 1]
+                        reel.removeChild(childToRemove)
+                        if (childToRemove && childToRemove.destroy) {
+                          childToRemove.destroy()
+                        }
                       }
                       
                       // Replace with server-determined final symbols (skip mask at index 0 and overshoot at index 1)
@@ -459,14 +566,6 @@ export default function Home() {
                             symbol.texture = newTexture
                           }
                         }
-                        
-                        // Set up the overshoot symbol (random symbol from available pool)
-                        const overshootSymbol = reel.children[1] as Sprite
-                        const overshootSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-                        const overshootTexture = reelAtlas.textures[overshootSymbolName]
-                        if (overshootTexture) {
-                          overshootSymbol.texture = overshootTexture
-                        }
                       } else {
                         // Fallback to random symbols if server results not available
                         for (let i = 2; i < reel.children.length; i++) {
@@ -477,14 +576,14 @@ export default function Home() {
                             symbol.texture = newTexture
                           }
                         }
-                        
-                        // Set up the overshoot symbol (what would appear above the top symbol)
-                        const overshootSymbol = reel.children[1] as Sprite
-                        const overshootSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-                        const overshootTexture = reelAtlas.textures[overshootSymbolName]
-                        if (overshootTexture) {
-                          overshootSymbol.texture = overshootTexture
-                        }
+                      }
+                      
+                      // Set up the overshoot symbol (random symbol from available pool)
+                      const overshootSymbol = reel.children[1] as Sprite
+                      const overshootSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
+                      const overshootTexture = reelAtlas.textures[overshootSymbolName]
+                      if (overshootTexture) {
+                        overshootSymbol.texture = overshootTexture
                       }
                     }
                     
@@ -503,7 +602,13 @@ export default function Home() {
                     if (!soundPlayed && bounceProgress >= 0.25) {
                       // Only play individual sounds if not a simultaneous stop
                       if (!simultaneousStopRef.current) {
-                        playReelStopSound()
+                        // Check if this reel has wild symbols and play appropriate sound
+                        if (reelHasWild(index)) {
+                          console.log(`🌟 Wild detected on reel ${index + 1}, playing wild sound instead of reel sound`)
+                          playWildReelSound()
+                        } else {
+                          playReelStopSound()
+                        }
                       }
                       soundPlayed = true
                     }
@@ -569,11 +674,21 @@ export default function Home() {
                     
                     // Show win highlights if there are wins
                     if (serverResults && serverResults.winLines && serverResults.winLines.length > 0) {
-                      // Delay highlighting to let wild expansion animations complete first
-                      // Wild animations take ~2300ms (69 frames at 30fps), so wait 2500ms
-                      setTimeout(() => {
+                      // Check if there are wild expansions happening
+                      const hasWildExpansions = serverResults.expandedReels && serverResults.expandedReels.length > 0
+                      
+                      if (hasWildExpansions) {
+                        // Delay highlighting to let wild expansion animations complete first
+                        // Wild animations take ~2300ms (69 frames at 30fps), so wait 2500ms
+                        console.log('🌟 Wild expansions detected, delaying win animations by 2500ms')
+                        setTimeout(() => {
+                          showWinHighlights(serverResults.winLines)
+                        }, 2500)
+                      } else {
+                        // No wild expansions, start win animations immediately
+                        console.log('✨ No wild expansions, starting win animations immediately')
                         showWinHighlights(serverResults.winLines)
-                      }, 2500)
+                      }
                     }
                   }
                 }
@@ -737,6 +852,192 @@ export default function Home() {
           animateFrames()
         }
         
+        // Track running win animations to stop them on new spins
+        const runningWinAnimations: { [key: string]: boolean } = {}
+        
+        // Function to animate winning symbols (with pre-loaded assets)
+        const animateWinningSymbols = async (winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[]) => {
+          if (winningPositions.length === 0) {
+            console.log('❌ No winning positions to animate')
+            return
+          }
+          
+          console.log('🎯 Animating', winningPositions.length, 'winning symbols with pre-loaded assets')
+          
+          winningPositions.forEach(({ reelIndex, rowIndex, symbolName }) => {
+            const animationKey = `${reelIndex}-${rowIndex}`
+            runningWinAnimations[animationKey] = true // Mark animation as running
+            
+            const reel = reelsRef.current[reelIndex]
+            if (!reel) {
+              console.log(`❌ No reel found at index ${reelIndex}`)
+              delete runningWinAnimations[animationKey]
+              return
+            }
+            
+            // Get the symbol at this position (skip mask at 0 and overshoot at 1)
+            const symbolSprite = reel.children[rowIndex + 2] as Sprite
+            if (!symbolSprite) {
+              console.log(`❌ No symbol found at reel ${reelIndex}, row ${rowIndex}`)
+              return
+            }
+            
+            // Convert symbol name to number (handle both "Wild" and "Wild.png")
+            const cleanSymbolName = symbolName.replace('.png', '') // Remove .png if present
+            
+            // Handle case where server sends clean name (like "Wild") vs filename (like "Wild.png")
+            const symbolNumber = symbolNameToNumber[cleanSymbolName] || cleanSymbolName
+            console.log(`🎨 Creating animation for symbol ${symbolName} -> ${cleanSymbolName} -> ${symbolNumber} at reel ${reelIndex}, row ${rowIndex}`)
+            
+            // Special logging for wild symbols - check both the clean name and number
+            if (cleanSymbolName === 'Wild' || symbolNumber === '08' || symbolName === 'Wild') {
+              console.log(`🌟 WILD SYMBOL DETECTED: original="${symbolName}", clean="${cleanSymbolName}", number="${symbolNumber}" - should use 08-0.json atlas`)
+            }
+            
+            const winAtlas = winAtlases[symbolNumber]
+            
+            if (!winAtlas?.textures) {
+              console.warn(`❌ No pre-loaded animation atlas for symbol ${symbolNumber}, falling back to flash`)
+              // Fallback to flashing
+              let flashCount = 0
+              const flash = () => {
+                if (flashCount >= 6) {
+                  symbolSprite.tint = 0xFFFFFF
+                  return
+                }
+                symbolSprite.tint = flashCount % 2 === 0 ? 0xFF0000 : 0xFFFFFF
+                flashCount++
+                setTimeout(flash, 150)
+              }
+              flash()
+              return
+            }
+            
+            console.log(`✅ Found pre-loaded atlas for symbol ${symbolNumber}`)
+            
+            // Additional debugging for wild symbols
+            if (symbolNumber === '08') {
+              console.log(`🌟 Using WILD WIN animation atlas (08-0.json) with ${Object.keys(winAtlas.textures).length} textures`)
+              console.log(`🌟 Sample wild frames:`, Object.keys(winAtlas.textures).slice(0, 5))
+            }
+            
+            // Create animation frames array (use all frames for smoothest animation)
+            const winFrames: import('pixi.js').Texture[] = []
+            console.log(`🔍 Available textures in ${symbolNumber} atlas:`, Object.keys(winAtlas.textures).slice(0, 10)) // Show first 10
+            
+            // Use all 57 frames for complete smooth animation
+            for (let i = 0; i < 57; i++) {
+              const frameNumber = i.toString().padStart(3, '0')
+              const frameName = `${symbolNumber}_${frameNumber}.png`
+              const texture = winAtlas.textures[frameName]
+              if (texture && texture.source) {
+                winFrames.push(texture)
+              } else {
+                console.warn(`⚠️ Missing or invalid frame ${frameName} in ${symbolNumber} atlas`)
+              }
+            }
+            
+            console.log(`🎞️ Using ${winFrames.length} frames out of 57 total frames`)
+            
+            // Log missing frames for debugging
+            if (winFrames.length < 57) {
+              const missingFrames: number[] = []
+              for (let i = 0; i < 57; i++) {
+                const frameNumber = i.toString().padStart(3, '0')
+                const frameName = `${symbolNumber}_${frameNumber}.png`
+                if (!winAtlas.textures[frameName]) {
+                  missingFrames.push(i)
+                }
+              }
+              console.warn(`🚨 Missing frames for ${symbolNumber}:`, missingFrames.slice(0, 10), missingFrames.length > 10 ? `... and ${missingFrames.length - 10} more` : '')
+            }
+            
+            if (winFrames.length === 0) {
+              console.warn(`❌ No animation frames found for symbol ${symbolNumber}`)
+              return
+            }
+            
+            console.log(`🎞️ Created ${winFrames.length} animation frames for symbol ${symbolNumber}`)
+            
+            // Hide the original symbol
+            symbolSprite.visible = false
+            
+            // Create win animation sprite with first valid frame
+            const firstFrame = winFrames[0]
+            if (!firstFrame || !firstFrame.source) {
+              console.error(`❌ Invalid first frame for ${symbolNumber} animation`)
+              return
+            }
+            
+            const winAnimSprite = new Sprite(firstFrame)
+            winAnimSprite.width = SYMBOL_WIDTH
+            winAnimSprite.height = SYMBOL_HEIGHT
+            winAnimSprite.x = 0
+            winAnimSprite.y = rowIndex * SYMBOL_HEIGHT
+            
+            reel.addChild(winAnimSprite)
+            console.log(`🎭 Created win animation sprite for ${symbolNumber} with ${winFrames.length} valid frames`)
+            
+            // Animate through frames at smooth speed
+            let currentFrame = 0
+            const animationSpeed = 80 // 80ms per frame (~12.5 FPS) - smooth but visible
+            let isLooping = false
+            const loopStartFrame = Math.max(0, winFrames.length - 20) // Last 20 frames for loop
+            
+            const animateFrames = () => {
+              // Check if animation should continue (not stopped by new spin)
+              if (!runningWinAnimations[animationKey]) {
+                // Animation was stopped - clean up
+                if (winAnimSprite && !winAnimSprite.destroyed) {
+                  winAnimSprite.destroy()
+                }
+                if (symbolSprite && !symbolSprite.destroyed) {
+                  symbolSprite.visible = true
+                }
+                console.log(`⏹️ Win animation stopped for ${symbolNumber}`)
+                return
+              }
+              
+              if (currentFrame < winFrames.length) {
+                const frameTexture = winFrames[currentFrame]
+                if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
+                  winAnimSprite.texture = frameTexture
+                } else {
+                  console.warn(`⚠️ Invalid texture at frame ${currentFrame} for ${symbolNumber}`)
+                }
+                // Log only every 10th frame to reduce console spam
+                if (currentFrame % 10 === 0) {
+                  console.log(`🎬 Frame ${currentFrame + 1}/${winFrames.length} for ${symbolNumber}`)
+                }
+                currentFrame++
+                setTimeout(animateFrames, animationSpeed)
+              } else if (!isLooping) {
+                // Animation complete - start looping the last 20 frames
+                isLooping = true
+                currentFrame = loopStartFrame
+                console.log(`🔄 Starting loop animation for ${symbolNumber} (frames ${loopStartFrame + 1}-${winFrames.length})`)
+                setTimeout(animateFrames, animationSpeed)
+              } else {
+                // Loop through last 20 frames
+                const frameTexture = winFrames[currentFrame]
+                if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
+                  winAnimSprite.texture = frameTexture
+                } else {
+                  console.warn(`⚠️ Invalid loop texture at frame ${currentFrame} for ${symbolNumber}`)
+                }
+                currentFrame++
+                if (currentFrame >= winFrames.length) {
+                  currentFrame = loopStartFrame // Reset to start of loop
+                }
+                setTimeout(animateFrames, animationSpeed)
+              }
+            }
+            
+            // Start the animation
+            animateFrames()
+          })
+        }
+        
         // Function to clear all win highlights
         const clearWinHighlights = () => {
           // Clear cycling interval if it exists
@@ -764,10 +1065,71 @@ export default function Home() {
         
         // Function to show win highlights with cycling
         const showWinHighlights = (winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => {
+          console.log('🏆 showWinHighlights called with', winLines.length, 'win lines:', winLines)
           clearWinHighlights()
           
-          if (winLines.length === 0) return
+          if (winLines.length === 0) {
+            console.log('❌ No win lines, skipping animations')
+            return
+          }
           
+          // First, collect all winning symbol positions from all winning lines
+          const winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[] = []
+          winLines.forEach(winLine => {
+            const paylineIndex = winLine.payline - 1 // Convert to 0-based
+            const positions = PAYLINES_VISUAL[paylineIndex]
+            
+            if (positions) {
+              // Only animate the winning symbols (based on count)
+              for (let i = 0; i < Math.min(winLine.count, positions.length); i++) {
+                const [reelIndex, rowIndex] = positions[i]
+                
+                // Check what symbol is actually displayed on the reel (might be Wild after expansion)
+                const reel = reelsRef.current[reelIndex]
+                const symbolSprite = reel?.children[rowIndex + 2] as Sprite // Skip mask and overshoot
+                let actualSymbolName = winLine.symbol // Default to base symbol
+                
+                // Check if this position shows a wild symbol
+                if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
+                  actualSymbolName = 'Wild'
+                  console.log(`🌟 Position [${reelIndex},${rowIndex}] shows Wild instead of ${winLine.symbol}`)
+                }
+                
+                winningPositions.push({ reelIndex, rowIndex, symbolName: `${actualSymbolName}.png` })
+              }
+            }
+          })
+          
+          // Enable win animations
+          const ENABLE_WIN_ANIMATIONS = true
+          
+          if (ENABLE_WIN_ANIMATIONS && winningPositions.length > 0) {
+            // Start win animations
+            console.log('🎊 Starting win animations for positions:', winningPositions)
+            
+            // Start animations and wait for them to load assets
+            animateWinningSymbols(winningPositions).then(() => {
+              console.log('✅ Win animations started successfully')
+            }).catch(error => {
+              console.error('❌ Win animation error:', error)
+            })
+            
+            // Calculate animation duration: 57 frames at 80ms = ~4.56 seconds (then loops)
+            const animationDuration = 57 * 80 // ~4560ms
+            
+            // Show highlights after win animations complete
+            setTimeout(() => {
+              showWinHighlightsAfterAnimation(winLines)
+            }, animationDuration)
+          } else {
+            console.log('🚫 Win animations disabled or no positions:', { enabled: ENABLE_WIN_ANIMATIONS, positions: winningPositions.length })
+            // Show highlights immediately without animations
+            showWinHighlightsAfterAnimation(winLines)
+          }
+        }
+        
+        // Function to show win highlights after animations complete
+        const showWinHighlightsAfterAnimation = (winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => {
           let currentWinIndex = 0
           
           const showCurrentWin = () => {

@@ -1,0 +1,7 @@
+# game assets - images only
+shining-crown/public/assets/*.png
+shining-crown/public/assets/*.jpg
+shining-crown/public/assets/*.jpeg
+shining-crown/public/assets/*.gif
+shining-crown/public/assets/*.webp
+shining-crown/public/assets/*.svg
