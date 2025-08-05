@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
+import { CURRENCY_CONFIG, formatCurrency } from '../config/currency'
 
 export default function Home() {
   // Helper function to format numbers with spaces instead of commas
@@ -9,13 +10,25 @@ export default function Home() {
     return num.toLocaleString().replace(/,/g, ' ')
   }
 
-  // Bet management state
-  const [currentBet, setCurrentBet] = useState(100)
-  const [totalCredits, setTotalCredits] = useState(10000)
-  const [lastWin, setLastWin] = useState(0)
+  // Denomination options available
+  const DENOMINATION_OPTIONS = [0.01, 0.10, 0.50, 1.00]
   
-  // Available bet options (like EGT slots)
-  const BET_OPTIONS = [1, 5, 10, 20, 50, 100, 200, 500, 1000]
+  // Bet management state (all in currency values)
+  const [currentBet, setCurrentBet] = useState(5.00)
+  const [totalBalance, setTotalBalance] = useState(0) // Will be loaded from wallet
+  const [lastWin, setLastWin] = useState(0)
+  const [denomination, setDenomination] = useState(0.01)
+  const [pendingWin, setPendingWin] = useState(0) // Win amount waiting to be collected
+  const [animatedWinAmount, setAnimatedWinAmount] = useState(0) // Animated display amount
+  const [isAutoStart, setIsAutoStart] = useState(false) // Autostart feature toggle
+
+  // Helper function to convert currency to credits for UI display
+  const currencyToCredits = useCallback((amount: number): number => {
+    return Math.round(amount / denomination) // Credits based on denomination
+  }, [denomination])
+  
+  // Available bet options in MKD currency
+  const BET_OPTIONS = [0.05, 0.10, 0.20, 0.50, 1.00, 2.00, 5.00, 10.00]
   
   const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
@@ -33,17 +46,38 @@ export default function Home() {
   const winInfoDisplayRef = useRef<HTMLDivElement | null>(null)
   const wildExpandSoundRef = useRef<HTMLAudioElement | null>(null)
   const wildReelSoundRef = useRef<HTMLAudioElement | null>(null)
+  const wildExpansionSoundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const uiUpdateRef = useRef<((credits: number, bet: number, win: number) => void) | null>(null)
+  const uiUpdateRef = useRef<((balance: number, bet: number, win: number) => void) | null>(null)
+  const denomTextRef = useRef<Text | null>(null)
+  const creditDollarTextRef = useRef<Text | null>(null)
+  const creditAmountTextRef = useRef<Text | null>(null)
+  const betDollarTextRef = useRef<Text | null>(null)
+  const betAmountTextRef = useRef<Text | null>(null)
+  const winDollarTextRef = useRef<Text | null>(null)
+  const winAmountTextRef = useRef<Text | null>(null)
+  const winAnimationRef = useRef<NodeJS.Timeout | null>(null)
+  const autoStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const autoStartTextRef = useRef<Text | null>(null)
+  const isAutoStartRef = useRef<boolean>(false)
+  const autoCollectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const creditFlashTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingWinRef = useRef<number>(0)
+  const animateWinRef = useRef<((amount: number) => void) | null>(null)
+  const collectWinRef = useRef<(() => void) | null>(null)
+  const isWinAnimatingRef = useRef(false)
+  const takeWinRef = useRef<(() => void) | null>(null)
+  const completeWildExpansionsRef = useRef<(() => void) | null>(null)
+  const takeWinActiveRef = useRef(false)
+  const wildExpansionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingWinLinesRef = useRef<{ payline: number, symbols: string[], count: number, symbol: string, payout: number }[] | null>(null)
+  const showWinHighlightsRef = useRef<((winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => void) | null>(null)
 
   // Bet management functions
   const increaseBet = () => {
     const currentIndex = BET_OPTIONS.indexOf(currentBet)
     if (currentIndex < BET_OPTIONS.length - 1) {
-      const newBet = BET_OPTIONS[currentIndex + 1]
-      if (newBet <= totalCredits) {
-        setCurrentBet(newBet)
-      }
+      setCurrentBet(BET_OPTIONS[currentIndex + 1])
     }
   }
 
@@ -54,10 +88,307 @@ export default function Home() {
     }
   }
 
-  const setMaxBet = () => {
-    const maxAffordableBet = BET_OPTIONS.filter(bet => bet <= totalCredits).pop() || BET_OPTIONS[0]
-    setCurrentBet(maxAffordableBet)
-  }
+  const setMaxBet = useCallback(() => {
+    setCurrentBet(BET_OPTIONS[BET_OPTIONS.length - 1])
+  }, [BET_OPTIONS])
+
+  const cycleBet = useCallback(() => {
+    const currentIndex = BET_OPTIONS.indexOf(currentBet)
+    const nextIndex = (currentIndex + 1) % BET_OPTIONS.length
+    const newBet = BET_OPTIONS[nextIndex]
+    console.log(`Cycling bet: currentBet=$${currentBet}, currentIndex=${currentIndex}, nextIndex=${nextIndex}, newBet=$${newBet}`)
+    setCurrentBet(newBet)
+  }, [currentBet, BET_OPTIONS])
+
+  const cycleDenomination = useCallback(() => {
+    const currentIndex = DENOMINATION_OPTIONS.indexOf(denomination)
+    const nextIndex = (currentIndex + 1) % DENOMINATION_OPTIONS.length
+    const newDenomination = DENOMINATION_OPTIONS[nextIndex]
+    console.log(`Cycling denomination: current=$${denomination.toFixed(2)}, next=$${newDenomination.toFixed(2)}`)
+    console.log(`Sample conversion: $100 = ${Math.round(100 / newDenomination)} credits at $${newDenomination.toFixed(2)} denom`)
+    setDenomination(newDenomination)
+  }, [denomination, DENOMINATION_OPTIONS])
+
+  // Function to collect pending win
+  const collectWin = useCallback(() => {
+    console.log(`Collecting win: $${pendingWin}`)
+    
+    if (pendingWin > 0) {
+      // Balance is already updated by the server in the spin response
+      // Just clear the pending win state
+      setPendingWin(0)
+      setLastWin(0)
+      setAnimatedWinAmount(0)
+    }
+
+    // Clear timeouts and animations
+    if (winAnimationRef.current) {
+      clearInterval(winAnimationRef.current)
+      winAnimationRef.current = null
+    }
+    if (autoCollectTimeoutRef.current) {
+      clearTimeout(autoCollectTimeoutRef.current)
+      autoCollectTimeoutRef.current = null
+    }
+    
+    // Reset win animation state
+    isWinAnimatingRef.current = false
+  }, [pendingWin])
+
+  // Function to take win immediately (skip slow animations)
+  const takeWin = useCallback(() => {
+    console.log('Take win triggered - skipping slow animations')
+    
+    if (pendingWin > 0) {
+      // Mark that take win is active to distinguish from new spin cancellations
+      takeWinActiveRef.current = true
+      
+      // Instantly set win amount to final value (skip counting animation)
+      if (winAnimationRef.current) {
+        clearInterval(winAnimationRef.current)
+        winAnimationRef.current = null
+      }
+      setAnimatedWinAmount(pendingWin)
+      
+      // Stop wild expansion sound if playing
+      if (wildExpandSoundRef.current) {
+        wildExpandSoundRef.current.pause()
+        wildExpandSoundRef.current.currentTime = 0
+      }
+      if (wildExpansionSoundTimeoutRef.current) {
+        clearTimeout(wildExpansionSoundTimeoutRef.current)
+        wildExpansionSoundTimeoutRef.current = null
+      }
+      
+      // Complete any running wild expansions FIRST before triggering win highlights
+      if (animationsRunningRef.current.size > 0 && completeWildExpansionsRef.current) {
+        console.log('Completing wild expansions for take win')
+        completeWildExpansionsRef.current()
+      } else {
+        // If no wild animations, just clear the running animations set
+        animationsRunningRef.current.clear()
+      }
+      
+      // Cancel wild expansion delay timeout if it exists and trigger win highlights AFTER wild completion
+      if (wildExpansionTimeoutRef.current) {
+        clearTimeout(wildExpansionTimeoutRef.current)
+        wildExpansionTimeoutRef.current = null
+        console.log('Cancelled wild expansion delay timeout')
+        
+        // Immediately trigger win highlights that were waiting for wild expansions
+        // This now happens AFTER wild symbols have been converted
+        if (pendingWinLinesRef.current && showWinHighlightsRef.current) {
+          console.log('🚀 Take win - immediately triggering pending win highlights (after wild conversion)')
+          showWinHighlightsRef.current(pendingWinLinesRef.current)
+          pendingWinLinesRef.current = null
+        }
+      }
+      
+      // Reset take win flag after completing expansions
+      takeWinActiveRef.current = false
+      
+      // Note: Win highlights will be triggered by the normal flow after wild completion
+      
+      // Immediately start auto-collect timeout (shortened)
+      if (autoCollectTimeoutRef.current) {
+        clearTimeout(autoCollectTimeoutRef.current)
+      }
+      autoCollectTimeoutRef.current = setTimeout(() => {
+        console.log('Auto-collecting win after take win')
+        if (collectWinRef.current) {
+          collectWinRef.current()
+        }
+      }, 500) // Very short timeout after take win
+      
+      // Mark that we're no longer in slow animation phase
+      isWinAnimatingRef.current = false
+    }
+  }, [pendingWin])
+
+  // Function to start auto-collect timeout
+  const startAutoCollectTimeout = useCallback(() => {
+    console.log('Starting auto-collect timeout (10 seconds)')
+    
+    // Clear any existing timeout
+    if (autoCollectTimeoutRef.current) {
+      clearTimeout(autoCollectTimeoutRef.current)
+    }
+
+    autoCollectTimeoutRef.current = setTimeout(() => {
+      console.log('Auto-collecting win due to timeout')
+      collectWin()
+    }, 10000) // 10 seconds
+  }, [collectWin])
+
+  // Function to animate win amount counting up
+  const animateWinAmount = useCallback((targetAmount: number) => {
+    console.log(`Starting win animation from 0 to $${targetAmount}`)
+    
+    // Clear any existing animation
+    if (winAnimationRef.current) {
+      clearInterval(winAnimationRef.current)
+    }
+
+    setAnimatedWinAmount(0)
+    
+    if (targetAmount === 0) {
+      isWinAnimatingRef.current = false
+      return
+    }
+
+    // Mark that win animations are active
+    isWinAnimatingRef.current = true
+    console.log('💰 Win animations started - press SPACE to take win and skip slow animations')
+
+    const duration = 2000 // 2 seconds animation
+    const steps = 50 // Number of animation steps
+    const increment = targetAmount / steps
+    const stepDuration = duration / steps
+    let currentStep = 0
+
+    winAnimationRef.current = setInterval(() => {
+      currentStep++
+      const currentAmount = Math.min(currentStep * increment, targetAmount)
+      setAnimatedWinAmount(currentAmount)
+
+      if (currentStep >= steps) {
+        setAnimatedWinAmount(targetAmount)
+        clearInterval(winAnimationRef.current!)
+        winAnimationRef.current = null
+        
+        // Mark that slow animations are complete
+        isWinAnimatingRef.current = false
+        
+        // Start auto-collect timeout after animation finishes
+        startAutoCollectTimeout()
+      }
+    }, stepDuration)
+  }, [startAutoCollectTimeout])
+
+  // Update refs when state or function changes
+  useEffect(() => {
+    pendingWinRef.current = pendingWin
+  }, [pendingWin])
+
+  useEffect(() => {
+    animateWinRef.current = animateWinAmount
+  }, [animateWinAmount])
+
+  useEffect(() => {
+    collectWinRef.current = collectWin
+  }, [collectWin])
+
+  useEffect(() => {
+    takeWinRef.current = takeWin
+  }, [takeWin])
+
+  // Function to flash credit display to indicate insufficient funds
+  const flashInsufficientFunds = useCallback(() => {
+    if (creditDollarTextRef.current && creditAmountTextRef.current) {
+      // Store original colors
+      const originalDollarColor = creditDollarTextRef.current.style.fill
+      const originalAmountColor = creditAmountTextRef.current.style.fill
+      
+      // Flash to gray
+      creditDollarTextRef.current.style.fill = 0x666666
+      creditAmountTextRef.current.style.fill = 0x666666
+      
+      // Clear any existing timeout
+      if (creditFlashTimeoutRef.current) {
+        clearTimeout(creditFlashTimeoutRef.current)
+      }
+      
+      // Restore original colors after 800ms
+      creditFlashTimeoutRef.current = setTimeout(() => {
+        if (creditDollarTextRef.current && creditAmountTextRef.current) {
+          creditDollarTextRef.current.style.fill = originalDollarColor
+          creditAmountTextRef.current.style.fill = originalAmountColor
+        }
+      }, 800)
+      
+      console.log('💸 Insufficient funds - flashing credit display')
+    }
+  }, [])
+
+  // Add keyboard event listener at component level
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('Component level key pressed:', event.code)
+      if (event.code === 'KeyB' && !isSpinningRef.current) {
+        event.preventDefault()
+        event.stopPropagation()
+        console.log('B key pressed, calling cycleBet()')
+        cycleBet()
+      } else if (event.code === 'KeyR' && !isSpinningRef.current) {
+        event.preventDefault()
+        event.stopPropagation()
+        console.log('R key pressed, calling setMaxBet()')
+        setMaxBet()
+      } else if (event.code === 'KeyD' && !isSpinningRef.current) {
+        event.preventDefault()
+        event.stopPropagation()
+        console.log('D key pressed, calling cycleDenomination()')
+        cycleDenomination()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [cycleBet, setMaxBet, cycleDenomination])
+
+  // Update denomination display when denomination changes
+  useEffect(() => {
+    if (denomTextRef.current) {
+      denomTextRef.current.text = `${formatCurrency(denomination)}\nCHANGE DENOM`
+    }
+  }, [denomination])
+
+  // Update all UI displays when denomination or values change
+  useEffect(() => {
+    console.log(`UI recalculation triggered: balance=$${totalBalance}, bet=$${currentBet}, win=$${animatedWinAmount}, denom=$${denomination}`)
+    
+    if (creditDollarTextRef.current) {
+      creditDollarTextRef.current.text = formatCurrency(totalBalance)
+    }
+    if (creditAmountTextRef.current) {
+      creditAmountTextRef.current.text = formatNumberWithSpaces(currencyToCredits(totalBalance))
+    }
+    if (betDollarTextRef.current) {
+      betDollarTextRef.current.text = formatCurrency(currentBet)
+    }
+    if (betAmountTextRef.current) {
+      betAmountTextRef.current.text = formatNumberWithSpaces(currencyToCredits(currentBet))
+    }
+    if (winDollarTextRef.current) {
+      winDollarTextRef.current.text = formatCurrency(animatedWinAmount)
+    }
+    if (winAmountTextRef.current) {
+      winAmountTextRef.current.text = formatNumberWithSpaces(currencyToCredits(animatedWinAmount))
+    }
+  }, [totalBalance, currentBet, animatedWinAmount, denomination, currencyToCredits, formatCurrency])
+
+
+  // Load wallet balance on component mount
+  useEffect(() => {
+    const loadWalletBalance = async () => {
+      try {
+        const response = await fetch('/api/wallet')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setTotalBalance(data.balance)
+            console.log('Wallet balance loaded:', data.balance)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load wallet balance:', error)
+      }
+    }
+    
+    loadWalletBalance()
+  }, [])
 
   useEffect(() => {
     let app: Application | null = null
@@ -214,10 +545,11 @@ export default function Home() {
             wildExpandSoundRef.current.play().catch(console.error)
             
             // Stop playback after 4.6 seconds (from 6s to 10.6s = 4.6s duration)
-            setTimeout(() => {
+            wildExpansionSoundTimeoutRef.current = setTimeout(() => {
               if (wildExpandSoundRef.current) {
                 wildExpandSoundRef.current.pause()
               }
+              wildExpansionSoundTimeoutRef.current = null
             }, 4600)
           }
         }
@@ -257,7 +589,7 @@ export default function Home() {
           'Orange': '02',
           'Plum': '03',
           'Bell': '04',
-          'Grapes': '05',
+          'Grape': '05',
           'Watermelon': '06',
           'Seven': '07',
           'Wild': '08',
@@ -398,7 +730,7 @@ export default function Home() {
           BET: { x: 950, y: UI_Y_BASE -20 },       // Adjust these coordinates to match overlay  
           WIN: { x: 1340, y: UI_Y_BASE-20},      // Adjust these coordinates to match overlay
           MORE_GAMES: { x: 100, y: UI_Y_BASE }, // Adjust these coordinates to match overlay
-          DENOM: { x: 240, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
+          DENOM: { x: 275, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
           INFO: { x: 1600, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
           FLAG: { x: 1740, y: UI_Y_BASE }      // Adjust these coordinates to match overlay
         }
@@ -406,25 +738,11 @@ export default function Home() {
         // Create PIXI-based UI elements container (will be added to stage after overlay)
         const uiContainer = new Container()
         
-        // LEFT SIDE: More Games button (no panel - using overlay)
-        
-        const moreGamesText = new Text('MORE\nGAMES', { 
-          fontFamily: 'Arial', 
-          fontSize: 16, 
-          fill: 0xFFFFFF, 
-          fontWeight: 'bold' as const,
-          align: 'center'
-        })
-        moreGamesText.anchor.set(0.5)
-        moreGamesText.x = OVERLAY_POSITIONS.MORE_GAMES.x
-        moreGamesText.y = OVERLAY_POSITIONS.MORE_GAMES.y
-        uiContainer.addChild(moreGamesText)
-        
         // Change Denomination button (no panel - using overlay)
         
-        const changeDenomText = new Text('$ 0.01\nCHANGE DENOM', { 
+        const changeDenomText = new Text(`${formatCurrency(denomination)}\nCHANGE DENOM`, { 
           fontFamily: 'Arial', 
-          fontSize: 14, 
+          fontSize: 28, 
           fill: 0xFFFFFF, 
           fontWeight: 'bold' as const,
           align: 'center'
@@ -432,12 +750,13 @@ export default function Home() {
         changeDenomText.anchor.set(0.5)
         changeDenomText.x = OVERLAY_POSITIONS.DENOM.x
         changeDenomText.y = OVERLAY_POSITIONS.DENOM.y
+        denomTextRef.current = changeDenomText
         uiContainer.addChild(changeDenomText)
         
         // CENTER: CREDIT display (no panel - using overlay)
         
         // Yellow dollar amount on top
-        const creditDollarText = new Text(`$ ${(totalCredits * 0.01).toFixed(2)}`, {
+        const creditDollarText = new Text(`${formatCurrency(totalBalance)}`, {
           fontFamily: 'Arial Black',
           fontSize: 40,
           fill: 0xFFFF00, // Yellow
@@ -445,18 +764,20 @@ export default function Home() {
           stroke: { color: 0x000000, width: 3 } // Small black stroke
         })
         creditDollarText.anchor.set(0.5, 0)
+        creditDollarTextRef.current = creditDollarText
         creditDollarText.x = OVERLAY_POSITIONS.CREDIT.x
         creditDollarText.y = OVERLAY_POSITIONS.CREDIT.y - 25
         uiContainer.addChild(creditDollarText)
         
-        // Large white credit amount
-        const creditAmountText = new Text(formatNumberWithSpaces(totalCredits), {
+        // Large white credit amount (converted from currency)
+        const creditAmountText = new Text(formatNumberWithSpaces(currencyToCredits(totalBalance)), {
           fontFamily: 'Arial Black',
           fontSize: 50,
           fill: 0xFFFFFF, // White
           fontWeight: '900' as const // Extra-bold for thickness
         })
         creditAmountText.anchor.set(0.5, 0)
+        creditAmountTextRef.current = creditAmountText
         creditAmountText.x = OVERLAY_POSITIONS.CREDIT.x - 2
         creditAmountText.y = OVERLAY_POSITIONS.CREDIT.y +10
         uiContainer.addChild(creditAmountText)
@@ -464,7 +785,7 @@ export default function Home() {
         // BET display (no panel - using overlay)
         
         // Yellow dollar amount on top
-        const betDollarText = new Text(`$ ${(currentBet * 0.01).toFixed(2)}`, {
+        const betDollarText = new Text(`${formatCurrency(currentBet)}`, {
           fontFamily: 'Arial Black',
           fontSize: 40,
           fill: 0xFFFF00, // Yellow
@@ -472,18 +793,20 @@ export default function Home() {
           stroke: { color: 0x000000, width: 3 } // Small black stroke
         })
         betDollarText.anchor.set(0.5, 0)
+        betDollarTextRef.current = betDollarText
         betDollarText.x = OVERLAY_POSITIONS.BET.x
         betDollarText.y = OVERLAY_POSITIONS.BET.y - 25
         uiContainer.addChild(betDollarText)
         
-        // Large white bet amount
-        const betAmountText = new Text(formatNumberWithSpaces(currentBet), {
+        // Large white bet amount (converted from currency)
+        const betAmountText = new Text(formatNumberWithSpaces(currencyToCredits(currentBet)), {
           fontFamily: 'Arial Black',
           fontSize: 50,
           fill: 0xFFFFFF, // White
           fontWeight: '900' as const // Extra-bold for thickness
         })
         betAmountText.anchor.set(0.5, 0)
+        betAmountTextRef.current = betAmountText
         betAmountText.x = OVERLAY_POSITIONS.BET.x
         betAmountText.y = OVERLAY_POSITIONS.BET.y +10
         uiContainer.addChild(betAmountText)
@@ -520,7 +843,7 @@ export default function Home() {
         // WIN display (no panel - using overlay)
         
         // Yellow dollar amount on top
-        const winDollarText = new Text(`$ ${(lastWin * 0.01).toFixed(2)}`, {
+        const winDollarText = new Text(`${formatCurrency(lastWin)}`, {
           fontFamily: 'Arial Black',
           fontSize: 40,
           fill: 0xFFFF00, // Yellow
@@ -528,18 +851,20 @@ export default function Home() {
           stroke: { color: 0x000000, width: 3 } // Small black stroke
         })
         winDollarText.anchor.set(0.5, 0)
+        winDollarTextRef.current = winDollarText
         winDollarText.x = OVERLAY_POSITIONS.WIN.x
         winDollarText.y = OVERLAY_POSITIONS.WIN.y - 25
         uiContainer.addChild(winDollarText)
         
-        // Large white win amount
-        const winAmountText = new Text(formatNumberWithSpaces(lastWin), {
+        // Large white win amount (converted from currency)
+        const winAmountText = new Text(formatNumberWithSpaces(currencyToCredits(lastWin)), {
           fontFamily: 'Arial Black',
           fontSize: 50,
           fill: 0xFFFFFF, // White
           fontWeight: '900' as const // Extra-bold for thickness
         })
         winAmountText.anchor.set(0.5, 0)
+        winAmountTextRef.current = winAmountText
         winAmountText.x = OVERLAY_POSITIONS.WIN.x
         winAmountText.y = OVERLAY_POSITIONS.WIN.y +10
         uiContainer.addChild(winAmountText)
@@ -569,26 +894,22 @@ export default function Home() {
         flagText.y = OVERLAY_POSITIONS.FLAG.y
         uiContainer.addChild(flagText)
         
-        // Function to update UI displays
-        const updateUIDisplays = (credits: number, bet: number, win: number) => {
-          creditDollarText.text = `$ ${(credits * 0.01).toFixed(2)}`
-          creditAmountText.text = formatNumberWithSpaces(credits)
-          betDollarText.text = `$ ${(bet * 0.01).toFixed(2)}`
-          betAmountText.text = formatNumberWithSpaces(bet)
-          winDollarText.text = `$ ${(win * 0.01).toFixed(2)}`
-          winAmountText.text = formatNumberWithSpaces(win)
-          
-          // Update arrow states
-          const betIndex = BET_OPTIONS.indexOf(bet)
-          betUpArrow.alpha = (betIndex === BET_OPTIONS.length - 1 || bet >= credits) ? 0.5 : 1.0
-          betDownArrow.alpha = (betIndex === 0) ? 0.5 : 1.0
-        }
+        // Autostart indicator
+        const autoStartText = new Text('AUTO', {
+          fontFamily: 'Arial Black',
+          fontSize: 24,
+          fill: 0x666666, // Start gray, will be updated by useEffect
+          fontWeight: 'bold' as const,
+          stroke: { color: 0x000000, width: 2 }
+        })
+        autoStartText.anchor.set(0.5)
+        autoStartText.x = 100 // Top left area
+        autoStartText.y = 100
+        autoStartText.visible = false // Hidden by default, shown only when active
+        autoStartTextRef.current = autoStartText
+        uiContainer.addChild(autoStartText)
         
-        // Store UI update function in ref for external access
-        uiUpdateRef.current = updateUIDisplays
-        
-        // Initial UI update
-        updateUIDisplays(10000, 100, 0) // Use initial values
+        // Function to update UI displays will be set in useEffect below
 
         // Lines indicators on both sides of reels (like in reference image)
         const leftLinesIndicator = new Sprite(mainAtlas.textures['linesIndicator.png'])
@@ -622,11 +943,18 @@ export default function Home() {
         // Add UI container to stage AFTER overlay - so text appears on top
         app.stage.addChild(uiContainer)
 
-        // Add keyboard event listener for space key
+        // Add keyboard event listener for space key and 'p' for autostart
         keydownHandler = (event: KeyboardEvent) => {
+          console.log('PIXI level key pressed:', event.code)
           if (event.code === 'Space') {
             event.preventDefault()
-            if (!isSpinningRef.current) {
+            if (!isSpinningRef.current && pendingWinRef.current > 0 && (isWinAnimatingRef.current || animationsRunningRef.current.size > 0)) {
+              // Take win feature - skip slow animations during wins
+              if (takeWinRef.current) {
+                console.log('Space pressed during win - activating take win')
+                takeWinRef.current()
+              }
+            } else if (!isSpinningRef.current) {
               spinReels()
             } else if (!stopRequestedRef.current) {
               // Request stop during spinning (only if not already requested)
@@ -637,26 +965,53 @@ export default function Home() {
                 playReelStopSound()
               }
             }
+          } else if (event.code === 'KeyP') {
+            event.preventDefault()
+            // Toggle autostart feature
+            setIsAutoStart(prev => {
+              const newAutoStart = !prev
+              isAutoStartRef.current = newAutoStart
+              console.log('Autostart toggled:', newAutoStart ? 'ON' : 'OFF')
+              
+              if (newAutoStart && !isSpinningRef.current) {
+                // Start autostart immediately if not spinning
+                spinReels()
+              } else if (!newAutoStart && autoStartTimeoutRef.current) {
+                // Stop autostart
+                clearTimeout(autoStartTimeoutRef.current)
+                autoStartTimeoutRef.current = null
+              }
+              
+              return newAutoStart
+            })
           }
         }
 
         const spinReels = async () => {
           if (isSpinningRef.current) return
           
-          // Check if player has enough credits
-          if (currentBet > totalCredits) {
-            console.log('Insufficient credits for bet')
-            return
+          // Clear any pending autostart timeout
+          if (autoStartTimeoutRef.current) {
+            clearTimeout(autoStartTimeoutRef.current)
+            autoStartTimeoutRef.current = null
           }
           
-          // Deduct bet amount
-          setTotalCredits(prev => prev - currentBet)
+          // Check for pending wins and collect them before starting new spin
+          if (pendingWinRef.current > 0 && collectWinRef.current) {
+            console.log('Collecting pending win before new spin:', pendingWinRef.current)
+            collectWinRef.current()
+          }
+          
+          // Balance validation will be handled by the server
           
           isSpinningRef.current = true
           stopRequestedRef.current = false
           reelsStoppedRef.current = [false, false, false, false, false]
           reelsStoppedCountRef.current = 0
           simultaneousStopRef.current = false
+          
+          // Clear previous win states for new spin
+          pendingWinLinesRef.current = null
           
           // Clear any running animations and restore symbol visibility
           animationsRunningRef.current.clear()
@@ -701,7 +1056,7 @@ export default function Home() {
           })
           
           // Get server results for this spin
-          let serverResults: { results: { reel: number, position: number, symbols: string[] }[], totalWin: number, winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[], expandedReels: number[] } | null = null
+          let serverResults: { results: { reel: number, position: number, symbols: string[] }[], totalWin: number, winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[], expandedReels: number[], balance: number } | null = null
           try {
             const response = await fetch('/api/spin', {
               method: 'POST',
@@ -711,20 +1066,52 @@ export default function Home() {
               body: JSON.stringify({ bet: currentBet }),
             })
             const data = await response.json()
+            
+            if (!response.ok) {
+              // Handle server errors (like insufficient funds)
+              if (data.error === 'Insufficient funds') {
+                console.error('Insufficient funds for spin')
+                flashInsufficientFunds()
+                isSpinningRef.current = false
+                return
+              } else {
+                console.error('Spin API error:', data.error)
+                isSpinningRef.current = false
+                return
+              }
+            }
+            
             if (data.success) {
               serverResults = data
-              // Update last win amount
-              const winAmount = data.totalWin || 0
+              
+              // Update balance from server response
+              if (typeof data.balance === 'number') {
+                setTotalBalance(data.balance)
+                console.log('Balance updated from server:', data.balance)
+              }
+              
+              // Update win amounts and start collection system
+              const winAmount = data.totalWin || 0 // Server already returns MKD
               lastWinRef.current = winAmount
               setLastWin(winAmount)
-              // Add winnings to total credits
+              
+              // Use the new win collection system instead of immediately adding to balance
               if (winAmount > 0) {
-                setTotalCredits(prev => prev + winAmount)
+                console.log('💰 Setting pendingWin to:', winAmount)
+                setPendingWin(winAmount)
+                // Win animation will start with payline animations in showWinHighlights
+              } else {
+                // Reset win states for non-winning spins
+                console.log('❌ No win - resetting win states')
+                setPendingWin(0)
+                setAnimatedWinAmount(0)
               }
               console.log('Win amount:', winAmount, 'Win lines:', data.winLines)
             }
           } catch (error) {
             console.error('Failed to get server results:', error)
+            isSpinningRef.current = false
+            return
           }
           
           // Available symbols for random spinning animation
@@ -939,6 +1326,21 @@ export default function Home() {
                       // Note: We'll need to get current state values externally
                     }
                     
+                    // Check for autostart - trigger next spin after delay
+                    if (isAutoStartRef.current) {
+                      const delay = serverResults?.winLines && serverResults.winLines.length > 0 ? 5000 : 300 // Longer delay for wins
+                      console.log(`🔄 Autostart active - next spin in ${delay}ms`)
+                      
+                      autoStartTimeoutRef.current = setTimeout(() => {
+                        if (isAutoStartRef.current && !isSpinningRef.current) {
+                          console.log('🔄 Autostart triggering next spin')
+                          spinReels()
+                        } else {
+                          console.log('🔄 Autostart cancelled:', isAutoStartRef.current ? 'spinning in progress' : 'autostart disabled')
+                        }
+                      }, delay)
+                    }
+                    
                     // Check for wild animations based on server results (only if there are actual wins)
                     if (serverResults && serverResults.expandedReels && serverResults.expandedReels.length > 0 && 
                         serverResults.winLines && serverResults.winLines.length > 0) {
@@ -955,8 +1357,14 @@ export default function Home() {
                         // Delay highlighting to let wild expansion animations complete first
                         // Wild animations take ~2300ms (69 frames at 30fps), so wait 2500ms
                         console.log('🌟 Wild expansions detected, delaying win animations by 2500ms')
-                        setTimeout(() => {
+                        
+                        // Store win lines for potential take win use
+                        pendingWinLinesRef.current = serverResults.winLines
+                        
+                        wildExpansionTimeoutRef.current = setTimeout(() => {
                           showWinHighlights(serverResults.winLines)
+                          wildExpansionTimeoutRef.current = null
+                          pendingWinLinesRef.current = null
                         }, 2500)
                       } else {
                         // No wild expansions, start win animations immediately
@@ -981,6 +1389,10 @@ export default function Home() {
 
           console.log('Reels to expand (from server):', winResults.expandedReels)
           
+          // Mark that win animations are active (expanding wilds are slow animations)
+          isWinAnimatingRef.current = true
+          console.log('🌟 Wild expansion animations started - press SPACE to take win and skip slow animations')
+          
           // Play wild expansion sound once for all expanding reels
           if (winResults.expandedReels.length > 0) {
             playWildExpandSound()
@@ -995,6 +1407,63 @@ export default function Home() {
             }
           })
         }
+
+        // Function to instantly complete wild expansions (for take win feature)
+        const completeWildExpansions = () => {
+          console.log('🌟 Instantly completing wild expansions for take win')
+          
+          // Get all reels that have running wild animations
+          const expandingReels = Array.from(animationsRunningRef.current)
+          
+          expandingReels.forEach(reelIndex => {
+            const reel = reelsRef.current[reelIndex]
+            if (!reel) return
+            
+            console.log(`Completing wild expansion for reel ${reelIndex}`)
+            
+            // Get all symbols in this reel (skip mask at 0 and overshoot at 1)
+            const reelSymbols: Sprite[] = []
+            for (let i = 2; i < reel.children.length; i++) {
+              reelSymbols.push(reel.children[i] as Sprite)
+            }
+            
+            // Find and clean up any existing expand animation sprites
+            const spritesToRemove: Sprite[] = []
+            for (let i = reel.children.length - 1; i >= 5; i--) { // Beyond base 5 (mask + overshoot + 3 symbols)
+              const child = reel.children[i] as Sprite
+              if (child) {
+                spritesToRemove.push(child)
+              }
+            }
+            
+            // Remove animation sprites
+            spritesToRemove.forEach(sprite => {
+              if (sprite && !sprite.destroyed) {
+                reel.removeChild(sprite)
+                sprite.destroy()
+              }
+            })
+            
+            // Convert non-wild symbols to wilds and make them visible
+            reelSymbols.forEach(symbol => {
+              if (symbol && !symbol.destroyed) {
+                if (symbol.texture !== reelAtlas.textures['08.png']) {
+                  // Convert to wild
+                  symbol.texture = reelAtlas.textures['08.png']
+                }
+                symbol.visible = true // Ensure symbol is visible
+              }
+            })
+            
+            console.log(`Completed wild expansion for reel ${reelIndex} - converted ${reelSymbols.length} symbols to wild`)
+          })
+          
+          // Clear all expanding animations after completion
+          animationsRunningRef.current.clear()
+        }
+        
+        // Set the ref for external access
+        completeWildExpansionsRef.current = completeWildExpansions
 
         // Function to animate expanding wild
         const animateExpandingWild = (wildSymbol: Sprite, reelIndex: number) => {
@@ -1071,23 +1540,28 @@ export default function Home() {
           const animationSpeed = 1000 / frameRate // ~33.33ms per frame
 
           const animateFrames = () => {
-            // Check if animation should continue (not interrupted by new spin)
+            // Check if animation should continue (not interrupted by new spin or take win)
             if (!animationsRunningRef.current.has(reelIndex)) {
-              // Animation was cancelled, clean up and restore original symbols
+              // Animation was cancelled - clean up expansion sprites
               expandSprites.forEach(sprite => {
                 if (sprite && !sprite.destroyed) {
                   sprite.destroy()
                 }
               })
               
-              // Restore visibility of original symbols that were hidden
-              symbolsToHide.forEach(symbol => {
-                if (symbol && !symbol.destroyed) {
-                  symbol.visible = true
-                }
-              })
-              
-              console.log(`Expanding wild animation cancelled for reel ${reelIndex} - restored ${symbolsToHide.length} symbols`)
+              // Only restore original symbols if this is NOT a take win cancellation
+              // (take win should have already converted symbols to wilds)
+              if (!takeWinActiveRef.current) {
+                // Restore visibility of original symbols that were hidden (for new spin cancellation)
+                symbolsToHide.forEach(symbol => {
+                  if (symbol && !symbol.destroyed) {
+                    symbol.visible = true
+                  }
+                })
+                console.log(`Expanding wild animation cancelled for reel ${reelIndex} - restored ${symbolsToHide.length} symbols`)
+              } else {
+                console.log(`Expanding wild animation cancelled for reel ${reelIndex} - symbols already converted to wilds by take win`)
+              }
               return
             }
             
@@ -1118,6 +1592,12 @@ export default function Home() {
               
               // Mark animation as complete
               animationsRunningRef.current.delete(reelIndex)
+              
+              // Check if all expanding wild animations are complete
+              if (animationsRunningRef.current.size === 0) {
+                console.log('All expanding wild animations complete')
+                // Note: Don't reset isWinAnimatingRef here as win counting might still be running
+              }
               
               console.log(`Expanding wild animation complete for reel ${reelIndex} - ${symbolsToHide.length} symbols converted to wild`)
             }
@@ -1166,6 +1646,11 @@ export default function Home() {
             // Special logging for wild symbols - check both the clean name and number
             if (cleanSymbolName === 'Wild' || symbolNumber === '08' || symbolName === 'Wild') {
               console.log(`🌟 WILD SYMBOL DETECTED: original="${symbolName}", clean="${cleanSymbolName}", number="${symbolNumber}" - should use 08-0.json atlas`)
+            }
+            
+            // Special logging for grapes
+            if (cleanSymbolName === 'Grape' || symbolNumber === '05' || symbolName === 'Grape') {
+              console.log(`🍇 GRAPES SYMBOL DETECTED: original="${symbolName}", clean="${cleanSymbolName}", number="${symbolNumber}" - should use 05-0.json atlas`)
             }
             
             const winAtlas = winAtlases[symbolNumber]
@@ -1399,7 +1884,7 @@ export default function Home() {
           
           // "= X.XX FUN" text
           const payoutText = new Text({
-            text: `= ${(winLine.payout * 0.01).toFixed(2)} FUN`,
+            text: `= ${formatCurrency(winLine.payout)}`,
             style: {
               fontFamily: 'Arial',
               fontSize: 18,
@@ -1428,6 +1913,12 @@ export default function Home() {
             console.log('❌ No win lines, skipping animations')
             return
           }
+
+          // Start win count-up animation synchronized with payline animations
+          if (pendingWinRef.current > 0 && animateWinRef.current) {
+            console.log('🎰 Starting win count-up animation with paylines:', pendingWinRef.current)
+            animateWinRef.current(pendingWinRef.current)
+          }
           
           // First, collect all winning symbol positions from all winning lines
           const winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[] = []
@@ -1449,6 +1940,8 @@ export default function Home() {
                 if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
                   actualSymbolName = 'Wild'
                   console.log(`🌟 Position [${reelIndex},${rowIndex}] shows Wild instead of ${winLine.symbol}`)
+                } else {
+                  console.log(`🎯 Position [${reelIndex},${rowIndex}] shows ${winLine.symbol} (keeping original)`)
                 }
                 
                 winningPositions.push({ reelIndex, rowIndex, symbolName: `${actualSymbolName}.png` })
@@ -1667,6 +2160,9 @@ export default function Home() {
           }
           // Single win stays visible (no timeout)
         }
+        
+        // Set the ref for external access (take win feature)
+        showWinHighlightsRef.current = showWinHighlights
 
         window.addEventListener('keydown', keydownHandler)
 
@@ -1687,6 +2183,16 @@ export default function Home() {
         if (handleResize) {
           window.removeEventListener('resize', handleResize)
         }
+        // Clean up autostart timeout
+        if (autoStartTimeoutRef.current) {
+          clearTimeout(autoStartTimeoutRef.current)
+          autoStartTimeoutRef.current = null
+        }
+        // Clean up credit flash timeout
+        if (creditFlashTimeoutRef.current) {
+          clearTimeout(creditFlashTimeoutRef.current)
+          creditFlashTimeoutRef.current = null
+        }
         appRef.current.destroy(true, { children: true })
         destroyed = true
         appRef.current = null
@@ -1696,10 +2202,21 @@ export default function Home() {
 
   // Update UI when state changes
   useEffect(() => {
+    console.log(`UI Update triggered: balance=$${totalBalance}, bet=$${currentBet}, win=$${lastWin}, denom=$${denomination}`)
     if (uiUpdateRef.current) {
-      uiUpdateRef.current(totalCredits, currentBet, lastWin)
+      uiUpdateRef.current(totalBalance, currentBet, lastWin)
     }
-  }, [totalCredits, currentBet, lastWin])
+  }, [totalBalance, currentBet, lastWin, denomination])
+
+  // Update autostart indicator and ref when state changes
+  useEffect(() => {
+    isAutoStartRef.current = isAutoStart
+    if (autoStartTextRef.current) {
+      autoStartTextRef.current.visible = isAutoStart
+      autoStartTextRef.current.style.fill = 0x00FF00 // Always green when visible
+      console.log('Autostart indicator updated:', isAutoStart ? 'VISIBLE (ACTIVE)' : 'HIDDEN (INACTIVE)')
+    }
+  }, [isAutoStart])
 
   return (
     <div

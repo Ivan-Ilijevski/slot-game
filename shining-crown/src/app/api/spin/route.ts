@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import fs from 'fs'
 import path from 'path'
+import { deductBalance, addBalance, validateBalance, readWallet } from '../../../utils/wallet'
+import { formatCurrency } from '../../../config/currency'
 
 // Types
 interface VirtualReels {
@@ -51,16 +53,16 @@ const PAYLINES: PaylinePosition[][] = [
   [[0, 0], [1, 1], [2, 1], [3, 1], [4, 0]]  // Payline 10 - mountain
 ]
 
-// Paytable - payout multipliers for base bet of 1 credit
+// Paytable - base payout values that get multiplied by bet amount
 const PAYTABLE: { [key: string]: { [key: number]: number } } = {
-  'Seven': { 2: 100, 3: 500, 4: 2500, 5: 50000 },
-  'Watermelon': { 3: 400, 4: 1200, 5: 7000 },
-  'Grape': { 3: 400, 4: 1200, 5: 7000 },
-  'Bell': { 3: 200, 4: 400, 5: 2000 },
-  'Plum': { 3: 100, 4: 300, 5: 1500 },
-  'Orange': { 3: 100, 4: 300, 5: 1500 },
-  'Cherry': { 3: 100, 4: 300, 5: 1500 },
-  'Lemon': { 3: 100, 4: 300, 5: 1500 }
+  'Seven': { 2: 1, 3: 5, 4: 25, 5: 500 },
+  'Watermelon': { 3: 4, 4: 12, 5: 70 },
+  'Grape': { 3: 4, 4: 12, 5: 70 },
+  'Bell': { 3: 2, 4: 4, 5: 20 },
+  'Plum': { 3: 1, 4: 3, 5: 15 },
+  'Orange': { 3: 1, 4: 3, 5: 15 },
+  'Cherry': { 3: 1, 4: 3, 5: 15 },
+  'Lemon': { 3: 1, 4: 3, 5: 15 }
 }
 
 // Reverse symbol mapping for payout calculations
@@ -171,7 +173,7 @@ function calculateWins(reelResults: string[][], betMultiplier: number): { winLin
     // Calculate wins for this payline
     const win = calculatePaylineWin(paylineSymbols, paylineIndex + 1, betMultiplier)
     if (win) {
-      console.log(`  WIN: ${win.count}x ${win.symbol} = ${win.payout} credits (base: ${win.payout / betMultiplier}, bet: ${betMultiplier})`)
+      console.log(`  WIN: ${win.count}x ${win.symbol} = ${formatCurrency(win.payout)} (base: ${win.payout / betMultiplier}, bet: ${formatCurrency(betMultiplier)})`)
       winLines.push(win)
       totalWin += win.payout
     } else {
@@ -227,7 +229,7 @@ function calculatePaylineWin(symbols: string[], paylineNumber: number, betMultip
     if (symbolPaytable && symbolPaytable[count]) {
       const basePayout = symbolPaytable[count]
       const payout = basePayout * betMultiplier // Apply bet multiplier
-      console.log(`    ${baseSymbol} forms valid win: ${count}x = ${basePayout} base * ${betMultiplier} bet = ${payout} credits`)
+      console.log(`    ${baseSymbol} forms valid win: ${count}x = ${basePayout} base * ${formatCurrency(betMultiplier)} bet = ${formatCurrency(payout)}`)
       
       // Keep track of the best (highest paying) combination
       if (!bestWin || payout > bestWin.payout) {
@@ -237,7 +239,7 @@ function calculatePaylineWin(symbols: string[], paylineNumber: number, betMultip
   }
   
   if (bestWin) {
-    console.log(`    BEST WIN: ${bestWin.count}x ${bestWin.symbol} = ${bestWin.payout} credits`)
+    console.log(`    BEST WIN: ${bestWin.count}x ${bestWin.symbol} = ${formatCurrency(bestWin.payout)}`)
     return {
       payline: paylineNumber,
       symbols: symbols.slice(0, bestWin.count),
@@ -263,6 +265,25 @@ export async function POST(request: NextRequest) {
     if (!virtualReels || !symbolMapping) {
       return NextResponse.json({ error: 'Game data not loaded' }, { status: 500 })
     }
+    
+    // Validate bet amount
+    if (typeof betAmount !== 'number' || betAmount <= 0) {
+      return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 })
+    }
+    
+    // Check if player has sufficient funds
+    if (!validateBalance(betAmount)) {
+      const currentBalance = readWallet().balance
+      return NextResponse.json({ 
+        error: 'Insufficient funds',
+        currentBalance,
+        requiredAmount: betAmount
+      }, { status: 400 })
+    }
+    
+    // Deduct bet amount from wallet
+    const walletAfterBet = deductBalance(betAmount)
+    console.log(`Bet deducted: ${formatCurrency(betAmount)}, new balance: ${formatCurrency(walletAfterBet.balance)}`)
     
     // Generate random stop positions for each reel
     const results: SpinResult[] = []
@@ -300,6 +321,13 @@ export async function POST(request: NextRequest) {
     // Calculate wins with expanded wilds and bet multiplier
     const { winLines, totalWin } = calculateWins(expandedResults, betAmount)
     
+    // Add winnings to wallet if any
+    let finalWallet = walletAfterBet
+    if (totalWin > 0) {
+      finalWallet = addBalance(totalWin)
+      console.log(`Win added: ${formatCurrency(totalWin)}, new balance: ${formatCurrency(finalWallet.balance)}`)
+    }
+    
     // Add small delay to simulate server processing
     await new Promise(resolve => setTimeout(resolve, 100))
     
@@ -309,11 +337,23 @@ export async function POST(request: NextRequest) {
       winLines,
       totalWin,
       expandedReels,
+      balance: finalWallet.balance,
       timestamp: Date.now()
     })
     
   } catch (error) {
     console.error('Spin API error:', error)
+    
+    // Handle specific wallet errors
+    if (error instanceof Error) {
+      if (error.message === 'Insufficient funds') {
+        return NextResponse.json({ 
+          error: 'Insufficient funds',
+          currentBalance: readWallet().balance
+        }, { status: 400 })
+      }
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

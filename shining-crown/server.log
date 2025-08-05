@@ -1,0 +1,2919 @@
+
+> shining-crown@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.4.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.78:3000
+
+ ✓ Starting...
+ ✓ Ready in 1260ms
+ ✓ Compiled /api/spin in 252ms (288 modules)
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4972,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T08:35:47.541Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4972.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '05.png', '01.png', '03.png' ],
+  [ '02.png', '04.png', '08.png' ],
+  [ '00.png', '04.png', '02.png' ],
+  [ '03.png', '04.png', '04.png' ],
+  [ '03.png', '01.png', '06.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Expanded reels: [
+  [ '05.png', '01.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '00.png', '04.png', '02.png' ],
+  [ '03.png', '04.png', '04.png' ],
+  [ '03.png', '01.png', '06.png' ]
+]
+Reels that expanded: [ 1 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '05.png', '01.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '00.png', '04.png', '02.png' ],
+  [ '03.png', '04.png', '04.png' ],
+  [ '03.png', '01.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '01.png', '08.png', '04.png', '04.png', '01.png' ]
+    Payline 1 - Symbol names: [ 'Lemon', 'Wild', 'Bell', 'Bell', 'Lemon' ]
+    Possible base symbols: [ 'Lemon', 'Bell' ]
+    Testing Lemon: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '05.png', '08.png', '00.png', '03.png', '03.png' ]
+    Payline 2 - Symbol names: [ 'Grape', 'Wild', 'Cherry', 'Plum', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Cherry', 'Plum' ]
+    Testing Grape: consecutive count = 2
+    Testing Cherry: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '03.png', '08.png', '02.png', '04.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Plum', 'Wild', 'Orange', 'Bell', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Bell', 'Watermelon' ]
+    Testing Plum: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '05.png', '08.png', '02.png', '04.png', '03.png' ]
+    Payline 4 - Symbol names: [ 'Grape', 'Wild', 'Orange', 'Bell', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Orange', 'Bell', 'Plum' ]
+    Testing Grape: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '03.png', '08.png', '00.png', '04.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Plum', 'Wild', 'Cherry', 'Bell', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Cherry', 'Bell', 'Watermelon' ]
+    Testing Plum: consecutive count = 2
+    Testing Cherry: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '05.png', '08.png', '04.png', '04.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Grape', 'Wild', 'Bell', 'Bell', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Watermelon' ]
+    Testing Grape: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '03.png', '08.png', '04.png', '03.png', '03.png' ]
+    Payline 7 - Symbol names: [ 'Plum', 'Wild', 'Bell', 'Plum', 'Plum' ]
+    Possible base symbols: [ 'Plum', 'Bell' ]
+    Testing Plum: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '01.png', '08.png', '02.png', '04.png', '01.png' ]
+    Payline 8 - Symbol names: [ 'Lemon', 'Wild', 'Orange', 'Bell', 'Lemon' ]
+    Possible base symbols: [ 'Lemon', 'Orange', 'Bell' ]
+    Testing Lemon: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '01.png', '08.png', '00.png', '03.png', '01.png' ]
+    Payline 9 - Symbol names: [ 'Lemon', 'Wild', 'Cherry', 'Plum', 'Lemon' ]
+    Possible base symbols: [ 'Lemon', 'Cherry', 'Plum' ]
+    Testing Lemon: consecutive count = 2
+    Testing Cherry: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '05.png', '08.png', '04.png', '04.png', '03.png' ]
+    Payline 10 - Symbol names: [ 'Grape', 'Wild', 'Bell', 'Bell', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Plum' ]
+    Testing Grape: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 438ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4967,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T08:36:01.577Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4967.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '00.png', '00.png', '06.png' ],
+  [ '02.png', '02.png', '00.png' ],
+  [ '01.png', '01.png', '05.png' ],
+  [ '06.png', '06.png', '06.png' ],
+  [ '03.png', '05.png', '04.png' ]
+]
+Expanded reels: [
+  [ '00.png', '00.png', '06.png' ],
+  [ '02.png', '02.png', '00.png' ],
+  [ '01.png', '01.png', '05.png' ],
+  [ '06.png', '06.png', '06.png' ],
+  [ '03.png', '05.png', '04.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '00.png', '00.png', '06.png' ],
+  [ '02.png', '02.png', '00.png' ],
+  [ '01.png', '01.png', '05.png' ],
+  [ '06.png', '06.png', '06.png' ],
+  [ '03.png', '05.png', '04.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '00.png', '02.png', '01.png', '06.png', '05.png' ]
+    Payline 1 - Symbol names: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '00.png', '02.png', '01.png', '06.png', '03.png' ]
+    Payline 2 - Symbol names: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Plum' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '06.png', '00.png', '05.png', '06.png', '04.png' ]
+    Payline 3 - Symbol names: [ 'Watermelon', 'Cherry', 'Grape', 'Watermelon', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Cherry', 'Grape', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '00.png', '02.png', '05.png', '06.png', '03.png' ]
+    Payline 4 - Symbol names: [ 'Cherry', 'Orange', 'Grape', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Grape', 'Watermelon', 'Plum' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '06.png', '02.png', '01.png', '06.png', '04.png' ]
+    Payline 5 - Symbol names: [ 'Watermelon', 'Orange', 'Lemon', 'Watermelon', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Lemon', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '00.png', '02.png', '01.png', '06.png', '04.png' ]
+    Payline 6 - Symbol names: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Bell' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '06.png', '00.png', '01.png', '06.png', '03.png' ]
+    Payline 7 - Symbol names: [ 'Watermelon', 'Cherry', 'Lemon', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Watermelon', 'Cherry', 'Lemon', 'Plum' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '00.png', '00.png', '05.png', '06.png', '05.png' ]
+    Payline 8 - Symbol names: [ 'Cherry', 'Cherry', 'Grape', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Grape', 'Watermelon' ]
+    Testing Cherry: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '00.png', '02.png', '01.png', '06.png', '05.png' ]
+    Payline 9 - Symbol names: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '00.png', '02.png', '01.png', '06.png', '03.png' ]
+    Payline 10 - Symbol names: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Lemon', 'Watermelon', 'Plum' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 106ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4962,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T08:36:10.851Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4962.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '00.png', '04.png', '03.png' ],
+  [ '06.png', '08.png', '00.png' ],
+  [ '04.png', '07.png', '07.png' ],
+  [ '06.png', '08.png', '00.png' ],
+  [ '05.png', '05.png', '05.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '00.png', '04.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '07.png', '07.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '05.png', '05.png', '05.png' ]
+]
+Reels that expanded: [ 1, 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '00.png', '04.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '07.png', '07.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '05.png', '05.png', '05.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '04.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 1 - Symbol names: [ 'Bell', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Seven', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '00.png', '08.png', '04.png', '08.png', '05.png' ]
+    Payline 2 - Symbol names: [ 'Cherry', 'Wild', 'Bell', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Bell', 'Grape' ]
+    Testing Cherry: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '03.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 3 - Symbol names: [ 'Plum', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Plum', 'Seven', 'Grape' ]
+    Testing Plum: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '00.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 4 - Symbol names: [ 'Cherry', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Seven', 'Grape' ]
+    Testing Cherry: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '03.png', '08.png', '04.png', '08.png', '05.png' ]
+    Payline 5 - Symbol names: [ 'Plum', 'Wild', 'Bell', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Plum', 'Bell', 'Grape' ]
+    Testing Plum: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '00.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 6 - Symbol names: [ 'Cherry', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Seven', 'Grape' ]
+    Testing Cherry: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '03.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 7 - Symbol names: [ 'Plum', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Plum', 'Seven', 'Grape' ]
+    Testing Plum: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '04.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 8 - Symbol names: [ 'Bell', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Seven', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '04.png', '08.png', '04.png', '08.png', '05.png' ]
+    Payline 9 - Symbol names: [ 'Bell', 'Wild', 'Bell', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 4
+    Bell forms valid win: 4x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Bell = 20.00 MKD
+  WIN: 4x Bell = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 10: [ '00.png', '08.png', '07.png', '08.png', '05.png' ]
+    Payline 10 - Symbol names: [ 'Cherry', 'Wild', 'Seven', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Seven', 'Grape' ]
+    Testing Cherry: consecutive count = 2
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 1
+Total win amount: 20
+=== END DEBUG ===
+Wallet updated: {
+  balance: 4982,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T08:36:10.852Z'
+}
+Win added: 20.00 MKD, new balance: 4982.00 MKD
+ POST /api/spin 200 in 107ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4977,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:27.628Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4977.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '01.png', '03.png', '00.png' ],
+  [ '01.png', '08.png', '06.png' ],
+  [ '02.png', '02.png', '03.png' ],
+  [ '03.png', '08.png', '04.png' ],
+  [ '04.png', '04.png', '04.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '01.png', '03.png', '00.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '02.png', '02.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '04.png', '04.png' ]
+]
+Reels that expanded: [ 1, 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '01.png', '03.png', '00.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '02.png', '02.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '04.png', '04.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '03.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 1 - Symbol names: [ 'Plum', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Bell' ]
+    Testing Plum: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '01.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 2 - Symbol names: [ 'Lemon', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Lemon', 'Orange', 'Bell' ]
+    Testing Lemon: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '00.png', '08.png', '03.png', '08.png', '04.png' ]
+    Payline 3 - Symbol names: [ 'Cherry', 'Wild', 'Plum', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Plum', 'Bell' ]
+    Testing Cherry: consecutive count = 2
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '01.png', '08.png', '03.png', '08.png', '04.png' ]
+    Payline 4 - Symbol names: [ 'Lemon', 'Wild', 'Plum', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Bell' ]
+    Testing Lemon: consecutive count = 2
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '00.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 5 - Symbol names: [ 'Cherry', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Bell' ]
+    Testing Cherry: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '01.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 6 - Symbol names: [ 'Lemon', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Lemon', 'Orange', 'Bell' ]
+    Testing Lemon: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '00.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 7 - Symbol names: [ 'Cherry', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Bell' ]
+    Testing Cherry: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '03.png', '08.png', '03.png', '08.png', '04.png' ]
+    Payline 8 - Symbol names: [ 'Plum', 'Wild', 'Plum', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Plum', 'Bell' ]
+    Testing Plum: consecutive count = 4
+    Plum forms valid win: 4x = 3 base * 5.00 MKD bet = 15.00 MKD
+    Testing Bell: consecutive count = 0
+    BEST WIN: 4x Plum = 15.00 MKD
+  WIN: 4x Plum = 15.00 MKD (base: 3, bet: 5.00 MKD)
+Payline 9: [ '03.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 9 - Symbol names: [ 'Plum', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Bell' ]
+    Testing Plum: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '01.png', '08.png', '02.png', '08.png', '04.png' ]
+    Payline 10 - Symbol names: [ 'Lemon', 'Wild', 'Orange', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Lemon', 'Orange', 'Bell' ]
+    Testing Lemon: consecutive count = 2
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 1
+Total win amount: 15
+=== END DEBUG ===
+Wallet updated: {
+  balance: 4992,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:27.630Z'
+}
+Win added: 15.00 MKD, new balance: 4992.00 MKD
+ POST /api/spin 200 in 122ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4987,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:33.523Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4987.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '06.png', '04.png', '03.png' ],
+  [ '02.png', '02.png', '02.png' ],
+  [ '03.png', '02.png', '03.png' ],
+  [ '04.png', '03.png', '05.png' ],
+  [ '00.png', '06.png', '06.png' ]
+]
+Expanded reels: [
+  [ '06.png', '04.png', '03.png' ],
+  [ '02.png', '02.png', '02.png' ],
+  [ '03.png', '02.png', '03.png' ],
+  [ '04.png', '03.png', '05.png' ],
+  [ '00.png', '06.png', '06.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '06.png', '04.png', '03.png' ],
+  [ '02.png', '02.png', '02.png' ],
+  [ '03.png', '02.png', '03.png' ],
+  [ '04.png', '03.png', '05.png' ],
+  [ '00.png', '06.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '04.png', '02.png', '02.png', '03.png', '06.png' ]
+    Payline 1 - Symbol names: [ 'Bell', 'Orange', 'Orange', 'Plum', 'Watermelon' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Plum', 'Watermelon' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '06.png', '02.png', '03.png', '04.png', '00.png' ]
+    Payline 2 - Symbol names: [ 'Watermelon', 'Orange', 'Plum', 'Bell', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Plum', 'Bell', 'Cherry' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '03.png', '02.png', '03.png', '05.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Plum', 'Orange', 'Plum', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Grape', 'Watermelon' ]
+    Testing Plum: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '06.png', '02.png', '03.png', '03.png', '00.png' ]
+    Payline 4 - Symbol names: [ 'Watermelon', 'Orange', 'Plum', 'Plum', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Plum', 'Cherry' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '03.png', '02.png', '03.png', '03.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Plum', 'Orange', 'Plum', 'Plum', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Watermelon' ]
+    Testing Plum: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '06.png', '02.png', '02.png', '05.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Watermelon', 'Orange', 'Orange', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Grape' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '03.png', '02.png', '02.png', '04.png', '00.png' ]
+    Payline 7 - Symbol names: [ 'Plum', 'Orange', 'Orange', 'Bell', 'Cherry' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Bell', 'Cherry' ]
+    Testing Plum: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '04.png', '02.png', '03.png', '05.png', '06.png' ]
+    Payline 8 - Symbol names: [ 'Bell', 'Orange', 'Plum', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Plum', 'Grape', 'Watermelon' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '04.png', '02.png', '03.png', '04.png', '06.png' ]
+    Payline 9 - Symbol names: [ 'Bell', 'Orange', 'Plum', 'Bell', 'Watermelon' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Plum', 'Watermelon' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '06.png', '02.png', '02.png', '03.png', '00.png' ]
+    Payline 10 - Symbol names: [ 'Watermelon', 'Orange', 'Orange', 'Plum', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Plum', 'Cherry' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 113ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4982,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:34.084Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4982.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '03.png', '00.png', '02.png' ],
+  [ '02.png', '00.png', '04.png' ],
+  [ '02.png', '03.png', '02.png' ],
+  [ '01.png', '06.png', '05.png' ],
+  [ '02.png', '04.png', '02.png' ]
+]
+Expanded reels: [
+  [ '03.png', '00.png', '02.png' ],
+  [ '02.png', '00.png', '04.png' ],
+  [ '02.png', '03.png', '02.png' ],
+  [ '01.png', '06.png', '05.png' ],
+  [ '02.png', '04.png', '02.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '03.png', '00.png', '02.png' ],
+  [ '02.png', '00.png', '04.png' ],
+  [ '02.png', '03.png', '02.png' ],
+  [ '01.png', '06.png', '05.png' ],
+  [ '02.png', '04.png', '02.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '00.png', '00.png', '03.png', '06.png', '04.png' ]
+    Payline 1 - Symbol names: [ 'Cherry', 'Cherry', 'Plum', 'Watermelon', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Plum', 'Watermelon', 'Bell' ]
+    Testing Cherry: consecutive count = 2
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '03.png', '02.png', '02.png', '01.png', '02.png' ]
+    Payline 2 - Symbol names: [ 'Plum', 'Orange', 'Orange', 'Lemon', 'Orange' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Lemon' ]
+    Testing Plum: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '02.png', '04.png', '02.png', '05.png', '02.png' ]
+    Payline 3 - Symbol names: [ 'Orange', 'Bell', 'Orange', 'Grape', 'Orange' ]
+    Possible base symbols: [ 'Orange', 'Bell', 'Grape' ]
+    Testing Orange: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '03.png', '00.png', '02.png', '06.png', '02.png' ]
+    Payline 4 - Symbol names: [ 'Plum', 'Cherry', 'Orange', 'Watermelon', 'Orange' ]
+    Possible base symbols: [ 'Plum', 'Cherry', 'Orange', 'Watermelon' ]
+    Testing Plum: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '02.png', '00.png', '02.png', '06.png', '02.png' ]
+    Payline 5 - Symbol names: [ 'Orange', 'Cherry', 'Orange', 'Watermelon', 'Orange' ]
+    Possible base symbols: [ 'Orange', 'Cherry', 'Watermelon' ]
+    Testing Orange: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '03.png', '02.png', '03.png', '05.png', '02.png' ]
+    Payline 6 - Symbol names: [ 'Plum', 'Orange', 'Plum', 'Grape', 'Orange' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Grape' ]
+    Testing Plum: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '02.png', '04.png', '03.png', '01.png', '02.png' ]
+    Payline 7 - Symbol names: [ 'Orange', 'Bell', 'Plum', 'Lemon', 'Orange' ]
+    Possible base symbols: [ 'Orange', 'Bell', 'Plum', 'Lemon' ]
+    Testing Orange: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '00.png', '04.png', '02.png', '05.png', '04.png' ]
+    Payline 8 - Symbol names: [ 'Cherry', 'Bell', 'Orange', 'Grape', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Bell', 'Orange', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '00.png', '02.png', '02.png', '01.png', '04.png' ]
+    Payline 9 - Symbol names: [ 'Cherry', 'Orange', 'Orange', 'Lemon', 'Bell' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Lemon', 'Bell' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '03.png', '00.png', '03.png', '06.png', '02.png' ]
+    Payline 10 - Symbol names: [ 'Plum', 'Cherry', 'Plum', 'Watermelon', 'Orange' ]
+    Possible base symbols: [ 'Plum', 'Cherry', 'Watermelon', 'Orange' ]
+    Testing Plum: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 111ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 4977,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:34.660Z'
+}
+Bet deducted: 5.00 MKD, new balance: 4977.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '04.png', '05.png', '04.png' ],
+  [ '08.png', '05.png', '05.png' ],
+  [ '01.png', '05.png', '05.png' ],
+  [ '05.png', '08.png', '05.png' ],
+  [ '04.png', '04.png', '04.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '04.png', '05.png', '04.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '01.png', '05.png', '05.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '04.png', '04.png' ]
+]
+Reels that expanded: [ 1, 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '04.png', '05.png', '04.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '01.png', '05.png', '05.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '04.png', '04.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '05.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 1 - Symbol names: [ 'Grape', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Grape', 'Bell' ]
+    Testing Grape: consecutive count = 4
+    Grape forms valid win: 4x = 12 base * 5.00 MKD bet = 60.00 MKD
+    Testing Bell: consecutive count = 0
+    BEST WIN: 4x Grape = 60.00 MKD
+  WIN: 4x Grape = 60.00 MKD (base: 12, bet: 5.00 MKD)
+Payline 2: [ '04.png', '08.png', '01.png', '08.png', '04.png' ]
+    Payline 2 - Symbol names: [ 'Bell', 'Wild', 'Lemon', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Lemon' ]
+    Testing Bell: consecutive count = 2
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '04.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 3 - Symbol names: [ 'Bell', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '04.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 4 - Symbol names: [ 'Bell', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '04.png', '08.png', '01.png', '08.png', '04.png' ]
+    Payline 5 - Symbol names: [ 'Bell', 'Wild', 'Lemon', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Lemon' ]
+    Testing Bell: consecutive count = 2
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '04.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 6 - Symbol names: [ 'Bell', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '04.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 7 - Symbol names: [ 'Bell', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '05.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 8 - Symbol names: [ 'Grape', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Grape', 'Bell' ]
+    Testing Grape: consecutive count = 4
+    Grape forms valid win: 4x = 12 base * 5.00 MKD bet = 60.00 MKD
+    Testing Bell: consecutive count = 0
+    BEST WIN: 4x Grape = 60.00 MKD
+  WIN: 4x Grape = 60.00 MKD (base: 12, bet: 5.00 MKD)
+Payline 9: [ '05.png', '08.png', '01.png', '08.png', '04.png' ]
+    Payline 9 - Symbol names: [ 'Grape', 'Wild', 'Lemon', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Grape', 'Lemon', 'Bell' ]
+    Testing Grape: consecutive count = 2
+    Testing Lemon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '04.png', '08.png', '05.png', '08.png', '04.png' ]
+    Payline 10 - Symbol names: [ 'Bell', 'Wild', 'Grape', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 2
+Total win amount: 120
+=== END DEBUG ===
+Wallet updated: {
+  balance: 5097,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:34.662Z'
+}
+Win added: 120.00 MKD, new balance: 5097.00 MKD
+ POST /api/spin 200 in 111ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5092,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:36.591Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5092.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '06.png', '06.png', '04.png' ],
+  [ '06.png', '03.png', '02.png' ],
+  [ '04.png', '05.png', '00.png' ],
+  [ '02.png', '01.png', '06.png' ],
+  [ '00.png', '00.png', '03.png' ]
+]
+Expanded reels: [
+  [ '06.png', '06.png', '04.png' ],
+  [ '06.png', '03.png', '02.png' ],
+  [ '04.png', '05.png', '00.png' ],
+  [ '02.png', '01.png', '06.png' ],
+  [ '00.png', '00.png', '03.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '06.png', '06.png', '04.png' ],
+  [ '06.png', '03.png', '02.png' ],
+  [ '04.png', '05.png', '00.png' ],
+  [ '02.png', '01.png', '06.png' ],
+  [ '00.png', '00.png', '03.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '06.png', '03.png', '05.png', '01.png', '00.png' ]
+    Payline 1 - Symbol names: [ 'Watermelon', 'Plum', 'Grape', 'Lemon', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Grape', 'Lemon', 'Cherry' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '06.png', '06.png', '04.png', '02.png', '00.png' ]
+    Payline 2 - Symbol names: [ 'Watermelon', 'Watermelon', 'Bell', 'Orange', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Bell', 'Orange', 'Cherry' ]
+    Testing Watermelon: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '04.png', '02.png', '00.png', '06.png', '03.png' ]
+    Payline 3 - Symbol names: [ 'Bell', 'Orange', 'Cherry', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Cherry', 'Watermelon', 'Plum' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '06.png', '03.png', '00.png', '01.png', '00.png' ]
+    Payline 4 - Symbol names: [ 'Watermelon', 'Plum', 'Cherry', 'Lemon', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Cherry', 'Lemon' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '04.png', '03.png', '04.png', '01.png', '03.png' ]
+    Payline 5 - Symbol names: [ 'Bell', 'Plum', 'Bell', 'Lemon', 'Plum' ]
+    Possible base symbols: [ 'Bell', 'Plum', 'Lemon' ]
+    Testing Bell: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '06.png', '06.png', '05.png', '06.png', '03.png' ]
+    Payline 6 - Symbol names: [ 'Watermelon', 'Watermelon', 'Grape', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Watermelon', 'Grape', 'Plum' ]
+    Testing Watermelon: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '04.png', '02.png', '05.png', '02.png', '00.png' ]
+    Payline 7 - Symbol names: [ 'Bell', 'Orange', 'Grape', 'Orange', 'Cherry' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Grape', 'Cherry' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '06.png', '02.png', '00.png', '06.png', '00.png' ]
+    Payline 8 - Symbol names: [ 'Watermelon', 'Orange', 'Cherry', 'Watermelon', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Cherry' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '06.png', '06.png', '04.png', '02.png', '00.png' ]
+    Payline 9 - Symbol names: [ 'Watermelon', 'Watermelon', 'Bell', 'Orange', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Bell', 'Orange', 'Cherry' ]
+    Testing Watermelon: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '06.png', '03.png', '05.png', '01.png', '00.png' ]
+    Payline 10 - Symbol names: [ 'Watermelon', 'Plum', 'Grape', 'Lemon', 'Cherry' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Grape', 'Lemon', 'Cherry' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 115ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5087,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:58.445Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5087.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '01.png', '04.png', '06.png' ],
+  [ '04.png', '06.png', '08.png' ],
+  [ '05.png', '01.png', '08.png' ],
+  [ '07.png', '00.png', '03.png' ],
+  [ '06.png', '05.png', '04.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Wild found on reel 3, expanding entire reel
+Expanded reels: [
+  [ '01.png', '04.png', '06.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '07.png', '00.png', '03.png' ],
+  [ '06.png', '05.png', '04.png' ]
+]
+Reels that expanded: [ 1, 2 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '01.png', '04.png', '06.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '07.png', '00.png', '03.png' ],
+  [ '06.png', '05.png', '04.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '04.png', '08.png', '08.png', '00.png', '05.png' ]
+    Payline 1 - Symbol names: [ 'Bell', 'Wild', 'Wild', 'Cherry', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Cherry', 'Grape' ]
+    Testing Bell: consecutive count = 3
+    Bell forms valid win: 3x = 2 base * 5.00 MKD bet = 10.00 MKD
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    BEST WIN: 3x Bell = 10.00 MKD
+  WIN: 3x Bell = 10.00 MKD (base: 2, bet: 5.00 MKD)
+Payline 2: [ '01.png', '08.png', '08.png', '07.png', '06.png' ]
+    Payline 2 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Seven', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Seven', 'Watermelon' ]
+    Testing Lemon: consecutive count = 3
+    Lemon forms valid win: 3x = 1 base * 5.00 MKD bet = 5.00 MKD
+    Testing Seven: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    BEST WIN: 3x Lemon = 5.00 MKD
+  WIN: 3x Lemon = 5.00 MKD (base: 1, bet: 5.00 MKD)
+Payline 3: [ '06.png', '08.png', '08.png', '03.png', '04.png' ]
+    Payline 3 - Symbol names: [ 'Watermelon', 'Wild', 'Wild', 'Plum', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Bell' ]
+    Testing Watermelon: consecutive count = 3
+    Watermelon forms valid win: 3x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    BEST WIN: 3x Watermelon = 20.00 MKD
+  WIN: 3x Watermelon = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 4: [ '01.png', '08.png', '08.png', '00.png', '06.png' ]
+    Payline 4 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Cherry', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Cherry', 'Watermelon' ]
+    Testing Lemon: consecutive count = 3
+    Lemon forms valid win: 3x = 1 base * 5.00 MKD bet = 5.00 MKD
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    BEST WIN: 3x Lemon = 5.00 MKD
+  WIN: 3x Lemon = 5.00 MKD (base: 1, bet: 5.00 MKD)
+Payline 5: [ '06.png', '08.png', '08.png', '00.png', '04.png' ]
+    Payline 5 - Symbol names: [ 'Watermelon', 'Wild', 'Wild', 'Cherry', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Cherry', 'Bell' ]
+    Testing Watermelon: consecutive count = 3
+    Watermelon forms valid win: 3x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Cherry: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    BEST WIN: 3x Watermelon = 20.00 MKD
+  WIN: 3x Watermelon = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 6: [ '01.png', '08.png', '08.png', '03.png', '04.png' ]
+    Payline 6 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Plum', 'Bell' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Bell' ]
+    Testing Lemon: consecutive count = 3
+    Lemon forms valid win: 3x = 1 base * 5.00 MKD bet = 5.00 MKD
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    BEST WIN: 3x Lemon = 5.00 MKD
+  WIN: 3x Lemon = 5.00 MKD (base: 1, bet: 5.00 MKD)
+Payline 7: [ '06.png', '08.png', '08.png', '07.png', '06.png' ]
+    Payline 7 - Symbol names: [ 'Watermelon', 'Wild', 'Wild', 'Seven', 'Watermelon' ]
+    Possible base symbols: [ 'Watermelon', 'Seven' ]
+    Testing Watermelon: consecutive count = 3
+    Watermelon forms valid win: 3x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Seven: consecutive count = 0
+    BEST WIN: 3x Watermelon = 20.00 MKD
+  WIN: 3x Watermelon = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 8: [ '04.png', '08.png', '08.png', '03.png', '05.png' ]
+    Payline 8 - Symbol names: [ 'Bell', 'Wild', 'Wild', 'Plum', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Plum', 'Grape' ]
+    Testing Bell: consecutive count = 3
+    Bell forms valid win: 3x = 2 base * 5.00 MKD bet = 10.00 MKD
+    Testing Plum: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    BEST WIN: 3x Bell = 10.00 MKD
+  WIN: 3x Bell = 10.00 MKD (base: 2, bet: 5.00 MKD)
+Payline 9: [ '04.png', '08.png', '08.png', '07.png', '05.png' ]
+    Payline 9 - Symbol names: [ 'Bell', 'Wild', 'Wild', 'Seven', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Seven', 'Grape' ]
+    Testing Bell: consecutive count = 3
+    Bell forms valid win: 3x = 2 base * 5.00 MKD bet = 10.00 MKD
+    Testing Seven: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    BEST WIN: 3x Bell = 10.00 MKD
+  WIN: 3x Bell = 10.00 MKD (base: 2, bet: 5.00 MKD)
+Payline 10: [ '01.png', '08.png', '08.png', '00.png', '06.png' ]
+    Payline 10 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Cherry', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Cherry', 'Watermelon' ]
+    Testing Lemon: consecutive count = 3
+    Lemon forms valid win: 3x = 1 base * 5.00 MKD bet = 5.00 MKD
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    BEST WIN: 3x Lemon = 5.00 MKD
+  WIN: 3x Lemon = 5.00 MKD (base: 1, bet: 5.00 MKD)
+Total wins found: 10
+Total win amount: 110
+=== END DEBUG ===
+Wallet updated: {
+  balance: 5197,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:42:58.447Z'
+}
+Win added: 110.00 MKD, new balance: 5197.00 MKD
+ POST /api/spin 200 in 118ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5192,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:43:02.495Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5192.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '01.png', '04.png', '05.png' ],
+  [ '03.png', '03.png', '03.png' ],
+  [ '01.png', '04.png', '06.png' ],
+  [ '08.png', '03.png', '03.png' ],
+  [ '06.png', '00.png', '06.png' ]
+]
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '01.png', '04.png', '05.png' ],
+  [ '03.png', '03.png', '03.png' ],
+  [ '01.png', '04.png', '06.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '06.png', '00.png', '06.png' ]
+]
+Reels that expanded: [ 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '01.png', '04.png', '05.png' ],
+  [ '03.png', '03.png', '03.png' ],
+  [ '01.png', '04.png', '06.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '06.png', '00.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '04.png', '03.png', '04.png', '08.png', '00.png' ]
+    Payline 1 - Symbol names: [ 'Bell', 'Plum', 'Bell', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Bell', 'Plum', 'Cherry' ]
+    Testing Bell: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '01.png', '03.png', '01.png', '08.png', '06.png' ]
+    Payline 2 - Symbol names: [ 'Lemon', 'Plum', 'Lemon', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Watermelon' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '05.png', '03.png', '06.png', '08.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Grape', 'Plum', 'Watermelon', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Plum', 'Watermelon' ]
+    Testing Grape: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '01.png', '03.png', '06.png', '08.png', '06.png' ]
+    Payline 4 - Symbol names: [ 'Lemon', 'Plum', 'Watermelon', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Watermelon' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '05.png', '03.png', '01.png', '08.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Grape', 'Plum', 'Lemon', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Plum', 'Lemon', 'Watermelon' ]
+    Testing Grape: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '01.png', '03.png', '04.png', '08.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Lemon', 'Plum', 'Bell', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Bell', 'Watermelon' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '05.png', '03.png', '04.png', '08.png', '06.png' ]
+    Payline 7 - Symbol names: [ 'Grape', 'Plum', 'Bell', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Plum', 'Bell', 'Watermelon' ]
+    Testing Grape: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '04.png', '03.png', '06.png', '08.png', '00.png' ]
+    Payline 8 - Symbol names: [ 'Bell', 'Plum', 'Watermelon', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Bell', 'Plum', 'Watermelon', 'Cherry' ]
+    Testing Bell: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '04.png', '03.png', '01.png', '08.png', '00.png' ]
+    Payline 9 - Symbol names: [ 'Bell', 'Plum', 'Lemon', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Bell', 'Plum', 'Lemon', 'Cherry' ]
+    Testing Bell: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '01.png', '03.png', '04.png', '08.png', '06.png' ]
+    Payline 10 - Symbol names: [ 'Lemon', 'Plum', 'Bell', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Bell', 'Watermelon' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 113ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5187,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:44:35.843Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5187.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '04.png', '02.png', '01.png' ],
+  [ '01.png', '02.png', '04.png' ],
+  [ '06.png', '05.png', '05.png' ],
+  [ '00.png', '05.png', '04.png' ],
+  [ '05.png', '02.png', '05.png' ]
+]
+Expanded reels: [
+  [ '04.png', '02.png', '01.png' ],
+  [ '01.png', '02.png', '04.png' ],
+  [ '06.png', '05.png', '05.png' ],
+  [ '00.png', '05.png', '04.png' ],
+  [ '05.png', '02.png', '05.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '04.png', '02.png', '01.png' ],
+  [ '01.png', '02.png', '04.png' ],
+  [ '06.png', '05.png', '05.png' ],
+  [ '00.png', '05.png', '04.png' ],
+  [ '05.png', '02.png', '05.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '02.png', '02.png', '05.png', '05.png', '02.png' ]
+    Payline 1 - Symbol names: [ 'Orange', 'Orange', 'Grape', 'Grape', 'Orange' ]
+    Possible base symbols: [ 'Orange', 'Grape' ]
+    Testing Orange: consecutive count = 2
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '04.png', '01.png', '06.png', '00.png', '05.png' ]
+    Payline 2 - Symbol names: [ 'Bell', 'Lemon', 'Watermelon', 'Cherry', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Lemon', 'Watermelon', 'Cherry', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '01.png', '04.png', '05.png', '04.png', '05.png' ]
+    Payline 3 - Symbol names: [ 'Lemon', 'Bell', 'Grape', 'Bell', 'Grape' ]
+    Possible base symbols: [ 'Lemon', 'Bell', 'Grape' ]
+    Testing Lemon: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '04.png', '02.png', '05.png', '05.png', '05.png' ]
+    Payline 4 - Symbol names: [ 'Bell', 'Orange', 'Grape', 'Grape', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '01.png', '02.png', '06.png', '05.png', '05.png' ]
+    Payline 5 - Symbol names: [ 'Lemon', 'Orange', 'Watermelon', 'Grape', 'Grape' ]
+    Possible base symbols: [ 'Lemon', 'Orange', 'Watermelon', 'Grape' ]
+    Testing Lemon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '04.png', '01.png', '05.png', '04.png', '05.png' ]
+    Payline 6 - Symbol names: [ 'Bell', 'Lemon', 'Grape', 'Bell', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Lemon', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '01.png', '04.png', '05.png', '00.png', '05.png' ]
+    Payline 7 - Symbol names: [ 'Lemon', 'Bell', 'Grape', 'Cherry', 'Grape' ]
+    Possible base symbols: [ 'Lemon', 'Bell', 'Grape', 'Cherry' ]
+    Testing Lemon: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '02.png', '04.png', '05.png', '04.png', '02.png' ]
+    Payline 8 - Symbol names: [ 'Orange', 'Bell', 'Grape', 'Bell', 'Orange' ]
+    Possible base symbols: [ 'Orange', 'Bell', 'Grape' ]
+    Testing Orange: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '02.png', '01.png', '06.png', '00.png', '02.png' ]
+    Payline 9 - Symbol names: [ 'Orange', 'Lemon', 'Watermelon', 'Cherry', 'Orange' ]
+    Possible base symbols: [ 'Orange', 'Lemon', 'Watermelon', 'Cherry' ]
+    Testing Orange: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '04.png', '02.png', '05.png', '05.png', '05.png' ]
+    Payline 10 - Symbol names: [ 'Bell', 'Orange', 'Grape', 'Grape', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 113ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5182,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:44:38.058Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5182.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '01.png', '06.png', '06.png' ],
+  [ '03.png', '03.png', '03.png' ],
+  [ '06.png', '08.png', '06.png' ],
+  [ '04.png', '01.png', '04.png' ],
+  [ '07.png', '07.png', '07.png' ]
+]
+Wild found on reel 3, expanding entire reel
+Expanded reels: [
+  [ '01.png', '06.png', '06.png' ],
+  [ '03.png', '03.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '01.png', '04.png' ],
+  [ '07.png', '07.png', '07.png' ]
+]
+Reels that expanded: [ 2 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '01.png', '06.png', '06.png' ],
+  [ '03.png', '03.png', '03.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '01.png', '04.png' ],
+  [ '07.png', '07.png', '07.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '06.png', '03.png', '08.png', '01.png', '07.png' ]
+    Payline 1 - Symbol names: [ 'Watermelon', 'Plum', 'Wild', 'Lemon', 'Seven' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Lemon', 'Seven' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '01.png', '03.png', '08.png', '04.png', '07.png' ]
+    Payline 2 - Symbol names: [ 'Lemon', 'Plum', 'Wild', 'Bell', 'Seven' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Bell', 'Seven' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '06.png', '03.png', '08.png', '04.png', '07.png' ]
+    Payline 3 - Symbol names: [ 'Watermelon', 'Plum', 'Wild', 'Bell', 'Seven' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Bell', 'Seven' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '01.png', '03.png', '08.png', '01.png', '07.png' ]
+    Payline 4 - Symbol names: [ 'Lemon', 'Plum', 'Wild', 'Lemon', 'Seven' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Seven' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '06.png', '03.png', '08.png', '01.png', '07.png' ]
+    Payline 5 - Symbol names: [ 'Watermelon', 'Plum', 'Wild', 'Lemon', 'Seven' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Lemon', 'Seven' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '01.png', '03.png', '08.png', '04.png', '07.png' ]
+    Payline 6 - Symbol names: [ 'Lemon', 'Plum', 'Wild', 'Bell', 'Seven' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Bell', 'Seven' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '06.png', '03.png', '08.png', '04.png', '07.png' ]
+    Payline 7 - Symbol names: [ 'Watermelon', 'Plum', 'Wild', 'Bell', 'Seven' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Bell', 'Seven' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '06.png', '03.png', '08.png', '04.png', '07.png' ]
+    Payline 8 - Symbol names: [ 'Watermelon', 'Plum', 'Wild', 'Bell', 'Seven' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Bell', 'Seven' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '06.png', '03.png', '08.png', '04.png', '07.png' ]
+    Payline 9 - Symbol names: [ 'Watermelon', 'Plum', 'Wild', 'Bell', 'Seven' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Bell', 'Seven' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '01.png', '03.png', '08.png', '01.png', '07.png' ]
+    Payline 10 - Symbol names: [ 'Lemon', 'Plum', 'Wild', 'Lemon', 'Seven' ]
+    Possible base symbols: [ 'Lemon', 'Plum', 'Seven' ]
+    Testing Lemon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Seven: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 109ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5177,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:27.583Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5177.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '05.png', '04.png', '04.png' ],
+  [ '04.png', '04.png', '04.png' ],
+  [ '08.png', '05.png', '04.png' ],
+  [ '01.png', '06.png', '08.png' ],
+  [ '04.png', '01.png', '05.png' ]
+]
+Wild found on reel 3, expanding entire reel
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '05.png', '04.png', '04.png' ],
+  [ '04.png', '04.png', '04.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '01.png', '05.png' ]
+]
+Reels that expanded: [ 2, 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '05.png', '04.png', '04.png' ],
+  [ '04.png', '04.png', '04.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '04.png', '01.png', '05.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '04.png', '04.png', '08.png', '08.png', '01.png' ]
+    Payline 1 - Symbol names: [ 'Bell', 'Bell', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Bell', 'Lemon' ]
+    Testing Bell: consecutive count = 4
+    Bell forms valid win: 4x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Bell = 20.00 MKD
+  WIN: 4x Bell = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 2: [ '05.png', '04.png', '08.png', '08.png', '04.png' ]
+    Payline 2 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Grape', 'Bell' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '04.png', '04.png', '08.png', '08.png', '05.png' ]
+    Payline 3 - Symbol names: [ 'Bell', 'Bell', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 4
+    Bell forms valid win: 4x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Bell = 20.00 MKD
+  WIN: 4x Bell = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 4: [ '05.png', '04.png', '08.png', '08.png', '04.png' ]
+    Payline 4 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Grape', 'Bell' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '04.png', '04.png', '08.png', '08.png', '05.png' ]
+    Payline 5 - Symbol names: [ 'Bell', 'Bell', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Grape' ]
+    Testing Bell: consecutive count = 4
+    Bell forms valid win: 4x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Bell = 20.00 MKD
+  WIN: 4x Bell = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 6: [ '05.png', '04.png', '08.png', '08.png', '05.png' ]
+    Payline 6 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Grape', 'Bell' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '04.png', '04.png', '08.png', '08.png', '04.png' ]
+    Payline 7 - Symbol names: [ 'Bell', 'Bell', 'Wild', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Bell' ]
+    Testing Bell: consecutive count = 5
+    Bell forms valid win: 5x = 20 base * 5.00 MKD bet = 100.00 MKD
+    BEST WIN: 5x Bell = 100.00 MKD
+  WIN: 5x Bell = 100.00 MKD (base: 20, bet: 5.00 MKD)
+Payline 8: [ '04.png', '04.png', '08.png', '08.png', '01.png' ]
+    Payline 8 - Symbol names: [ 'Bell', 'Bell', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Bell', 'Lemon' ]
+    Testing Bell: consecutive count = 4
+    Bell forms valid win: 4x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Bell = 20.00 MKD
+  WIN: 4x Bell = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 9: [ '04.png', '04.png', '08.png', '08.png', '01.png' ]
+    Payline 9 - Symbol names: [ 'Bell', 'Bell', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Bell', 'Lemon' ]
+    Testing Bell: consecutive count = 4
+    Bell forms valid win: 4x = 4 base * 5.00 MKD bet = 20.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Bell = 20.00 MKD
+  WIN: 4x Bell = 20.00 MKD (base: 4, bet: 5.00 MKD)
+Payline 10: [ '05.png', '04.png', '08.png', '08.png', '04.png' ]
+    Payline 10 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Wild', 'Bell' ]
+    Possible base symbols: [ 'Grape', 'Bell' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 6
+Total win amount: 200
+=== END DEBUG ===
+Wallet updated: {
+  balance: 5377,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:27.584Z'
+}
+Win added: 200.00 MKD, new balance: 5377.00 MKD
+ POST /api/spin 200 in 114ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5372,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:28.531Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5372.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '06.png', '00.png', '02.png' ],
+  [ '02.png', '00.png', '06.png' ],
+  [ '02.png', '04.png', '00.png' ],
+  [ '02.png', '02.png', '05.png' ],
+  [ '04.png', '05.png', '06.png' ]
+]
+Expanded reels: [
+  [ '06.png', '00.png', '02.png' ],
+  [ '02.png', '00.png', '06.png' ],
+  [ '02.png', '04.png', '00.png' ],
+  [ '02.png', '02.png', '05.png' ],
+  [ '04.png', '05.png', '06.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '06.png', '00.png', '02.png' ],
+  [ '02.png', '00.png', '06.png' ],
+  [ '02.png', '04.png', '00.png' ],
+  [ '02.png', '02.png', '05.png' ],
+  [ '04.png', '05.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '00.png', '00.png', '04.png', '02.png', '05.png' ]
+    Payline 1 - Symbol names: [ 'Cherry', 'Cherry', 'Bell', 'Orange', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Bell', 'Orange', 'Grape' ]
+    Testing Cherry: consecutive count = 2
+    Testing Bell: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '06.png', '02.png', '02.png', '02.png', '04.png' ]
+    Payline 2 - Symbol names: [ 'Watermelon', 'Orange', 'Orange', 'Orange', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '02.png', '06.png', '00.png', '05.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Orange', 'Watermelon', 'Cherry', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Orange', 'Watermelon', 'Cherry', 'Grape' ]
+    Testing Orange: consecutive count = 1
+    Testing Watermelon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '06.png', '00.png', '00.png', '02.png', '04.png' ]
+    Payline 4 - Symbol names: [ 'Watermelon', 'Cherry', 'Cherry', 'Orange', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Cherry', 'Orange', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '02.png', '00.png', '02.png', '02.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Orange', 'Cherry', 'Orange', 'Orange', 'Watermelon' ]
+    Possible base symbols: [ 'Orange', 'Cherry', 'Watermelon' ]
+    Testing Orange: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '06.png', '02.png', '04.png', '05.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Watermelon', 'Orange', 'Bell', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Bell', 'Grape' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '02.png', '06.png', '04.png', '02.png', '04.png' ]
+    Payline 7 - Symbol names: [ 'Orange', 'Watermelon', 'Bell', 'Orange', 'Bell' ]
+    Possible base symbols: [ 'Orange', 'Watermelon', 'Bell' ]
+    Testing Orange: consecutive count = 1
+    Testing Watermelon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '00.png', '06.png', '00.png', '05.png', '05.png' ]
+    Payline 8 - Symbol names: [ 'Cherry', 'Watermelon', 'Cherry', 'Grape', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Watermelon', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '00.png', '02.png', '02.png', '02.png', '05.png' ]
+    Payline 9 - Symbol names: [ 'Cherry', 'Orange', 'Orange', 'Orange', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Orange', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '06.png', '00.png', '04.png', '02.png', '04.png' ]
+    Payline 10 - Symbol names: [ 'Watermelon', 'Cherry', 'Bell', 'Orange', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Cherry', 'Bell', 'Orange' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 109ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5367,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:32.547Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5367.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '02.png', '06.png', '03.png' ],
+  [ '02.png', '05.png', '03.png' ],
+  [ '01.png', '06.png', '06.png' ],
+  [ '05.png', '04.png', '06.png' ],
+  [ '06.png', '04.png', '05.png' ]
+]
+Expanded reels: [
+  [ '02.png', '06.png', '03.png' ],
+  [ '02.png', '05.png', '03.png' ],
+  [ '01.png', '06.png', '06.png' ],
+  [ '05.png', '04.png', '06.png' ],
+  [ '06.png', '04.png', '05.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '02.png', '06.png', '03.png' ],
+  [ '02.png', '05.png', '03.png' ],
+  [ '01.png', '06.png', '06.png' ],
+  [ '05.png', '04.png', '06.png' ],
+  [ '06.png', '04.png', '05.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '06.png', '05.png', '06.png', '04.png', '04.png' ]
+    Payline 1 - Symbol names: [ 'Watermelon', 'Grape', 'Watermelon', 'Bell', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Grape', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '02.png', '02.png', '01.png', '05.png', '06.png' ]
+    Payline 2 - Symbol names: [ 'Orange', 'Orange', 'Lemon', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Orange', 'Lemon', 'Grape', 'Watermelon' ]
+    Testing Orange: consecutive count = 2
+    Testing Lemon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '03.png', '03.png', '06.png', '06.png', '05.png' ]
+    Payline 3 - Symbol names: [ 'Plum', 'Plum', 'Watermelon', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Plum', 'Watermelon', 'Grape' ]
+    Testing Plum: consecutive count = 2
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '02.png', '05.png', '06.png', '04.png', '06.png' ]
+    Payline 4 - Symbol names: [ 'Orange', 'Grape', 'Watermelon', 'Bell', 'Watermelon' ]
+    Possible base symbols: [ 'Orange', 'Grape', 'Watermelon', 'Bell' ]
+    Testing Orange: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '03.png', '05.png', '01.png', '04.png', '05.png' ]
+    Payline 5 - Symbol names: [ 'Plum', 'Grape', 'Lemon', 'Bell', 'Grape' ]
+    Possible base symbols: [ 'Plum', 'Grape', 'Lemon', 'Bell' ]
+    Testing Plum: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '02.png', '02.png', '06.png', '06.png', '05.png' ]
+    Payline 6 - Symbol names: [ 'Orange', 'Orange', 'Watermelon', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Orange', 'Watermelon', 'Grape' ]
+    Testing Orange: consecutive count = 2
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '03.png', '03.png', '06.png', '05.png', '06.png' ]
+    Payline 7 - Symbol names: [ 'Plum', 'Plum', 'Watermelon', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Watermelon', 'Grape' ]
+    Testing Plum: consecutive count = 2
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '06.png', '03.png', '06.png', '06.png', '04.png' ]
+    Payline 8 - Symbol names: [ 'Watermelon', 'Plum', 'Watermelon', 'Watermelon', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Plum', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Plum: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '06.png', '02.png', '01.png', '05.png', '04.png' ]
+    Payline 9 - Symbol names: [ 'Watermelon', 'Orange', 'Lemon', 'Grape', 'Bell' ]
+    Possible base symbols: [ 'Watermelon', 'Orange', 'Lemon', 'Grape', 'Bell' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '02.png', '05.png', '06.png', '04.png', '06.png' ]
+    Payline 10 - Symbol names: [ 'Orange', 'Grape', 'Watermelon', 'Bell', 'Watermelon' ]
+    Possible base symbols: [ 'Orange', 'Grape', 'Watermelon', 'Bell' ]
+    Testing Orange: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Bell: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 109ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5362,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:35.107Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5362.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '04.png', '06.png', '03.png' ],
+  [ '01.png', '02.png', '05.png' ],
+  [ '00.png', '01.png', '08.png' ],
+  [ '02.png', '02.png', '03.png' ],
+  [ '05.png', '02.png', '06.png' ]
+]
+Wild found on reel 3, expanding entire reel
+Expanded reels: [
+  [ '04.png', '06.png', '03.png' ],
+  [ '01.png', '02.png', '05.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '02.png', '02.png', '03.png' ],
+  [ '05.png', '02.png', '06.png' ]
+]
+Reels that expanded: [ 2 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '04.png', '06.png', '03.png' ],
+  [ '01.png', '02.png', '05.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '02.png', '02.png', '03.png' ],
+  [ '05.png', '02.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '06.png', '02.png', '08.png', '02.png', '02.png' ]
+    Payline 1 - Symbol names: [ 'Watermelon', 'Orange', 'Wild', 'Orange', 'Orange' ]
+    Possible base symbols: [ 'Watermelon', 'Orange' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '04.png', '01.png', '08.png', '02.png', '05.png' ]
+    Payline 2 - Symbol names: [ 'Bell', 'Lemon', 'Wild', 'Orange', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Lemon', 'Orange', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '03.png', '05.png', '08.png', '03.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Plum', 'Grape', 'Wild', 'Plum', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Grape', 'Watermelon' ]
+    Testing Plum: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '04.png', '02.png', '08.png', '02.png', '05.png' ]
+    Payline 4 - Symbol names: [ 'Bell', 'Orange', 'Wild', 'Orange', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '03.png', '02.png', '08.png', '02.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Plum', 'Orange', 'Wild', 'Orange', 'Watermelon' ]
+    Possible base symbols: [ 'Plum', 'Orange', 'Watermelon' ]
+    Testing Plum: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '04.png', '01.png', '08.png', '03.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Bell', 'Lemon', 'Wild', 'Plum', 'Watermelon' ]
+    Possible base symbols: [ 'Bell', 'Lemon', 'Plum', 'Watermelon' ]
+    Testing Bell: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '03.png', '05.png', '08.png', '02.png', '05.png' ]
+    Payline 7 - Symbol names: [ 'Plum', 'Grape', 'Wild', 'Orange', 'Grape' ]
+    Possible base symbols: [ 'Plum', 'Grape', 'Orange' ]
+    Testing Plum: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '06.png', '05.png', '08.png', '03.png', '02.png' ]
+    Payline 8 - Symbol names: [ 'Watermelon', 'Grape', 'Wild', 'Plum', 'Orange' ]
+    Possible base symbols: [ 'Watermelon', 'Grape', 'Plum', 'Orange' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Grape: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '06.png', '01.png', '08.png', '02.png', '02.png' ]
+    Payline 9 - Symbol names: [ 'Watermelon', 'Lemon', 'Wild', 'Orange', 'Orange' ]
+    Possible base symbols: [ 'Watermelon', 'Lemon', 'Orange' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '04.png', '02.png', '08.png', '02.png', '05.png' ]
+    Payline 10 - Symbol names: [ 'Bell', 'Orange', 'Wild', 'Orange', 'Grape' ]
+    Possible base symbols: [ 'Bell', 'Orange', 'Grape' ]
+    Testing Bell: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 109ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5357,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:36.587Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5357.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '07.png', '07.png', '07.png' ],
+  [ '00.png', '04.png', '02.png' ],
+  [ '05.png', '05.png', '05.png' ],
+  [ '00.png', '06.png', '06.png' ],
+  [ '03.png', '00.png', '05.png' ]
+]
+Expanded reels: [
+  [ '07.png', '07.png', '07.png' ],
+  [ '00.png', '04.png', '02.png' ],
+  [ '05.png', '05.png', '05.png' ],
+  [ '00.png', '06.png', '06.png' ],
+  [ '03.png', '00.png', '05.png' ]
+]
+Reels that expanded: []
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '07.png', '07.png', '07.png' ],
+  [ '00.png', '04.png', '02.png' ],
+  [ '05.png', '05.png', '05.png' ],
+  [ '00.png', '06.png', '06.png' ],
+  [ '03.png', '00.png', '05.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '07.png', '04.png', '05.png', '06.png', '00.png' ]
+    Payline 1 - Symbol names: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Cherry' ]
+    Possible base symbols: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Cherry' ]
+    Testing Seven: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '07.png', '00.png', '05.png', '00.png', '03.png' ]
+    Payline 2 - Symbol names: [ 'Seven', 'Cherry', 'Grape', 'Cherry', 'Plum' ]
+    Possible base symbols: [ 'Seven', 'Cherry', 'Grape', 'Plum' ]
+    Testing Seven: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '07.png', '02.png', '05.png', '06.png', '05.png' ]
+    Payline 3 - Symbol names: [ 'Seven', 'Orange', 'Grape', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Seven', 'Orange', 'Grape', 'Watermelon' ]
+    Testing Seven: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '07.png', '04.png', '05.png', '06.png', '03.png' ]
+    Payline 4 - Symbol names: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Plum' ]
+    Testing Seven: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '07.png', '04.png', '05.png', '06.png', '05.png' ]
+    Payline 5 - Symbol names: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Seven', 'Bell', 'Grape', 'Watermelon' ]
+    Testing Seven: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '07.png', '00.png', '05.png', '06.png', '05.png' ]
+    Payline 6 - Symbol names: [ 'Seven', 'Cherry', 'Grape', 'Watermelon', 'Grape' ]
+    Possible base symbols: [ 'Seven', 'Cherry', 'Grape', 'Watermelon' ]
+    Testing Seven: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '07.png', '02.png', '05.png', '00.png', '03.png' ]
+    Payline 7 - Symbol names: [ 'Seven', 'Orange', 'Grape', 'Cherry', 'Plum' ]
+    Possible base symbols: [ 'Seven', 'Orange', 'Grape', 'Cherry', 'Plum' ]
+    Testing Seven: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '07.png', '02.png', '05.png', '06.png', '00.png' ]
+    Payline 8 - Symbol names: [ 'Seven', 'Orange', 'Grape', 'Watermelon', 'Cherry' ]
+    Possible base symbols: [ 'Seven', 'Orange', 'Grape', 'Watermelon', 'Cherry' ]
+    Testing Seven: consecutive count = 1
+    Testing Orange: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Cherry: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '07.png', '00.png', '05.png', '00.png', '00.png' ]
+    Payline 9 - Symbol names: [ 'Seven', 'Cherry', 'Grape', 'Cherry', 'Cherry' ]
+    Possible base symbols: [ 'Seven', 'Cherry', 'Grape' ]
+    Testing Seven: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '07.png', '04.png', '05.png', '06.png', '03.png' ]
+    Payline 10 - Symbol names: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Seven', 'Bell', 'Grape', 'Watermelon', 'Plum' ]
+    Testing Seven: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 110ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5352,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:37.619Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5352.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '05.png', '05.png', '05.png' ],
+  [ '04.png', '00.png', '04.png' ],
+  [ '03.png', '03.png', '08.png' ],
+  [ '03.png', '06.png', '05.png' ],
+  [ '03.png', '01.png', '06.png' ]
+]
+Wild found on reel 3, expanding entire reel
+Expanded reels: [
+  [ '05.png', '05.png', '05.png' ],
+  [ '04.png', '00.png', '04.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '03.png', '06.png', '05.png' ],
+  [ '03.png', '01.png', '06.png' ]
+]
+Reels that expanded: [ 2 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '05.png', '05.png', '05.png' ],
+  [ '04.png', '00.png', '04.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '03.png', '06.png', '05.png' ],
+  [ '03.png', '01.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '05.png', '00.png', '08.png', '06.png', '01.png' ]
+    Payline 1 - Symbol names: [ 'Grape', 'Cherry', 'Wild', 'Watermelon', 'Lemon' ]
+    Possible base symbols: [ 'Grape', 'Cherry', 'Watermelon', 'Lemon' ]
+    Testing Grape: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '05.png', '04.png', '08.png', '03.png', '03.png' ]
+    Payline 2 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Plum', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Plum' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '05.png', '04.png', '08.png', '05.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Watermelon' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '05.png', '00.png', '08.png', '06.png', '03.png' ]
+    Payline 4 - Symbol names: [ 'Grape', 'Cherry', 'Wild', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Cherry', 'Watermelon', 'Plum' ]
+    Testing Grape: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '05.png', '00.png', '08.png', '06.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Grape', 'Cherry', 'Wild', 'Watermelon', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Cherry', 'Watermelon' ]
+    Testing Grape: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '05.png', '04.png', '08.png', '05.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Grape', 'Watermelon' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Watermelon' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '05.png', '04.png', '08.png', '03.png', '03.png' ]
+    Payline 7 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Plum', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Plum' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '05.png', '04.png', '08.png', '05.png', '01.png' ]
+    Payline 8 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Grape', 'Lemon' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Lemon' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '05.png', '04.png', '08.png', '03.png', '01.png' ]
+    Payline 9 - Symbol names: [ 'Grape', 'Bell', 'Wild', 'Plum', 'Lemon' ]
+    Possible base symbols: [ 'Grape', 'Bell', 'Plum', 'Lemon' ]
+    Testing Grape: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '05.png', '00.png', '08.png', '06.png', '03.png' ]
+    Payline 10 - Symbol names: [ 'Grape', 'Cherry', 'Wild', 'Watermelon', 'Plum' ]
+    Possible base symbols: [ 'Grape', 'Cherry', 'Watermelon', 'Plum' ]
+    Testing Grape: consecutive count = 1
+    Testing Cherry: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    Testing Plum: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 109ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 5347,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:40.182Z'
+}
+Bet deducted: 5.00 MKD, new balance: 5347.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '07.png', '07.png', '00.png' ],
+  [ '05.png', '08.png', '06.png' ],
+  [ '08.png', '06.png', '05.png' ],
+  [ '06.png', '08.png', '05.png' ],
+  [ '00.png', '01.png', '05.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Wild found on reel 3, expanding entire reel
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '07.png', '07.png', '00.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '00.png', '01.png', '05.png' ]
+]
+Reels that expanded: [ 1, 2, 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '07.png', '07.png', '00.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '00.png', '01.png', '05.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '07.png', '08.png', '08.png', '08.png', '01.png' ]
+    Payline 1 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Seven', 'Lemon' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Payline 2: [ '07.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 2 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Seven', 'Cherry' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Cherry: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Payline 3: [ '00.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 3 - Symbol names: [ 'Cherry', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Grape' ]
+    Testing Cherry: consecutive count = 4
+    Cherry forms valid win: 4x = 3 base * 5.00 MKD bet = 15.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Cherry = 15.00 MKD
+  WIN: 4x Cherry = 15.00 MKD (base: 3, bet: 5.00 MKD)
+Payline 4: [ '07.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 4 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Seven', 'Cherry' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Cherry: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Payline 5: [ '00.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 5 - Symbol names: [ 'Cherry', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Cherry', 'Grape' ]
+    Testing Cherry: consecutive count = 4
+    Cherry forms valid win: 4x = 3 base * 5.00 MKD bet = 15.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Cherry = 15.00 MKD
+  WIN: 4x Cherry = 15.00 MKD (base: 3, bet: 5.00 MKD)
+Payline 6: [ '07.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 6 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Seven', 'Grape' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Payline 7: [ '00.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 7 - Symbol names: [ 'Cherry', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry' ]
+    Testing Cherry: consecutive count = 5
+    Cherry forms valid win: 5x = 15 base * 5.00 MKD bet = 75.00 MKD
+    BEST WIN: 5x Cherry = 75.00 MKD
+  WIN: 5x Cherry = 75.00 MKD (base: 15, bet: 5.00 MKD)
+Payline 8: [ '07.png', '08.png', '08.png', '08.png', '01.png' ]
+    Payline 8 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Seven', 'Lemon' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Payline 9: [ '07.png', '08.png', '08.png', '08.png', '01.png' ]
+    Payline 9 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Seven', 'Lemon' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Payline 10: [ '07.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 10 - Symbol names: [ 'Seven', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Seven', 'Cherry' ]
+    Testing Seven: consecutive count = 4
+    Seven forms valid win: 4x = 25 base * 5.00 MKD bet = 125.00 MKD
+    Testing Cherry: consecutive count = 0
+    BEST WIN: 4x Seven = 125.00 MKD
+  WIN: 4x Seven = 125.00 MKD (base: 25, bet: 5.00 MKD)
+Total wins found: 10
+Total win amount: 980
+=== END DEBUG ===
+Wallet updated: {
+  balance: 6327,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:40.184Z'
+}
+Win added: 980.00 MKD, new balance: 6327.00 MKD
+ POST /api/spin 200 in 110ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 6322,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:45.989Z'
+}
+Bet deducted: 5.00 MKD, new balance: 6322.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '01.png', '00.png', '05.png' ],
+  [ '08.png', '03.png', '05.png' ],
+  [ '08.png', '00.png', '00.png' ],
+  [ '01.png', '08.png', '01.png' ],
+  [ '05.png', '00.png', '01.png' ]
+]
+Wild found on reel 2, expanding entire reel
+Wild found on reel 3, expanding entire reel
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '01.png', '00.png', '05.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '05.png', '00.png', '01.png' ]
+]
+Reels that expanded: [ 1, 2, 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '01.png', '00.png', '05.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '05.png', '00.png', '01.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '00.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 1 - Symbol names: [ 'Cherry', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry' ]
+    Testing Cherry: consecutive count = 5
+    Cherry forms valid win: 5x = 15 base * 5.00 MKD bet = 75.00 MKD
+    BEST WIN: 5x Cherry = 75.00 MKD
+  WIN: 5x Cherry = 75.00 MKD (base: 15, bet: 5.00 MKD)
+Payline 2: [ '01.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 2 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Lemon', 'Grape' ]
+    Testing Lemon: consecutive count = 4
+    Lemon forms valid win: 4x = 3 base * 5.00 MKD bet = 15.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Lemon = 15.00 MKD
+  WIN: 4x Lemon = 15.00 MKD (base: 3, bet: 5.00 MKD)
+Payline 3: [ '05.png', '08.png', '08.png', '08.png', '01.png' ]
+    Payline 3 - Symbol names: [ 'Grape', 'Wild', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Grape', 'Lemon' ]
+    Testing Grape: consecutive count = 4
+    Grape forms valid win: 4x = 12 base * 5.00 MKD bet = 60.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Grape = 60.00 MKD
+  WIN: 4x Grape = 60.00 MKD (base: 12, bet: 5.00 MKD)
+Payline 4: [ '01.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 4 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Lemon', 'Grape' ]
+    Testing Lemon: consecutive count = 4
+    Lemon forms valid win: 4x = 3 base * 5.00 MKD bet = 15.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Lemon = 15.00 MKD
+  WIN: 4x Lemon = 15.00 MKD (base: 3, bet: 5.00 MKD)
+Payline 5: [ '05.png', '08.png', '08.png', '08.png', '01.png' ]
+    Payline 5 - Symbol names: [ 'Grape', 'Wild', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Grape', 'Lemon' ]
+    Testing Grape: consecutive count = 4
+    Grape forms valid win: 4x = 12 base * 5.00 MKD bet = 60.00 MKD
+    Testing Lemon: consecutive count = 0
+    BEST WIN: 4x Grape = 60.00 MKD
+  WIN: 4x Grape = 60.00 MKD (base: 12, bet: 5.00 MKD)
+Payline 6: [ '01.png', '08.png', '08.png', '08.png', '01.png' ]
+    Payline 6 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Wild', 'Lemon' ]
+    Possible base symbols: [ 'Lemon' ]
+    Testing Lemon: consecutive count = 5
+    Lemon forms valid win: 5x = 15 base * 5.00 MKD bet = 75.00 MKD
+    BEST WIN: 5x Lemon = 75.00 MKD
+  WIN: 5x Lemon = 75.00 MKD (base: 15, bet: 5.00 MKD)
+Payline 7: [ '05.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 7 - Symbol names: [ 'Grape', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Grape' ]
+    Testing Grape: consecutive count = 5
+    Grape forms valid win: 5x = 70 base * 5.00 MKD bet = 350.00 MKD
+    BEST WIN: 5x Grape = 350.00 MKD
+  WIN: 5x Grape = 350.00 MKD (base: 70, bet: 5.00 MKD)
+Payline 8: [ '00.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 8 - Symbol names: [ 'Cherry', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry' ]
+    Testing Cherry: consecutive count = 5
+    Cherry forms valid win: 5x = 15 base * 5.00 MKD bet = 75.00 MKD
+    BEST WIN: 5x Cherry = 75.00 MKD
+  WIN: 5x Cherry = 75.00 MKD (base: 15, bet: 5.00 MKD)
+Payline 9: [ '00.png', '08.png', '08.png', '08.png', '00.png' ]
+    Payline 9 - Symbol names: [ 'Cherry', 'Wild', 'Wild', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry' ]
+    Testing Cherry: consecutive count = 5
+    Cherry forms valid win: 5x = 15 base * 5.00 MKD bet = 75.00 MKD
+    BEST WIN: 5x Cherry = 75.00 MKD
+  WIN: 5x Cherry = 75.00 MKD (base: 15, bet: 5.00 MKD)
+Payline 10: [ '01.png', '08.png', '08.png', '08.png', '05.png' ]
+    Payline 10 - Symbol names: [ 'Lemon', 'Wild', 'Wild', 'Wild', 'Grape' ]
+    Possible base symbols: [ 'Lemon', 'Grape' ]
+    Testing Lemon: consecutive count = 4
+    Lemon forms valid win: 4x = 3 base * 5.00 MKD bet = 15.00 MKD
+    Testing Grape: consecutive count = 0
+    BEST WIN: 4x Lemon = 15.00 MKD
+  WIN: 4x Lemon = 15.00 MKD (base: 3, bet: 5.00 MKD)
+Total wins found: 10
+Total win amount: 815
+=== END DEBUG ===
+Wallet updated: {
+  balance: 7137,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:45.991Z'
+}
+Win added: 815.00 MKD, new balance: 7137.00 MKD
+ POST /api/spin 200 in 108ms
+Loaded symbol mapping: {
+  Cherry: '00.png',
+  Lemon: '01.png',
+  Orange: '02.png',
+  Plum: '03.png',
+  Bell: '04.png',
+  Grape: '05.png',
+  Watermelon: '06.png',
+  Seven: '07.png',
+  Wild: '08.png',
+  Bar: '09.png',
+  Diamond: '10.png',
+  Star: '10.png'
+}
+Wallet updated: {
+  balance: 7132,
+  currency: 'MKD',
+  lastUpdated: '2025-08-05T15:46:47.605Z'
+}
+Bet deducted: 5.00 MKD, new balance: 7132.00 MKD
+=== WILD EXPANSION DEBUG ===
+Original reels: [
+  [ '00.png', '00.png', '06.png' ],
+  [ '06.png', '04.png', '01.png' ],
+  [ '02.png', '05.png', '01.png' ],
+  [ '08.png', '04.png', '01.png' ],
+  [ '06.png', '00.png', '06.png' ]
+]
+Wild found on reel 4, expanding entire reel
+Expanded reels: [
+  [ '00.png', '00.png', '06.png' ],
+  [ '06.png', '04.png', '01.png' ],
+  [ '02.png', '05.png', '01.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '06.png', '00.png', '06.png' ]
+]
+Reels that expanded: [ 3 ]
+=== END WILD EXPANSION ===
+=== PAYLINE CALCULATION DEBUG ===
+Reel Results: [
+  [ '00.png', '00.png', '06.png' ],
+  [ '06.png', '04.png', '01.png' ],
+  [ '02.png', '05.png', '01.png' ],
+  [ '08.png', '08.png', '08.png' ],
+  [ '06.png', '00.png', '06.png' ]
+]
+Bet Multiplier: 5
+Payline 1: [ '00.png', '04.png', '05.png', '08.png', '00.png' ]
+    Payline 1 - Symbol names: [ 'Cherry', 'Bell', 'Grape', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry', 'Bell', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 2: [ '00.png', '06.png', '02.png', '08.png', '06.png' ]
+    Payline 2 - Symbol names: [ 'Cherry', 'Watermelon', 'Orange', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Cherry', 'Watermelon', 'Orange' ]
+    Testing Cherry: consecutive count = 1
+    Testing Watermelon: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 3: [ '06.png', '01.png', '01.png', '08.png', '06.png' ]
+    Payline 3 - Symbol names: [ 'Watermelon', 'Lemon', 'Lemon', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Watermelon', 'Lemon' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 4: [ '00.png', '04.png', '01.png', '08.png', '06.png' ]
+    Payline 4 - Symbol names: [ 'Cherry', 'Bell', 'Lemon', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Cherry', 'Bell', 'Lemon', 'Watermelon' ]
+    Testing Cherry: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Lemon: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 5: [ '06.png', '04.png', '02.png', '08.png', '06.png' ]
+    Payline 5 - Symbol names: [ 'Watermelon', 'Bell', 'Orange', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Watermelon', 'Bell', 'Orange' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 6: [ '00.png', '06.png', '05.png', '08.png', '06.png' ]
+    Payline 6 - Symbol names: [ 'Cherry', 'Watermelon', 'Grape', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Cherry', 'Watermelon', 'Grape' ]
+    Testing Cherry: consecutive count = 1
+    Testing Watermelon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 7: [ '06.png', '01.png', '05.png', '08.png', '06.png' ]
+    Payline 7 - Symbol names: [ 'Watermelon', 'Lemon', 'Grape', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Watermelon', 'Lemon', 'Grape' ]
+    Testing Watermelon: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    No valid wins found
+  No win
+Payline 8: [ '00.png', '01.png', '01.png', '08.png', '00.png' ]
+    Payline 8 - Symbol names: [ 'Cherry', 'Lemon', 'Lemon', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry', 'Lemon' ]
+    Testing Cherry: consecutive count = 1
+    Testing Lemon: consecutive count = 0
+    No valid wins found
+  No win
+Payline 9: [ '00.png', '06.png', '02.png', '08.png', '00.png' ]
+    Payline 9 - Symbol names: [ 'Cherry', 'Watermelon', 'Orange', 'Wild', 'Cherry' ]
+    Possible base symbols: [ 'Cherry', 'Watermelon', 'Orange' ]
+    Testing Cherry: consecutive count = 1
+    Testing Watermelon: consecutive count = 0
+    Testing Orange: consecutive count = 0
+    No valid wins found
+  No win
+Payline 10: [ '00.png', '04.png', '05.png', '08.png', '06.png' ]
+    Payline 10 - Symbol names: [ 'Cherry', 'Bell', 'Grape', 'Wild', 'Watermelon' ]
+    Possible base symbols: [ 'Cherry', 'Bell', 'Grape', 'Watermelon' ]
+    Testing Cherry: consecutive count = 1
+    Testing Bell: consecutive count = 0
+    Testing Grape: consecutive count = 0
+    Testing Watermelon: consecutive count = 0
+    No valid wins found
+  No win
+Total wins found: 0
+Total win amount: 0
+=== END DEBUG ===
+ POST /api/spin 200 in 110ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1211ms (1861 modules)
+ GET / 200 in 1463ms
+ ✓ Compiled /_not-found in 118ms (1852 modules)
+ GET /_next/static/chunks/main-app.js?v=1754425050518 404 in 216ms
+ ✓ Compiled in 94ms (887 modules)
+ ✓ Compiled in 65ms (887 modules)
+ ✓ Compiled in 69ms (887 modules)
+ ✓ Compiled in 71ms (887 modules)
+ ✓ Compiled in 71ms (887 modules)
+ ✓ Compiled in 74ms (887 modules)
+ ✓ Compiled in 65ms (887 modules)
+ ✓ Compiled in 77ms (883 modules)
+ ✓ Compiled in 67ms (883 modules)
+ ✓ Compiled in 48ms (883 modules)
+ ✓ Compiled in 59ms (883 modules)
+ ✓ Compiled in 67ms (883 modules)
+ ✓ Compiled in 51ms (883 modules)
+ ✓ Compiled in 63ms (883 modules)
+ ✓ Compiled in 63ms (883 modules)
+ ✓ Compiled in 78ms (883 modules)
+ ✓ Compiled in 55ms (883 modules)
+ ✓ Compiled in 70ms (883 modules)
+ ✓ Compiled in 63ms (883 modules)
+ ✓ Compiled in 66ms (883 modules)
+ ✓ Compiled in 54ms (883 modules)
+ ✓ Compiled in 65ms (883 modules)
+ ✓ Compiled in 66ms (883 modules)
+ ✓ Compiled in 62ms (883 modules)
+ ✓ Compiled in 64ms (883 modules)
+ ✓ Compiled in 64ms (883 modules)
+ ✓ Compiled in 65ms (883 modules)
