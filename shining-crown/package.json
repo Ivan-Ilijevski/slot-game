@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixi/sound": "^6.0.1",
     "next": "15.4.4",
     "pixi.js": "^8.11.0",
     "react": "19.1.0",

@@ -2,7 +2,30 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
-import { CURRENCY_CONFIG, formatCurrency } from '../config/currency'
+import { formatCurrency } from '../config/currency'
+
+// Dynamic import for PIXI Sound to avoid SSR issues
+let sound: {
+  play: (alias: string, options?: { start?: number; end?: number; volume?: number }) => void;
+  stop: (alias: string) => void;
+  stopAll: () => void;
+} | null = null
+
+if (typeof window !== 'undefined') {
+  import('@pixi/sound').then((pixiSound) => {
+    sound = pixiSound.sound
+  })
+}
+
+// Type for gamble UI elements
+interface GambleElements {
+  faceDownCard: Sprite
+  faceUpCard: Sprite
+  gambleAmountText: Text
+  instructionsText: Text
+  redButton: Sprite
+  blackButton: Sprite
+}
 
 export default function Home() {
   // Helper function to format numbers with spaces instead of commas
@@ -21,6 +44,13 @@ export default function Home() {
   const [pendingWin, setPendingWin] = useState(0) // Win amount waiting to be collected
   const [animatedWinAmount, setAnimatedWinAmount] = useState(0) // Animated display amount
   const [isAutoStart, setIsAutoStart] = useState(false) // Autostart feature toggle
+  
+  // Gamble feature state
+  const [isGambleMode, setIsGambleMode] = useState(false) // Whether gamble mode is active
+  const [gambleAmount, setGambleAmount] = useState(0) // Amount being gambled
+  const [gambleStage, setGambleStage] = useState<'choice' | 'reveal' | 'result'>('choice') // Current gamble stage
+  const [selectedColor, setSelectedColor] = useState<'red' | 'black' | null>(null) // Player's color choice
+  const [cardColor, setCardColor] = useState<'red' | 'black' | null>(null) // Revealed card color
 
   // Helper function to convert currency to credits for UI display
   const currencyToCredits = useCallback((amount: number): number => {
@@ -34,7 +64,6 @@ export default function Home() {
   const appRef = useRef<Application | null>(null)
   const reelsRef = useRef<Container[]>([])
   const isSpinningRef = useRef(false)
-  const reelStopSoundRef = useRef<HTMLAudioElement | null>(null)
   const soundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const stopRequestedRef = useRef(false)
   const reelsStoppedRef = useRef<boolean[]>([false, false, false, false, false])
@@ -44,8 +73,6 @@ export default function Home() {
   const lastWinRef = useRef(0)
   const winHighlightsRef = useRef<Container[]>([])
   const winInfoDisplayRef = useRef<HTMLDivElement | null>(null)
-  const wildExpandSoundRef = useRef<HTMLAudioElement | null>(null)
-  const wildReelSoundRef = useRef<HTMLAudioElement | null>(null)
   const wildExpansionSoundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const uiUpdateRef = useRef<((balance: number, bet: number, win: number) => void) | null>(null)
@@ -72,9 +99,23 @@ export default function Home() {
   const wildExpansionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingWinLinesRef = useRef<{ payline: number, symbols: string[], count: number, symbol: string, payout: number }[] | null>(null)
   const showWinHighlightsRef = useRef<((winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => void) | null>(null)
+  
+  // Gamble feature refs
+  const gambleContainerRef = useRef<Container | null>(null)
+  const gambleCardRef = useRef<Sprite | null>(null)
+  const gambleButtonsRef = useRef<Container | null>(null)
+  const isGambleModeRef = useRef<boolean>(false)
+  const cardFlashIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const gambleSoundLoopIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Helper function to check if bet controls should be disabled
+  const isBetControlsDisabled = useCallback(() => {
+    return isSpinningRef.current || pendingWin > 0 || isGambleModeRef.current
+  }, [pendingWin])
 
   // Bet management functions
   const increaseBet = () => {
+    if (isBetControlsDisabled()) return
     const currentIndex = BET_OPTIONS.indexOf(currentBet)
     if (currentIndex < BET_OPTIONS.length - 1) {
       setCurrentBet(BET_OPTIONS[currentIndex + 1])
@@ -82,6 +123,7 @@ export default function Home() {
   }
 
   const decreaseBet = () => {
+    if (isBetControlsDisabled()) return
     const currentIndex = BET_OPTIONS.indexOf(currentBet)
     if (currentIndex > 0) {
       setCurrentBet(BET_OPTIONS[currentIndex - 1])
@@ -89,25 +131,28 @@ export default function Home() {
   }
 
   const setMaxBet = useCallback(() => {
+    if (isBetControlsDisabled()) return
     setCurrentBet(BET_OPTIONS[BET_OPTIONS.length - 1])
-  }, [BET_OPTIONS])
+  }, [BET_OPTIONS, isBetControlsDisabled])
 
   const cycleBet = useCallback(() => {
+    if (isBetControlsDisabled()) return
     const currentIndex = BET_OPTIONS.indexOf(currentBet)
     const nextIndex = (currentIndex + 1) % BET_OPTIONS.length
     const newBet = BET_OPTIONS[nextIndex]
     console.log(`Cycling bet: currentBet=$${currentBet}, currentIndex=${currentIndex}, nextIndex=${nextIndex}, newBet=$${newBet}`)
     setCurrentBet(newBet)
-  }, [currentBet, BET_OPTIONS])
+  }, [currentBet, BET_OPTIONS, isBetControlsDisabled])
 
   const cycleDenomination = useCallback(() => {
+    if (isBetControlsDisabled()) return
     const currentIndex = DENOMINATION_OPTIONS.indexOf(denomination)
     const nextIndex = (currentIndex + 1) % DENOMINATION_OPTIONS.length
     const newDenomination = DENOMINATION_OPTIONS[nextIndex]
     console.log(`Cycling denomination: current=$${denomination.toFixed(2)}, next=$${newDenomination.toFixed(2)}`)
     console.log(`Sample conversion: $100 = ${Math.round(100 / newDenomination)} credits at $${newDenomination.toFixed(2)} denom`)
     setDenomination(newDenomination)
-  }, [denomination, DENOMINATION_OPTIONS])
+  }, [denomination, DENOMINATION_OPTIONS, isBetControlsDisabled])
 
   // Function to collect pending win
   const collectWin = useCallback(() => {
@@ -151,9 +196,8 @@ export default function Home() {
       setAnimatedWinAmount(pendingWin)
       
       // Stop wild expansion sound if playing
-      if (wildExpandSoundRef.current) {
-        wildExpandSoundRef.current.pause()
-        wildExpandSoundRef.current.currentTime = 0
+      if (sound) {
+        sound.stop('winSound')
       }
       if (wildExpansionSoundTimeoutRef.current) {
         clearTimeout(wildExpansionSoundTimeoutRef.current)
@@ -282,6 +326,278 @@ export default function Home() {
     takeWinRef.current = takeWin
   }, [takeWin])
 
+  // Card flashing helper functions
+  const startCardFlashing = useCallback(() => {
+    if (cardFlashIntervalRef.current) {
+      clearInterval(cardFlashIntervalRef.current)
+    }
+
+    // Start looping sound effect using PIXI Sound (13s start, 400ms duration)
+    let loopCount = 0
+    const playGambleSoundLoop = () => {
+      if (gambleSoundLoopIntervalRef.current) {
+        loopCount++
+        console.log(`🎵 Playing gamble sound loop #${loopCount}`)
+        
+        // Play the sound starting at 13 seconds for 400ms duration
+        if (sound) {
+          sound.play('reelSound', {
+            start: 13,
+            end: 13.1, // 400ms = 0.4 seconds
+            volume: 0.9
+          })
+        }
+        
+        // The sound will automatically stop at 13.4 seconds due to the 'end' parameter
+      }
+    }
+    
+    // Play immediately
+    playGambleSoundLoop()
+    
+    // Set up interval to repeat every 450ms
+    gambleSoundLoopIntervalRef.current = setInterval(playGambleSoundLoop, 100)
+
+    if (gambleContainerRef.current) {
+      const elements = (gambleContainerRef.current as Container & { gambleElements?: GambleElements }).gambleElements
+      if (elements) {
+        let isRed = true
+        const gambleAtlas = Assets.get('/assets/gambleResources.json')
+        
+        // Flash between red and black card backs every 250ms (faster)
+        cardFlashIntervalRef.current = setInterval(() => {
+          if (isRed) {
+            elements.faceDownCard.texture = gambleAtlas.textures['cardBackBlack.png']
+          } else {
+            elements.faceDownCard.texture = gambleAtlas.textures['cardBackRed.png']
+          }
+          isRed = !isRed
+        }, 80)
+      }
+    }
+  }, [])
+
+  const stopCardFlashing = useCallback(() => {
+    if (cardFlashIntervalRef.current) {
+      clearInterval(cardFlashIntervalRef.current)
+      cardFlashIntervalRef.current = null
+    }
+    
+    // Stop sound effect
+    if (gambleSoundLoopIntervalRef.current) {
+      clearInterval(gambleSoundLoopIntervalRef.current)
+      gambleSoundLoopIntervalRef.current = null
+    }
+    // Stop the gamble sound using PIXI
+    if (sound) {
+      sound.stop('reelSound')
+    }
+    
+    // Reset to default red back
+    if (gambleContainerRef.current) {
+      const elements = (gambleContainerRef.current as Container & { gambleElements?: GambleElements }).gambleElements
+      if (elements) {
+        const gambleAtlas = Assets.get('/assets/gambleResources.json')
+        elements.faceDownCard.texture = gambleAtlas.textures['cardBackRed.png']
+      }
+    }
+  }, [])
+
+  // Gamble feature functions
+  const enterGambleMode = useCallback(() => {
+    if (pendingWin > 0 && !isSpinningRef.current) {
+      console.log('Entering gamble mode with amount:', pendingWin)
+      
+      // Stop all other sounds before starting gamble mode
+      if (sound) {
+        sound.stopAll()
+      }
+      
+      // Clear any sound timeouts
+      if (soundTimeoutRef.current) {
+        clearTimeout(soundTimeoutRef.current)
+        soundTimeoutRef.current = null
+      }
+      if (wildExpansionSoundTimeoutRef.current) {
+        clearTimeout(wildExpansionSoundTimeoutRef.current)
+        wildExpansionSoundTimeoutRef.current = null
+      }
+      
+      setIsGambleMode(true)
+      setGambleAmount(pendingWin)
+      setGambleStage('choice')
+      setSelectedColor(null)
+      setCardColor(null)
+      isGambleModeRef.current = true
+      
+      // Show gamble UI
+      if (gambleContainerRef.current && appRef.current) {
+        gambleContainerRef.current.visible = true
+        
+        // Move gamble container to top of display list to ensure it's above everything
+        appRef.current.stage.removeChild(gambleContainerRef.current)
+        appRef.current.stage.addChild(gambleContainerRef.current)
+        const elements = (gambleContainerRef.current as Container & { gambleElements?: GambleElements }).gambleElements
+        if (elements) {
+          // Show face-down card, hide face-up card
+          elements.faceDownCard.visible = true
+          elements.faceUpCard.visible = false
+          
+          // Update amount display
+          elements.gambleAmountText.text = formatCurrency(pendingWin)
+          
+          // Update instructions
+          elements.instructionsText.text = 'Press R for Red, B for Black, Space to Collect'
+        }
+      }
+      
+      // Start card flashing animation
+      startCardFlashing()
+      
+      // Clear auto-collect timeout when entering gamble
+      if (autoCollectTimeoutRef.current) {
+        clearTimeout(autoCollectTimeoutRef.current)
+        autoCollectTimeoutRef.current = null
+      }
+    }
+  }, [pendingWin, startCardFlashing])
+
+  const exitGambleMode = useCallback(() => {
+    console.log('Exiting gamble mode')
+    setIsGambleMode(false)
+    setGambleAmount(0)
+    setGambleStage('choice')
+    setSelectedColor(null)
+    setCardColor(null)
+    isGambleModeRef.current = false
+    
+    // Stop card flashing
+    stopCardFlashing()
+    
+    // Hide gamble UI if it exists
+    if (gambleContainerRef.current) {
+      gambleContainerRef.current.visible = false
+    }
+  }, [stopCardFlashing])
+
+  const collectGambleWin = useCallback(() => {
+    console.log(`Collecting gamble win: $${gambleAmount}`)
+    
+    // Add the gamble amount to balance (server will handle this later)
+    setTotalBalance(prev => prev + gambleAmount)
+    
+    // Clear pending win and exit gamble mode
+    setPendingWin(0)
+    setLastWin(0) 
+    setAnimatedWinAmount(0)
+    exitGambleMode()
+  }, [gambleAmount, exitGambleMode])
+
+  const chooseGambleColor = useCallback((color: 'red' | 'black') => {
+    if (gambleStage === 'choice' && gambleContainerRef.current) {
+      console.log('🎴 FUNCTION START: chooseGambleColor called with color =', color, typeof color)
+      console.log('Player chose:', color)
+      setSelectedColor(color)
+      setGambleStage('reveal')
+      
+      // Stop card flashing when player makes choice
+      stopCardFlashing()
+      
+      // Generate random card color (50/50 chance)
+      const randomColor = Math.random() < 0.5 ? 'red' : 'black'
+      setCardColor(randomColor)
+      
+      const elements = (gambleContainerRef.current as Container & { gambleElements?: GambleElements }).gambleElements
+      if (elements) {
+        // Update instructions
+        elements.instructionsText.text = 'Revealing card...'
+        
+        // Show appropriate card based on random result
+        const gambleAtlas = Assets.get('/assets/gambleResources.json')
+        
+        // Fixed mapping based on standard playing card conventions
+        // Let's try the opposite mapping since the previous one was still wrong
+        const cardTextures = {
+          red: ['cardFront1.png', 'cardFront2.png'], // Red cards 
+          black: ['cardFront0.png', 'cardFront3.png'] // Black cards
+        }
+        
+        // Pick random card texture for the chosen color
+        const availableCards = cardTextures[randomColor] || cardTextures.red
+        const randomCardTexture = availableCards[Math.floor(Math.random() * availableCards.length)]
+        
+        console.log(`🎴 Gamble Debug: Player chose ${color}, card is ${randomColor}, showing texture ${randomCardTexture}, should ${color === randomColor ? 'WIN' : 'LOSE'}`)
+        console.log(`🎴 Current mapping - Red textures: cardFront0.png, cardFront2.png | Black textures: cardFront1.png, cardFront3.png`)
+        console.log(`🎴 If this is wrong, the mapping needs to be flipped!`)
+        
+        setTimeout(() => {
+          // Hide face-down card, show face-up card
+          elements.faceDownCard.visible = false
+          elements.faceUpCard.texture = gambleAtlas.textures[randomCardTexture]
+          elements.faceUpCard.visible = true
+        }, 500)
+      }
+      
+      // Determine win/lose
+      const won = color === randomColor
+      console.log(`🎴 WIN/LOSS LOGIC: Player chose "${color}", Random card is "${randomColor}", Match: ${color === randomColor}, Result: ${won ? 'WON' : 'LOST'}`)
+      console.log(`🎴 DETAILED: color variable = "${color}", randomColor variable = "${randomColor}", comparison = ${color} === ${randomColor} = ${color === randomColor}`)
+      
+      setTimeout(() => {
+        setGambleStage('result')
+        
+        if (elements) {
+          if (won) {
+            // Double the gamble amount
+            const newAmount = gambleAmount * 2
+            setGambleAmount(newAmount)
+            setPendingWin(newAmount)
+            elements.gambleAmountText.text = formatCurrency(newAmount)
+            elements.instructionsText.text = 'You won! Starting next round... Press Space to collect'
+            console.log('Gamble won! New amount:', newAmount)
+            
+            // Auto-continue to next gamble round after showing win
+            setTimeout(() => {
+              // Reset to choice stage for another gamble
+              setGambleStage('choice')
+              setSelectedColor(null)
+              setCardColor(null)
+              
+              // Reset UI to choice state
+              if (elements) {
+                elements.faceDownCard.visible = true
+                elements.faceUpCard.visible = false
+                elements.instructionsText.text = 'Press R for Red, B for Black, Space to Collect'
+              }
+              
+              // Start card flashing for new gamble round
+              startCardFlashing()
+            }, 2000) // Show win message for 2 seconds before continuing
+          } else {
+            // Lost - clear everything
+            setGambleAmount(0)
+            setPendingWin(0)
+            setLastWin(0)
+            setAnimatedWinAmount(0)
+            elements.gambleAmountText.text = formatCurrency(0)
+            elements.instructionsText.text = 'You lost! Better luck next time.'
+            console.log('Gamble lost! Amount reset to 0')
+            
+            // Exit gamble mode after a short delay
+            setTimeout(() => {
+              exitGambleMode()
+            }, 2000)
+          }
+        }
+      }, 1500) // Show reveal for 1.5 seconds
+    }
+  }, [gambleStage, gambleAmount, exitGambleMode, stopCardFlashing, startCardFlashing])
+
+  // Update gamble mode ref when state changes
+  useEffect(() => {
+    isGambleModeRef.current = isGambleMode
+  }, [isGambleMode])
+
   // Function to flash credit display to indicate insufficient funds
   const flashInsufficientFunds = useCallback(() => {
     if (creditDollarTextRef.current && creditAmountTextRef.current) {
@@ -314,21 +630,54 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       console.log('Component level key pressed:', event.code)
-      if (event.code === 'KeyB' && !isSpinningRef.current) {
-        event.preventDefault()
-        event.stopPropagation()
-        console.log('B key pressed, calling cycleBet()')
-        cycleBet()
-      } else if (event.code === 'KeyR' && !isSpinningRef.current) {
-        event.preventDefault()
-        event.stopPropagation()
-        console.log('R key pressed, calling setMaxBet()')
-        setMaxBet()
-      } else if (event.code === 'KeyD' && !isSpinningRef.current) {
-        event.preventDefault()
-        event.stopPropagation()
-        console.log('D key pressed, calling cycleDenomination()')
-        cycleDenomination()
+      
+      // Gamble mode controls
+      if (isGambleModeRef.current) {
+        if (event.code === 'KeyR' && gambleStage === 'choice') {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('R key pressed in gamble mode - choosing red')
+          chooseGambleColor('red')
+        } else if (event.code === 'KeyB' && gambleStage === 'choice') {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('B key pressed in gamble mode - choosing black')
+          chooseGambleColor('black')
+        } else if (event.code === 'Space' && (gambleStage === 'result' || gambleStage === 'choice')) {
+          event.preventDefault()  
+          event.stopPropagation()
+          console.log('Space pressed in gamble mode - collecting win')
+          collectGambleWin()
+        }
+      }
+      // Normal game controls (only when not in gamble mode)
+      else if (!isSpinningRef.current) {
+        if (event.code === 'KeyR' && pendingWinRef.current > 0) {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('R key pressed with pending win - entering gamble mode')
+          enterGambleMode()
+        } else if (event.code === 'KeyB' && pendingWinRef.current > 0) {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('B key pressed with pending win - entering gamble mode')
+          enterGambleMode()
+        } else if (event.code === 'KeyB' && pendingWinRef.current === 0) {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('B key pressed, calling cycleBet()')
+          cycleBet()
+        } else if (event.code === 'KeyR' && pendingWinRef.current === 0) {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('R key pressed, calling setMaxBet()')
+          setMaxBet()
+        } else if (event.code === 'KeyD') {
+          event.preventDefault()
+          event.stopPropagation()
+          console.log('D key pressed, calling cycleDenomination()')
+          cycleDenomination()
+        }
       }
     }
 
@@ -336,7 +685,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [cycleBet, setMaxBet, cycleDenomination])
+  }, [cycleBet, setMaxBet, cycleDenomination, gambleStage, chooseGambleColor, collectGambleWin, enterGambleMode])
 
   // Update denomination display when denomination changes
   useEffect(() => {
@@ -472,54 +821,38 @@ export default function Home() {
           '/assets/07-0.json', // Seven win animation
           '/assets/09-0.json', // Star win animation
           '/assets/10-0.json', // Crown win animation
-          '/assets/ui-cabinet-overlay.png' // UI cabinet overlay
+          '/assets/ui-cabinet-overlay.png', // UI cabinet overlay
+          '/assets/gambleResources.json', // Gamble assets
+          // Sound assets
+          { alias: 'reelSound', src: '/assets/mobileMainSounds.mp3' },
+          { alias: 'winSound', src: '/assets/winSounds.mp3' },
+          { alias: 'shortSound', src: '/assets/shortSounds.mp3' }
         ])
 
-        // Load reel stop sound
-        reelStopSoundRef.current = new Audio('/assets/mobileMainSounds.mp3')
-        reelStopSoundRef.current.preload = 'auto'
+        // Load sounds via PIXI Sound - they are already loaded with Assets.load above
+        // No need for separate HTML Audio objects - PIXI sound handles everything
         
-        // Load wild expansion sound
-        wildExpandSoundRef.current = new Audio('/assets/winSounds.mp3')
-        wildExpandSoundRef.current.preload = 'auto'
-        
-        // Load wild reel sound
-        wildReelSoundRef.current = new Audio('/assets/shortSounds.mp3')
-        wildReelSoundRef.current.preload = 'auto'
-        
-        // Set up sound to play only a small portion (e.g., 0.2 seconds from start)
+        // Set up sound to play only a small portion using PIXI sound
         const playReelStopSound = () => {
-          if (reelStopSoundRef.current) {
-            // Clear any existing timeout to prevent conflicts
-            if (soundTimeoutRef.current) {
-              clearTimeout(soundTimeoutRef.current)
-            }
-            
-            reelStopSoundRef.current.currentTime = 1 // Start from 1 second
-            reelStopSoundRef.current.play().catch(console.error)
-            
-            // Stop playback after 0.3 seconds
-            soundTimeoutRef.current = setTimeout(() => {
-              if (reelStopSoundRef.current) {
-                reelStopSoundRef.current.pause()
-              }
-              soundTimeoutRef.current = null
-            }, 300)
+          // Play reel stop sound from 1 second for 0.3 seconds duration
+          if (sound) {
+            sound.play('reelSound', {
+              start: 1,
+              end: 1.3, // 0.3 seconds duration
+              volume: 0.7
+            })
           }
         }
         
         // Function to play wild reel sound (1 second from shortSounds.mp3)
         const playWildReelSound = () => {
-          if (wildReelSoundRef.current) {
-            wildReelSoundRef.current.currentTime = 0 // Start from beginning
-            wildReelSoundRef.current.play().catch(console.error)
-            
-            // Stop after 1 second
-            setTimeout(() => {
-              if (wildReelSoundRef.current) {
-                wildReelSoundRef.current.pause()
-              }
-            }, 1000)
+          // Play wild reel sound from beginning for 1 second
+          if (sound) {
+            sound.play('shortSound', {
+              start: 0,
+              end: 1, // 1 second duration
+              volume: 0.8
+            })
           }
         }
         
@@ -540,17 +873,13 @@ export default function Home() {
         
         // Function to play wild expansion sound
         const playWildExpandSound = () => {
-          if (wildExpandSoundRef.current) {
-            wildExpandSoundRef.current.currentTime = 4.7 // Start from 6 seconds
-            wildExpandSoundRef.current.play().catch(console.error)
-            
-            // Stop playback after 4.6 seconds (from 6s to 10.6s = 4.6s duration)
-            wildExpansionSoundTimeoutRef.current = setTimeout(() => {
-              if (wildExpandSoundRef.current) {
-                wildExpandSoundRef.current.pause()
-              }
-              wildExpansionSoundTimeoutRef.current = null
-            }, 4600)
+          // Play wild expansion sound from 4.7 seconds for 4.6 seconds
+          if (sound) {
+            sound.play('winSound', {
+              start: 6.0,
+              end: 10.3, // 4.6 seconds duration
+              volume: 0.9
+            })
           }
         }
 
@@ -946,6 +1275,12 @@ export default function Home() {
         // Add keyboard event listener for space key and 'p' for autostart
         keydownHandler = (event: KeyboardEvent) => {
           console.log('PIXI level key pressed:', event.code)
+          
+          // Prevent space in gamble mode
+          if (isGambleModeRef.current) {
+            return
+          }
+          
           if (event.code === 'Space') {
             event.preventDefault()
             if (!isSpinningRef.current && pendingWinRef.current > 0 && (isWinAnimatingRef.current || animationsRunningRef.current.size > 0)) {
@@ -986,6 +1321,110 @@ export default function Home() {
             })
           }
         }
+
+        // Setup gamble container and UI elements
+        const setupGambleUI = () => {
+          if (!app) return
+          
+          const gambleAtlas = Assets.get('/assets/gambleResources.json')
+          
+          // Create gamble container (initially hidden)
+          const gambleContainer = new Container()
+          gambleContainer.visible = false
+          gambleContainerRef.current = gambleContainer
+          app.stage.addChild(gambleContainer)
+          
+          // Create semi-transparent background overlay
+          const overlay = new Graphics()
+          overlay.rect(0, 0, 1920, 1080)
+          overlay.fill({ color: 0x000000, alpha: 0.7 }) // Black with 70% opacity
+          gambleContainer.addChild(overlay)
+          
+          // Card display area - center of screen
+          const cardX = 1920 / 2
+          const cardY = 1080 / 2 - 50
+          
+          // Face-down card (initially visible)
+          const faceDownCard = new Sprite(gambleAtlas.textures['cardBackRed.png'])
+          faceDownCard.anchor.set(0.5)
+          faceDownCard.x = cardX
+          faceDownCard.y = cardY
+          faceDownCard.scale.set(1.5)
+          gambleContainer.addChild(faceDownCard)
+          
+          // Face-up card (initially hidden)
+          const faceUpCard = new Sprite(gambleAtlas.textures['cardFront0.png'])
+          faceUpCard.anchor.set(0.5)
+          faceUpCard.x = cardX
+          faceUpCard.y = cardY
+          faceUpCard.scale.set(1.5)
+          faceUpCard.visible = false
+          gambleCardRef.current = faceUpCard
+          gambleContainer.addChild(faceUpCard)
+          
+          // Button container
+          const buttonsContainer = new Container()
+          gambleButtonsRef.current = buttonsContainer
+          gambleContainer.addChild(buttonsContainer)
+          
+          // Red button (left side)
+          const redButton = new Sprite(gambleAtlas.textures['halfRedButtonUp.png'])
+          redButton.anchor.set(0.5)
+          redButton.x = cardX - 200
+          redButton.y = cardY + 150
+          redButton.scale.set(2)
+          buttonsContainer.addChild(redButton)
+          
+          // Black button (right side)
+          const blackButton = new Sprite(gambleAtlas.textures['halfBlackButtonUp.png'])
+          blackButton.anchor.set(0.5)
+          blackButton.x = cardX + 200
+          blackButton.y = cardY + 150
+          blackButton.scale.set(2)
+          buttonsContainer.addChild(blackButton)
+          
+          // Gamble amount text
+          const gambleAmountText = new Text({
+            text: '0',
+            style: {
+              fontFamily: 'Arial Black',
+              fontSize: 48,
+              fill: 0xFFFF00,
+              stroke: { color: 0x000000, width: 3 }
+            }
+          })
+          gambleAmountText.anchor.set(0.5)
+          gambleAmountText.x = cardX
+          gambleAmountText.y = cardY - 200
+          gambleContainer.addChild(gambleAmountText)
+          
+          // Instructions text
+          const instructionsText = new Text({
+            text: 'Press R for Red, B for Black, Space to Collect',
+            style: {
+              fontFamily: 'Arial',
+              fontSize: 24,
+              fill: 0xFFFFFF,
+              align: 'center'
+            }
+          })
+          instructionsText.anchor.set(0.5)
+          instructionsText.x = cardX
+          instructionsText.y = cardY + 250
+          gambleContainer.addChild(instructionsText)
+          
+          // Store references for updates using type assertion
+          ;(gambleContainer as Container & { gambleElements: GambleElements }).gambleElements = {
+            faceDownCard,
+            faceUpCard,
+            gambleAmountText,
+            instructionsText,
+            redButton,
+            blackButton
+          }
+        }
+
+        setupGambleUI()
 
         const spinReels = async () => {
           if (isSpinningRef.current) return
@@ -2192,6 +2631,20 @@ export default function Home() {
         if (creditFlashTimeoutRef.current) {
           clearTimeout(creditFlashTimeoutRef.current)
           creditFlashTimeoutRef.current = null
+        }
+        // Clean up card flash interval
+        if (cardFlashIntervalRef.current) {
+          clearInterval(cardFlashIntervalRef.current)
+          cardFlashIntervalRef.current = null
+        }
+        // Clean up gamble flash sound
+        if (gambleSoundLoopIntervalRef.current) {
+          clearInterval(gambleSoundLoopIntervalRef.current)
+          gambleSoundLoopIntervalRef.current = null
+        }
+        // Clean up PIXI sounds on unmount
+        if (sound) {
+          sound.stopAll()
         }
         appRef.current.destroy(true, { children: true })
         destroyed = true
