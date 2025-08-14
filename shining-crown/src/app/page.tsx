@@ -535,7 +535,7 @@ export default function Home() {
           elements.faceDownCard.visible = false
           elements.faceUpCard.texture = gambleAtlas.textures[randomCardTexture]
           elements.faceUpCard.visible = true
-        }, 500)
+        }, 50)
       }
       
       // Determine win/lose
@@ -552,6 +552,13 @@ export default function Home() {
             const newAmount = gambleAmount * 2
             setGambleAmount(newAmount)
             setPendingWin(newAmount)
+            if (sound) {
+          sound.play('reelSound', {
+            start: 10,
+            end: 11, // 400ms = 0.4 seconds
+            volume: 0.9
+          })
+        }
             elements.gambleAmountText.text = formatCurrency(newAmount)
             elements.instructionsText.text = 'You won! Starting next round... Press Space to collect'
             console.log('Gamble won! New amount:', newAmount)
@@ -579,6 +586,13 @@ export default function Home() {
             setPendingWin(0)
             setLastWin(0)
             setAnimatedWinAmount(0)
+            if (sound) {
+              sound.play('reelSound', {
+                start: 9,
+                end: 10, // 400ms = 0.4 seconds
+                volume: 0.9
+              })
+            }
             elements.gambleAmountText.text = formatCurrency(0)
             elements.instructionsText.text = 'You lost! Better luck next time.'
             console.log('Gamble lost! Amount reset to 0')
@@ -589,7 +603,7 @@ export default function Home() {
             }, 2000)
           }
         }
-      }, 1500) // Show reveal for 1.5 seconds
+      }, 10) // Show reveal for 50 milliseconds
     }
   }, [gambleStage, gambleAmount, exitGambleMode, stopCardFlashing, startCardFlashing])
 
