@@ -30,6 +30,7 @@ export interface GameState {
   isWinAnimating: boolean
   stopRequested: boolean
   hasRunningAnimations: boolean
+  isAutoStart?: boolean
 }
 
 export interface KeyboardHandlerProps {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 import { formatCurrency } from '../config/currency'
+import MobileController from '../components/game/MobileController'
 
 // Dynamic import for PIXI Sound to avoid SSR issues
 let sound: {
@@ -51,6 +52,12 @@ export default function Home() {
   const [gambleStage, setGambleStage] = useState<'choice' | 'reveal' | 'result'>('choice') // Current gamble stage
   const [selectedColor, setSelectedColor] = useState<'red' | 'black' | null>(null) // Player's color choice
   const [cardColor, setCardColor] = useState<'red' | 'black' | null>(null) // Revealed card color
+  
+  // Mobile controller state tracking
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [stopRequested, setStopRequested] = useState(false)
+  const [isWinAnimating, setIsWinAnimating] = useState(false)
+  const [hasRunningAnimations, setHasRunningAnimations] = useState(false)
 
   // Helper function to convert currency to credits for UI display
   const currencyToCredits = useCallback((amount: number): number => {
@@ -96,6 +103,8 @@ export default function Home() {
   const takeWinRef = useRef<(() => void) | null>(null)
   const completeWildExpansionsRef = useRef<(() => void) | null>(null)
   const takeWinActiveRef = useRef(false)
+  const spinReelsRef = useRef<(() => void) | null>(null)
+  const playReelStopSoundRef = useRef<(() => void) | null>(null)
   const wildExpansionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingWinLinesRef = useRef<{ payline: number, symbols: string[], count: number, symbol: string, payout: number }[] | null>(null)
   const showWinHighlightsRef = useRef<((winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => void) | null>(null)
@@ -857,6 +866,7 @@ export default function Home() {
             })
           }
         }
+        playReelStopSoundRef.current = playReelStopSound
         
         // Function to play wild reel sound (1 second from shortSounds.mp3)
         const playWildReelSound = () => {
@@ -1833,6 +1843,7 @@ export default function Home() {
             }
           })
         }
+        spinReelsRef.current = spinReels
 
         // Function to check for wild symbols and animate them based on server results
         const checkAndAnimateWilds = (winResults: { results: { reel: number, position: number, symbols: string[] }[], totalWin: number, winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[], expandedReels: number[] }) => {
@@ -2685,6 +2696,30 @@ export default function Home() {
     }
   }, [isAutoStart])
 
+  // Sync mobile controller state with refs - optimized with change detection
+  useEffect(() => {
+    const updateMobileControllerState = () => {
+      const newIsSpinning = isSpinningRef.current
+      const newStopRequested = stopRequestedRef.current
+      const newIsWinAnimating = isWinAnimatingRef.current
+      const newHasRunningAnimations = animationsRunningRef.current.size > 0
+
+      // Only update state if values have actually changed
+      setIsSpinning(prev => prev !== newIsSpinning ? newIsSpinning : prev)
+      setStopRequested(prev => prev !== newStopRequested ? newStopRequested : prev)
+      setIsWinAnimating(prev => prev !== newIsWinAnimating ? newIsWinAnimating : prev)
+      setHasRunningAnimations(prev => prev !== newHasRunningAnimations ? newHasRunningAnimations : prev)
+    }
+
+    // Initial sync
+    updateMobileControllerState()
+
+    // Reduced polling frequency to 200ms for better performance
+    const interval = setInterval(updateMobileControllerState, 200)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div
       style={{
@@ -2708,6 +2743,48 @@ export default function Home() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+        }}
+      />
+      <MobileController
+        gameState={{
+          isSpinning: isSpinning,
+          isGambleMode: isGambleMode,
+          gambleStage: gambleStage,
+          hasPendingWin: pendingWin > 0,
+          isWinAnimating: isWinAnimating,
+          stopRequested: stopRequested,
+          hasRunningAnimations: hasRunningAnimations,
+          isAutoStart: isAutoStart
+        }}
+        actions={{
+          spinReels: () => {
+            if (!isSpinningRef.current && spinReelsRef.current) {
+              spinReelsRef.current()
+            }
+          },
+          stopReels: () => {
+            if (isSpinningRef.current && !stopRequestedRef.current) {
+              console.log('Mobile controller: Requesting stop')
+              stopRequestedRef.current = true
+              if (reelsStoppedCountRef.current === 0 && playReelStopSoundRef.current) {
+                playReelStopSoundRef.current()
+              }
+            } else {
+              console.log('Mobile controller: Stop request ignored - spinning:', isSpinningRef.current, 'stopRequested:', stopRequestedRef.current)
+            }
+          },
+          takeWin: () => {
+            if (takeWinRef.current) {
+              takeWinRef.current()
+            }
+          },
+          cycleBet: () => cycleBet(),
+          setMaxBet: () => setMaxBet(),
+          cycleDenomination: () => cycleDenomination(),
+          enterGambleMode: () => enterGambleMode(),
+          chooseGambleColor: (color: 'red' | 'black') => chooseGambleColor(color),
+          collectGambleWin: () => collectGambleWin(),
+          toggleAutoStart: () => setIsAutoStart(prev => !prev)
         }}
       />
     </div>
