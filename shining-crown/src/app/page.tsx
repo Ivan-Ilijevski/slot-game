@@ -117,6 +117,8 @@ export default function Home() {
   const isGambleModeRef = useRef<boolean>(false)
   const cardFlashIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const gambleSoundLoopIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const gambleWinTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const gambleLoseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Helper function to check if bet controls should be disabled
   const isBetControlsDisabled = useCallback(() => {
@@ -474,6 +476,17 @@ export default function Home() {
 
   const exitGambleMode = useCallback(() => {
     console.log('Exiting gamble mode')
+    
+    // Clear any pending gamble timeouts first
+    if (gambleWinTimeoutRef.current) {
+      clearTimeout(gambleWinTimeoutRef.current)
+      gambleWinTimeoutRef.current = null
+    }
+    if (gambleLoseTimeoutRef.current) {
+      clearTimeout(gambleLoseTimeoutRef.current)
+      gambleLoseTimeoutRef.current = null
+    }
+    
     setIsGambleMode(false)
     setGambleAmount(0)
     setGambleStage('choice')
@@ -574,7 +587,7 @@ export default function Home() {
             console.log('Gamble won! New amount:', newAmount)
             
             // Auto-continue to next gamble round after showing win
-            setTimeout(() => {
+            gambleWinTimeoutRef.current = setTimeout(() => {
               // Reset to choice stage for another gamble
               setGambleStage('choice')
               setSelectedColor(null)
@@ -589,6 +602,7 @@ export default function Home() {
               
               // Start card flashing for new gamble round
               startCardFlashing()
+              gambleWinTimeoutRef.current = null // Clear ref after execution
             }, 2000) // Show win message for 2 seconds before continuing
           } else {
             // Lost - clear everything
@@ -608,8 +622,9 @@ export default function Home() {
             console.log('Gamble lost! Amount reset to 0')
             
             // Exit gamble mode after a short delay
-            setTimeout(() => {
+            gambleLoseTimeoutRef.current = setTimeout(() => {
               exitGambleMode()
+              gambleLoseTimeoutRef.current = null // Clear ref after execution
             }, 2000)
           }
         }
@@ -2675,6 +2690,15 @@ export default function Home() {
         if (gambleSoundLoopIntervalRef.current) {
           clearInterval(gambleSoundLoopIntervalRef.current)
           gambleSoundLoopIntervalRef.current = null
+        }
+        // Clean up gamble timeouts
+        if (gambleWinTimeoutRef.current) {
+          clearTimeout(gambleWinTimeoutRef.current)
+          gambleWinTimeoutRef.current = null
+        }
+        if (gambleLoseTimeoutRef.current) {
+          clearTimeout(gambleLoseTimeoutRef.current)
+          gambleLoseTimeoutRef.current = null
         }
         // Clean up PIXI sounds on unmount
         if (sound) {
