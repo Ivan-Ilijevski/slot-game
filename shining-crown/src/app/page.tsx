@@ -70,6 +70,7 @@ export default function Home() {
   const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const reelsRef = useRef<Container[]>([])
+  const reelContainerRef = useRef<Container | null>(null)
   const isSpinningRef = useRef(false)
   const soundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const stopRequestedRef = useRef(false)
@@ -1012,6 +1013,7 @@ export default function Home() {
         const reelContainer = new Container()
         reelContainer.x = REEL_OFFSET_X
         reelContainer.y = REEL_OFFSET_Y
+        reelContainerRef.current = reelContainer
         app.stage.addChild(reelContainer)
 
         // Define specific symbol sequence to match screenshot
@@ -2594,11 +2596,18 @@ export default function Home() {
               highlightContainer.addChild(highlight)
             }
             
-            // Add to main stage (on top of everything) instead of reel container
-            if (app) {
-              app.stage.addChild(highlightContainer)
+            // Add to stage at correct z-index position (above border, below overlays)
+            if (app && app.stage) {
+              // Find insertion point - after border element
+              const borderChild = app.stage.children.find(child => 
+                child instanceof Sprite && child.texture?.label?.includes('reelBorder')
+              )
+              const borderIndex = borderChild ? app.stage.children.indexOf(borderChild) : -1
+              const insertIndex = borderIndex !== -1 ? borderIndex + 1 : app.stage.children.length - 1
               
-              // Position relative to the game screen (accounting for reel container offset)
+              app.stage.addChildAt(highlightContainer, insertIndex)
+              
+              // Restore manual positioning since not inheriting from reelContainer
               highlightContainer.x = REEL_OFFSET_X
               highlightContainer.y = REEL_OFFSET_Y
             }
