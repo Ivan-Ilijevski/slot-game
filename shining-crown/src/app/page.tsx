@@ -117,6 +117,9 @@ export default function Home() {
   const gambleSoundLoopIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const gambleWinTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const gambleLoseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Ref to store current bet amount to avoid stale closures
+  const currentBetRef = useRef<number>(currentBet)
 
   // Helper function to check if bet controls should be disabled
   const isBetControlsDisabled = useCallback(() => {
@@ -323,6 +326,10 @@ export default function Home() {
   useEffect(() => {
     pendingWinRef.current = pendingWin
   }, [pendingWin])
+
+  useEffect(() => {
+    currentBetRef.current = currentBet
+  }, [currentBet])
 
   useEffect(() => {
     animateWinRef.current = animateWinAmount
@@ -1520,12 +1527,13 @@ export default function Home() {
           // Get server results for this spin
           let serverResults: { results: { reel: number, position: number, symbols: string[] }[], totalWin: number, winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[], expandedReels: number[], balance: number } | null = null
           try {
+            const requestBody = { bet: currentBetRef.current }
             const response = await fetch('/api/spin', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ bet: currentBet }),
+              body: JSON.stringify(requestBody),
             })
             const data = await response.json()
             
@@ -2386,9 +2394,9 @@ export default function Home() {
 
           // Classify the win and get appropriate configuration
           const totalWinAmount = pendingWinRef.current
-          const winConfig = getWinConfig(totalWinAmount, currentBet, winLines)
+          const winConfig = getWinConfig(totalWinAmount, currentBetRef.current, winLines)
           console.log(`🎰 Win classified as: ${winConfig.type} (${winConfig.description})`)
-          console.log(`💰 Win amount: $${totalWinAmount}, Bet: $${currentBet}, Multiplier: ${(totalWinAmount / currentBet).toFixed(2)}x`)
+          console.log(`💰 Win amount: $${totalWinAmount}, Bet: $${currentBetRef.current}, Multiplier: ${(totalWinAmount / currentBetRef.current).toFixed(2)}x`)
           
           // Play appropriate win sound
           if (sound) {
