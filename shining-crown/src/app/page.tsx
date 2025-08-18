@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 import { formatCurrency } from '../config/currency'
 import MobileController from '../components/game/MobileController'
+import { getWinConfig, playWinSound, getAnimationSpeed, formatWinType, getWinColor } from '../utils/winSystem'
 
 // Dynamic import for PIXI Sound to avoid SSR issues
 let sound: {
@@ -24,8 +25,6 @@ interface GambleElements {
   faceUpCard: Sprite
   gambleAmountText: Text
   instructionsText: Text
-  redButton: Sprite
-  blackButton: Sprite
 }
 
 export default function Home() {
@@ -65,8 +64,7 @@ export default function Home() {
   }, [denomination])
   
   // Available bet options in MKD currency
-  const BET_OPTIONS = [0.05, 0.10, 0.20, 0.50, 1.00, 2.00, 5.00, 10.00]
-  
+  const BET_OPTIONS = [5.00, 10.00, 20.00, 50.00, 100.00, 200.00, 500.00, 1000.00]
   const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const reelsRef = useRef<Container[]>([])
@@ -1408,21 +1406,7 @@ export default function Home() {
           gambleButtonsRef.current = buttonsContainer
           gambleContainer.addChild(buttonsContainer)
           
-          // Red button (left side)
-          const redButton = new Sprite(gambleAtlas.textures['halfRedButtonUp.png'])
-          redButton.anchor.set(0.5)
-          redButton.x = cardX - 200
-          redButton.y = cardY + 150
-          redButton.scale.set(2)
-          buttonsContainer.addChild(redButton)
-          
-          // Black button (right side)
-          const blackButton = new Sprite(gambleAtlas.textures['halfBlackButtonUp.png'])
-          blackButton.anchor.set(0.5)
-          blackButton.x = cardX + 200
-          blackButton.y = cardY + 150
-          blackButton.scale.set(2)
-          buttonsContainer.addChild(blackButton)
+          // Red and black buttons removed - using mobile/keyboard controls instead
           
           // Gamble amount text
           const gambleAmountText = new Text({
@@ -1459,9 +1443,7 @@ export default function Home() {
             faceDownCard,
             faceUpCard,
             gambleAmountText,
-            instructionsText,
-            redButton,
-            blackButton
+            instructionsText
           }
         }
 
@@ -2091,7 +2073,7 @@ export default function Home() {
         const runningWinAnimations: { [key: string]: boolean } = {}
         
         // Function to animate winning symbols (with pre-loaded assets)
-        const animateWinningSymbols = async (winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[]) => {
+        const animateWinningSymbols = async (winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[], customSpeed?: number) => {
           if (winningPositions.length === 0) {
             console.log('❌ No winning positions to animate')
             return
@@ -2220,7 +2202,7 @@ export default function Home() {
             
             // Animate through frames at smooth speed
             let currentFrame = 0
-            const animationSpeed = 80 // 80ms per frame (~12.5 FPS) - smooth but visible
+            const animationSpeed = customSpeed || 80 // Use custom speed or default 80ms per frame (~12.5 FPS)
             let isLooping = false
             const loopStartFrame = Math.max(0, winFrames.length - 20) // Last 20 frames for loop
             
@@ -2314,16 +2296,22 @@ export default function Home() {
           // Create container for the single line display
           const lineContainer = new Container()
           
+          // Get win type information for this specific line
+          const lineWinConfig = getWinConfig(winLine.payout, currentBet, [winLine])
+          const winTypeColor = getWinColor(lineWinConfig.type)
+          const winTypeText = formatWinType(lineWinConfig.type)
+          
           let currentX = 0
           
-          // "Line X Yx" text
+          // Win type and line information
           const lineText = new Text({
-            text: `Line ${winLine.payline} ${winLine.count}x`,
+            text: `${winTypeText} - Line ${winLine.payline} ${winLine.count}x`,
             style: {
               fontFamily: 'Arial',
               fontSize: 18,
-              fill: 0xFFFFFF,
-              fontWeight: 'bold'
+              fill: winTypeColor,
+              fontWeight: 'bold',
+              stroke: { color: 0x000000, width: 1 }
             }
           })
           lineText.x = currentX
@@ -2363,14 +2351,15 @@ export default function Home() {
             currentX += 10
           }
           
-          // "= X.XX FUN" text
+          // Payout text with win type color
           const payoutText = new Text({
             text: `= ${formatCurrency(winLine.payout)}`,
             style: {
               fontFamily: 'Arial',
               fontSize: 18,
-              fill: 0xFFFFFF,
-              fontWeight: 'bold'
+              fill: winTypeColor,
+              fontWeight: 'bold',
+              stroke: { color: 0x000000, width: 1 }
             }
           })
           payoutText.x = currentX
@@ -2393,6 +2382,17 @@ export default function Home() {
           if (winLines.length === 0) {
             console.log('❌ No win lines, skipping animations')
             return
+          }
+
+          // Classify the win and get appropriate configuration
+          const totalWinAmount = pendingWinRef.current
+          const winConfig = getWinConfig(totalWinAmount, currentBet, winLines)
+          console.log(`🎰 Win classified as: ${winConfig.type} (${winConfig.description})`)
+          console.log(`💰 Win amount: $${totalWinAmount}, Bet: $${currentBet}, Multiplier: ${(totalWinAmount / currentBet).toFixed(2)}x`)
+          
+          // Play appropriate win sound
+          if (sound) {
+            playWinSound(winConfig.type, sound)
           }
 
           // Start win count-up animation synchronized with payline animations
@@ -2437,8 +2437,11 @@ export default function Home() {
             // Start win animations
             console.log('🎊 Starting win animations for positions:', winningPositions)
             
-            // Start animations and wait for them to load assets
-            animateWinningSymbols(winningPositions).then(() => {
+            // Start animations with win-type-specific speed
+            const animationSpeed = getAnimationSpeed(winConfig.type)
+            console.log(`🎬 Using ${winConfig.type} animation speed: ${animationSpeed}ms per frame`)
+            
+            animateWinningSymbols(winningPositions, animationSpeed).then(() => {
               console.log('✅ Win animations started successfully')
             }).catch(error => {
               console.error('❌ Win animation error:', error)

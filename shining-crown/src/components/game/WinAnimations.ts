@@ -1,5 +1,6 @@
 // Win Animation System for slot games using PIXI.js
 import { Container, Sprite, Graphics, Text, Texture } from 'pixi.js'
+import { WinType, getWinConfig, playWinSound, getAnimationSpeed, formatWinType, getWinColor, hasWildSymbols } from '../../utils/winSystem'
 
 export interface WinPosition {
   reelIndex: number
@@ -24,6 +25,7 @@ export interface WinAnimationConfig {
   winAnimationSteps: number
   enableWinAnimations: boolean
   autoCollectDelay: number
+  currentBet: number  // Added for win classification
 }
 
 export interface PIXIRefs {
@@ -44,6 +46,7 @@ export interface WinAnimationAssets {
   expandAtlas: { textures: { [key: string]: Texture } }
   reelAtlas: { textures: { [key: string]: Texture } }
   paylineColors: number[]
+  soundInstance?: any  // Added for sound support
 }
 
 export class WinAnimationManager {
@@ -79,11 +82,21 @@ export class WinAnimationManager {
     pendingWin: number,
     onAnimateWin: (amount: number) => void
   ): Promise<void> {
-    console.log('🎯 Starting win highlights for', winLines.length, 'win lines')
+    console.log('🎯 Starting win highlights for', winLines.length, 'win lines', `win amount: $${pendingWin}`)
 
     if (!this.config.enableWinAnimations || winLines.length === 0) {
       console.log('Win animations disabled or no win lines, skipping animations')
       return
+    }
+
+    // Classify the win and get appropriate configuration
+    const winConfig = getWinConfig(pendingWin, this.config.currentBet, winLines)
+    console.log(`🎰 Win classified as: ${winConfig.type} (${winConfig.description})`)
+    console.log(`💰 Win multiplier: ${(pendingWin / this.config.currentBet).toFixed(2)}x bet`)
+    
+    // Play appropriate win sound
+    if (this.assets.soundInstance) {
+      playWinSound(winConfig.type, this.assets.soundInstance)
     }
 
     // Clear any existing highlights
@@ -117,9 +130,9 @@ export class WinAnimationManager {
     // Start win count animation
     onAnimateWin(pendingWin)
 
-    // Start symbol animations
+    // Start symbol animations with win-type-specific speed
     if (allWinningPositions.length > 0) {
-      await this.animateWinningSymbols(allWinningPositions)
+      await this.animateWinningSymbols(allWinningPositions, winConfig)
     }
 
     // Start payline cycling after symbol animations
@@ -127,7 +140,7 @@ export class WinAnimationManager {
   }
 
   // Animate individual winning symbols
-  private async animateWinningSymbols(winningPositions: WinPosition[]): Promise<void> {
+  private async animateWinningSymbols(winningPositions: WinPosition[], winConfig?: any): Promise<void> {
     if (winningPositions.length === 0) {
       console.log('❌ No winning positions to animate')
       return
@@ -191,8 +204,9 @@ export class WinAnimationManager {
         return
       }
       
-      // Start the frame-by-frame animation
-      this.animateSymbolFrames(symbolSprite, winFrames, animationKey)
+      // Start the frame-by-frame animation with win-type-specific speed
+      const animationSpeed = winConfig ? getAnimationSpeed(winConfig.type) : this.config.symbolAnimationFPS
+      this.animateSymbolFrames(symbolSprite, winFrames, animationKey, animationSpeed)
     })
   }
 
@@ -200,10 +214,11 @@ export class WinAnimationManager {
   private animateSymbolFrames(
     symbolSprite: Sprite, 
     frames: Texture[], 
-    animationKey: string
+    animationKey: string,
+    customSpeed?: number
   ): void {
     let currentFrame = 0
-    const frameInterval = 1000 / this.config.symbolAnimationFPS // Convert FPS to ms
+    const frameInterval = customSpeed || (1000 / this.config.symbolAnimationFPS) // Use custom speed or default
     
     const animate = () => {
       // Check if animation should stop
@@ -350,11 +365,17 @@ export class WinAnimationManager {
 
   // Draw win information text
   private drawWinInfo(container: Container, winLine: WinLine): void {
-    const text = new Text(`${winLine.count}x ${winLine.symbol}\n$${winLine.payout.toFixed(2)}`, {
+    // Classify this specific win line to get appropriate color
+    const winConfig = getWinConfig(winLine.payout, this.config.currentBet, [winLine])
+    const winTypeText = formatWinType(winConfig.type)
+    const winColor = getWinColor(winConfig.type)
+    
+    const text = new Text(`${winTypeText}\n${winLine.count}x ${winLine.symbol}\n$${winLine.payout.toFixed(2)}`, {
       fontFamily: 'Arial',
       fontSize: 24,
-      fill: 0xFFFFFF,
-      align: 'center'
+      fill: winColor,
+      align: 'center',
+      stroke: { color: 0x000000, width: 2 }
     })
     
     text.anchor.set(0.5)
@@ -628,7 +649,8 @@ export const DEFAULT_WIN_ANIMATION_CONFIG: WinAnimationConfig = {
   winCountDuration: 2500, // 2.5 seconds
   winAnimationSteps: 50,
   enableWinAnimations: true,
-  autoCollectDelay: 10000 // 10 seconds
+  autoCollectDelay: 10000, // 10 seconds
+  currentBet: 1.00 // Default bet amount for win classification
 }
 
 // Payline colors
