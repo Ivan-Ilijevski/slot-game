@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 import { formatCurrency } from '../config/currency'
 import MobileController from '../components/game/MobileController'
-import { getWinConfig, playWinSound, getAnimationSpeed, formatWinType, getWinColor } from '../utils/winSystem'
+import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence, updateGambleModeState, startWinCountingSound, stopWinCountingSound } from '../utils/winSystem'
 
 // Dynamic import for PIXI Sound to avoid SSR issues
 let sound: {
@@ -193,6 +193,86 @@ export default function Home() {
     isWinAnimatingRef.current = false
   }, [pendingWin])
 
+  // Function to stop all sounds immediately (for gamble mode and takeWin)
+  const stopAllSounds = useCallback(() => {
+    console.log('🔇 Stopping all sounds')
+    
+    // Stop wild expansion sound timeout
+    if (wildExpansionSoundTimeoutRef.current) {
+      clearTimeout(wildExpansionSoundTimeoutRef.current)
+      wildExpansionSoundTimeoutRef.current = null
+      console.log('  ✓ Stopped wild expansion sound timeout')
+    }
+    
+    // Stop all win sound sequences
+    stopWinSoundSequence()
+    console.log('  ✓ Stopped win sound sequences')
+    
+    // Stop win counting sounds
+    if (sound) {
+      stopWinCountingSound(sound)
+      console.log('  ✓ Stopped win counting sounds')
+    }
+    
+    console.log('🔇 All sounds stopped')
+  }, [])
+
+  // Function to complete all animations to final state (for gamble mode)
+  const completeAllAnimations = useCallback(() => {
+    console.log('⚡ Completing all animations to final state')
+    
+    // Complete win counting animation to final amount
+    if (winAnimationRef.current) {
+      clearInterval(winAnimationRef.current)
+      winAnimationRef.current = null
+      console.log('  ✓ Completed win counting animation')
+    }
+    
+    // Complete wild expansion animations instantly
+    if (animationsRunningRef.current.size > 0 && completeWildExpansionsRef.current) {
+      console.log('  ✓ Completing wild expansions instantly')
+      completeWildExpansionsRef.current()
+    }
+    
+    // Clear animation timeouts but set final states
+    if (winCycleIntervalRef.current) {
+      clearTimeout(winCycleIntervalRef.current)
+      winCycleIntervalRef.current = null
+      console.log('  ✓ Cleared win cycle interval')
+    }
+    
+    if (autoCollectTimeoutRef.current) {
+      clearTimeout(autoCollectTimeoutRef.current)
+      autoCollectTimeoutRef.current = null
+      console.log('  ✓ Cleared auto-collect timeout')
+    }
+    
+    // Clear wild expansion timeout to prevent delayed win animations
+    if (wildExpansionTimeoutRef.current) {
+      clearTimeout(wildExpansionTimeoutRef.current)
+      wildExpansionTimeoutRef.current = null
+      console.log('  ✓ Cleared wild expansion timeout')
+    }
+    
+    // Clear pending win lines to prevent win animations
+    pendingWinLinesRef.current = null
+    console.log('  ✓ Cleared pending win lines')
+    
+    // Set win amount to final value
+    if (pendingWinRef.current > 0) {
+      setAnimatedWinAmount(pendingWinRef.current)
+      console.log('  ✓ Set win amount to final value:', pendingWinRef.current)
+    }
+    
+    // Reset animation states to complete
+    isWinAnimatingRef.current = false
+    setIsWinAnimating(false)
+    setHasRunningAnimations(false)
+    
+    console.log('⚡ All animations completed to final state')
+  }, [])
+
+
   // Function to take win immediately (skip slow animations)
   const takeWin = useCallback(() => {
     console.log('Take win triggered - skipping slow animations')
@@ -201,50 +281,14 @@ export default function Home() {
       // Mark that take win is active to distinguish from new spin cancellations
       takeWinActiveRef.current = true
       
-      // Instantly set win amount to final value (skip counting animation)
-      if (winAnimationRef.current) {
-        clearInterval(winAnimationRef.current)
-        winAnimationRef.current = null
-      }
-      setAnimatedWinAmount(pendingWin)
+      // Complete ALL animations to final state (don't stop them entirely)
+      completeAllAnimations()
       
-      // Stop wild expansion sound if playing
-      if (sound) {
-        sound.stop('winSound')
-      }
-      if (wildExpansionSoundTimeoutRef.current) {
-        clearTimeout(wildExpansionSoundTimeoutRef.current)
-        wildExpansionSoundTimeoutRef.current = null
-      }
+      // Stop only sounds (animations are completed, not stopped)
+      stopAllSounds()
       
-      // Complete any running wild expansions FIRST before triggering win highlights
-      if (animationsRunningRef.current.size > 0 && completeWildExpansionsRef.current) {
-        console.log('Completing wild expansions for take win')
-        completeWildExpansionsRef.current()
-      } else {
-        // If no wild animations, just clear the running animations set
-        animationsRunningRef.current.clear()
-      }
-      
-      // Cancel wild expansion delay timeout if it exists and trigger win highlights AFTER wild completion
-      if (wildExpansionTimeoutRef.current) {
-        clearTimeout(wildExpansionTimeoutRef.current)
-        wildExpansionTimeoutRef.current = null
-        console.log('Cancelled wild expansion delay timeout')
-        
-        // Immediately trigger win highlights that were waiting for wild expansions
-        // This now happens AFTER wild symbols have been converted
-        if (pendingWinLinesRef.current && showWinHighlightsRef.current) {
-          console.log('🚀 Take win - immediately triggering pending win highlights (after wild conversion)')
-          showWinHighlightsRef.current(pendingWinLinesRef.current)
-          pendingWinLinesRef.current = null
-        }
-      }
-      
-      // Reset take win flag after completing expansions
+      // Reset take win flag after completing all animations
       takeWinActiveRef.current = false
-      
-      // Note: Win highlights will be triggered by the normal flow after wild completion
       
       // Immediately start auto-collect timeout (shortened)
       if (autoCollectTimeoutRef.current) {
@@ -260,7 +304,7 @@ export default function Home() {
       // Mark that we're no longer in slow animation phase
       isWinAnimatingRef.current = false
     }
-  }, [pendingWin])
+  }, [pendingWin, completeAllAnimations, stopAllSounds])
 
   // Function to start auto-collect timeout
   const startAutoCollectTimeout = useCallback(() => {
@@ -293,6 +337,8 @@ export default function Home() {
       return
     }
 
+    // Counting sound will be triggered during the actual counting animation
+
     // Mark that win animations are active
     isWinAnimatingRef.current = true
     console.log('💰 Win animations started - press SPACE to take win and skip slow animations')
@@ -302,6 +348,11 @@ export default function Home() {
     const increment = targetAmount / steps
     const stepDuration = duration / steps
     let currentStep = 0
+    
+    // Start counting sound when win amount starts counting up
+    if (sound) {
+      startWinCountingSound(sound)
+    }
 
     winAnimationRef.current = setInterval(() => {
       currentStep++
@@ -313,6 +364,11 @@ export default function Home() {
         clearInterval(winAnimationRef.current!)
         winAnimationRef.current = null
         
+        // Stop counting sound when animation completes
+        if (sound) {
+          stopWinCountingSound(sound)
+        }
+        
         // Mark that slow animations are complete
         isWinAnimatingRef.current = false
         
@@ -321,6 +377,7 @@ export default function Home() {
       }
     }, stepDuration)
   }, [startAutoCollectTimeout])
+
 
   // Update refs when state or function changes
   useEffect(() => {
@@ -425,19 +482,19 @@ export default function Home() {
     if (pendingWin > 0 && !isSpinningRef.current) {
       console.log('Entering gamble mode with amount:', pendingWin)
       
-      // Stop all other sounds before starting gamble mode
+      // Complete animations to final state (don't stop them entirely)
+      completeAllAnimations()
+      
+      // Stop all sounds immediately
+      stopAllSounds()
       if (sound) {
         sound.stopAll()
       }
       
-      // Clear any sound timeouts
+      // Clear any remaining sound timeouts
       if (soundTimeoutRef.current) {
         clearTimeout(soundTimeoutRef.current)
         soundTimeoutRef.current = null
-      }
-      if (wildExpansionSoundTimeoutRef.current) {
-        clearTimeout(wildExpansionSoundTimeoutRef.current)
-        wildExpansionSoundTimeoutRef.current = null
       }
       
       setIsGambleMode(true)
@@ -446,6 +503,9 @@ export default function Home() {
       setSelectedColor(null)
       setCardColor(null)
       isGambleModeRef.current = true
+      
+      // Update gamble mode state for win sound system
+      updateGambleModeState(true)
       
       // Show gamble UI
       if (gambleContainerRef.current && appRef.current) {
@@ -477,7 +537,7 @@ export default function Home() {
         autoCollectTimeoutRef.current = null
       }
     }
-  }, [pendingWin, startCardFlashing])
+  }, [pendingWin, startCardFlashing, completeAllAnimations, stopAllSounds])
 
   const exitGambleMode = useCallback(() => {
     console.log('Exiting gamble mode')
@@ -498,6 +558,13 @@ export default function Home() {
     setSelectedColor(null)
     setCardColor(null)
     isGambleModeRef.current = false
+    
+    // Reset gamble mode state for win sounds
+    updateGambleModeState(false)
+    
+    // Clear any pending win lines to prevent win animations after gamble
+    pendingWinLinesRef.current = null
+    console.log('🚫 Cleared pending win lines - no win animations will play after gamble')
     
     // Stop card flashing
     stopCardFlashing()
@@ -1597,9 +1664,10 @@ export default function Home() {
               const originalBounceEndTime = bounceEndTimes[index]
               let spinDuration = originalSpinDuration
               let bounceEndTime = originalBounceEndTime
-              const spinSpeed = 40
+              const spinSpeed = 4200 // PIXI pixels per second (equivalent to ~70px/frame at 60fps)
               let soundPlayed = false
               let acceleratedMode = false
+              let tickerFunction: ((ticker: any) => void) | null = null
               
               // Add fewer extra symbols for spinning effect (reduced from 5+5 to 2+2)
               const originalSymbolCount = reel.children.length - 2 // -2 for mask and overshoot symbol
@@ -1635,7 +1703,8 @@ export default function Home() {
               let elapsed = 0
               const startTime = Date.now()
               
-              const animate = () => {
+              // PIXI Ticker-based animation function
+              const animate = (ticker: any) => {
                 elapsed = Date.now() - startTime
                 
                 // Check for stop request during spinning (only allow stops during spin phase, not bounce)
@@ -1663,17 +1732,19 @@ export default function Home() {
                 
                 if (elapsed < bounceEndTime) {
                   if (elapsed < spinDuration) {
-                    // Spin the reel at full speed until bounce starts
+                    // Spin the reel using PIXI ticker delta time for smooth animation
                     // Skip mask (index 0) and overshoot symbol (index 1)
+                    const deltaMovement = spinSpeed * ticker.deltaMS / 1000 // Convert to pixels per second
+                    
                     for (let i = 2; i < reel.children.length; i++) {
                       const symbol = reel.children[i]
-                      symbol.y += spinSpeed
+                      symbol.y += deltaMovement
                       // When symbol goes below visible area, wrap it to the top seamlessly
                       if (symbol.y >= (SYMBOLS_PER_REEL + 2) * SYMBOL_HEIGHT) {
                         symbol.y -= (SYMBOLS_PER_REEL + 4) * SYMBOL_HEIGHT
                       }
                     }
-                    requestAnimationFrame(animate)
+                    // Continue animation (ticker will call this function again)
                   } else {
                     // Continuous bounce phase - from overshoot back to final position
                     
@@ -1766,7 +1837,7 @@ export default function Home() {
                       reel.children[i].y = targetY + bounceOffset
                     }
                     
-                    requestAnimationFrame(animate)
+                    // Continue animation (ticker will call this function again)
                   }
                 } else {
                   // Bounce complete - ensure final positions are exact
@@ -1785,6 +1856,12 @@ export default function Home() {
                   if (!reelsStoppedRef.current[index]) {
                     reelsStoppedRef.current[index] = true
                     reelsStoppedCountRef.current++
+                  }
+                  
+                  // Remove ticker function when animation is complete
+                  if (tickerFunction && appRef.current) {
+                    appRef.current.ticker.remove(tickerFunction)
+                    tickerFunction = null
                   }
                   
                   // Check if all reels have finished bouncing
@@ -1832,21 +1909,35 @@ export default function Home() {
                         pendingWinLinesRef.current = serverResults.winLines
                         
                         wildExpansionTimeoutRef.current = setTimeout(() => {
-                          showWinHighlights(serverResults.winLines)
+                          // Only show win highlights if not in gamble mode
+                          if (!isGambleModeRef.current) {
+                            showWinHighlights(serverResults.winLines)
+                          } else {
+                            console.log('🚫 Skipping win highlights - gamble mode active')
+                          }
                           wildExpansionTimeoutRef.current = null
                           pendingWinLinesRef.current = null
                         }, 2500)
                       } else {
                         // No wild expansions, start win animations immediately
-                        console.log('✨ No wild expansions, starting win animations immediately')
-                        showWinHighlights(serverResults.winLines)
+                        // But only if not in gamble mode
+                        if (!isGambleModeRef.current) {
+                          console.log('✨ No wild expansions, starting win animations immediately')
+                          showWinHighlights(serverResults.winLines)
+                        } else {
+                          console.log('🚫 Skipping win animations - gamble mode active')
+                        }
                       }
                     }
                   }
                 }
               }
               
-              animate()
+              // Set up PIXI ticker for smooth animation
+              tickerFunction = animate
+              if (appRef.current) {
+                appRef.current.ticker.add(tickerFunction)
+              }
             }
           })
         }
@@ -2068,6 +2159,24 @@ export default function Home() {
               if (animationsRunningRef.current.size === 0) {
                 console.log('All expanding wild animations complete')
                 // Note: Don't reset isWinAnimatingRef here as win counting might still be running
+                
+                // Trigger win sound sequence now that wild expansions are complete
+                // But only if not in gamble mode
+                if (pendingWinRef.current > 0 && sound && !isGambleModeRef.current) {
+                  const totalWinAmount = pendingWinRef.current
+                  const winLines = pendingWinLinesRef.current || []
+                  console.log('🎵 Starting win sound sequence after wild expansion completion')
+                  startWinSoundSequence(
+                    totalWinAmount, 
+                    currentBetRef.current, 
+                    winLines, 
+                    sound,
+                    true, // hasWildExpansion = true
+                    isGambleMode
+                  )
+                } else if (isGambleModeRef.current) {
+                  console.log('🚫 Skipping win sound sequence - gamble mode active')
+                }
               }
               
               console.log(`Expanding wild animation complete for reel ${reelIndex} - ${symbolsToHide.length} symbols converted to wild`)
@@ -2398,15 +2507,29 @@ export default function Home() {
           console.log(`🎰 Win classified as: ${winConfig.type} (${winConfig.description})`)
           console.log(`💰 Win amount: $${totalWinAmount}, Bet: $${currentBetRef.current}, Multiplier: ${(totalWinAmount / currentBetRef.current).toFixed(2)}x`)
           
-          // Play appropriate win sound
-          if (sound) {
-            playWinSound(winConfig.type, sound)
+          // Trigger win sound sequence immediately if no wild expansions are happening
+          const hasWildExpansions = animationsRunningRef.current.size > 0
+          if (!hasWildExpansions && sound) {
+            console.log('🎵 Starting win sound sequence immediately (no wild expansions)')
+            startWinSoundSequence(
+              totalWinAmount, 
+              currentBetRef.current, 
+              winLines, 
+              sound,
+              false, // hasWildExpansion = false
+              isGambleMode
+            )
+          } else if (hasWildExpansions) {
+            console.log('🎵 Win sound sequence will start after wild expansions complete')
           }
 
           // Start win count-up animation synchronized with payline animations
-          if (pendingWinRef.current > 0 && animateWinRef.current) {
+          // But only if gamble mode is not active
+          if (pendingWinRef.current > 0 && animateWinRef.current && !isGambleMode) {
             console.log('🎰 Starting win count-up animation with paylines:', pendingWinRef.current)
             animateWinRef.current(pendingWinRef.current)
+          } else if (isGambleMode) {
+            console.log('🚫 Skipping win animation - gamble mode is active')
           }
           
           // First, collect all winning symbol positions from all winning lines

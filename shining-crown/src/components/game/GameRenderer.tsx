@@ -76,7 +76,7 @@ export function useGameRenderer({
   })
 
   // Sound play helper (defined early)
-  const playSound = useCallback((alias: string, options: unknown = {}) => {
+  const playSound = useCallback((alias: string, options: any = {}) => {
     soundManagerRef.current?.playCustomSound(alias, options)
   }, [])
 
