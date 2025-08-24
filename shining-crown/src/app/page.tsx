@@ -44,6 +44,7 @@ export default function Home() {
   const [pendingWin, setPendingWin] = useState(0) // Win amount waiting to be collected
   const [animatedWinAmount, setAnimatedWinAmount] = useState(0) // Animated display amount
   const [isAutoStart, setIsAutoStart] = useState(false) // Autostart feature toggle
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'mk'>('en') // Language for UI overlay
   
   // Gamble feature state
   const [isGambleMode, setIsGambleMode] = useState(false) // Whether gamble mode is active
@@ -83,6 +84,7 @@ export default function Home() {
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const uiUpdateRef = useRef<((balance: number, bet: number, win: number) => void) | null>(null)
   const denomTextRef = useRef<Text | null>(null)
+  const denomLabelTextRef = useRef<Text | null>(null)
   const creditDollarTextRef = useRef<Text | null>(null)
   const creditAmountTextRef = useRef<Text | null>(null)
   const betDollarTextRef = useRef<Text | null>(null)
@@ -107,6 +109,8 @@ export default function Home() {
   const wildExpansionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingWinLinesRef = useRef<{ payline: number, symbols: string[], count: number, symbol: string, payout: number }[] | null>(null)
   const showWinHighlightsRef = useRef<((winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => void) | null>(null)
+  const uiCabinetOverlayRef = useRef<Sprite | null>(null)
+  const updateOverlayRef = useRef<((newLanguage: 'en' | 'mk') => void) | null>(null)
   
   // Gamble feature refs
   const gambleContainerRef = useRef<Container | null>(null)
@@ -790,6 +794,26 @@ export default function Home() {
           cycleDenomination()
         }
       }
+      
+      // Language toggle (works in any mode)
+      if (event.code === 'KeyL') {
+        event.preventDefault()
+        event.stopPropagation()
+        console.log('🌐 L key pressed - toggling language')
+        setCurrentLanguage(prev => {
+          const newLang = prev === 'en' ? 'mk' : 'en'
+          console.log('🌐 Language toggled to:', newLang)
+          console.log('🔍 updateOverlayRef.current:', !!updateOverlayRef.current)
+          console.log('🔍 uiCabinetOverlayRef.current:', !!uiCabinetOverlayRef.current)
+          // Trigger overlay update
+          if (updateOverlayRef.current) {
+            updateOverlayRef.current(newLang)
+          } else {
+            console.error('❌ updateOverlayRef.current is null')
+          }
+          return newLang
+        })
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -801,7 +825,7 @@ export default function Home() {
   // Update denomination display when denomination changes
   useEffect(() => {
     if (denomTextRef.current) {
-      denomTextRef.current.text = `${formatCurrency(denomination)}\nCHANGE DENOM`
+      denomTextRef.current.text = formatCurrency(denomination)
     }
   }, [denomination])
 
@@ -932,7 +956,8 @@ export default function Home() {
           '/assets/07-0.json', // Seven win animation
           '/assets/09-0.json', // Star win animation
           '/assets/10-0.json', // Crown win animation
-          '/assets/ui-cabinet-overlay.png', // UI cabinet overlay
+          '/assets/ui-cabinet-overlay.png', // UI cabinet overlay (English)
+          '/assets/ui-cabinet-overlay-mk.png', // UI cabinet overlay (Macedonian)
           '/assets/gambleResources.json', // Gamble assets
           // Sound assets
           { alias: 'reelSound', src: '/assets/mobileMainSounds.mp3' },
@@ -1172,9 +1197,7 @@ export default function Home() {
           BET: { x: 950, y: UI_Y_BASE -20 },       // Adjust these coordinates to match overlay  
           WIN: { x: 1340, y: UI_Y_BASE-20},      // Adjust these coordinates to match overlay
           MORE_GAMES: { x: 100, y: UI_Y_BASE }, // Adjust these coordinates to match overlay
-          DENOM: { x: 275, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
-          INFO: { x: 1600, y: UI_Y_BASE },     // Adjust these coordinates to match overlay
-          FLAG: { x: 1740, y: UI_Y_BASE }      // Adjust these coordinates to match overlay
+          DENOM: { x: 275, y: UI_Y_BASE + 4 }     // Adjust these coordinates to match overlay
         }
         
         // Create PIXI-based UI elements container (will be added to stage after overlay)
@@ -1182,18 +1205,33 @@ export default function Home() {
         
         // Change Denomination button (no panel - using overlay)
         
-        const changeDenomText = new Text(`${formatCurrency(denomination)}\nCHANGE DENOM`, { 
+        // Large denomination number (top)
+        const denomNumberText = new Text(formatCurrency(denomination), { 
           fontFamily: 'Arial', 
-          fontSize: 28, 
+          fontSize: 32, // Larger font for denomination number
           fill: 0xFFFFFF, 
           fontWeight: 'bold' as const,
           align: 'center'
         })
-        changeDenomText.anchor.set(0.5)
-        changeDenomText.x = OVERLAY_POSITIONS.DENOM.x
-        changeDenomText.y = OVERLAY_POSITIONS.DENOM.y
-        denomTextRef.current = changeDenomText
-        uiContainer.addChild(changeDenomText)
+        denomNumberText.anchor.set(0.5)
+        denomNumberText.x = OVERLAY_POSITIONS.DENOM.x
+        denomNumberText.y = OVERLAY_POSITIONS.DENOM.y - 12 // Position higher
+        denomTextRef.current = denomNumberText
+        uiContainer.addChild(denomNumberText)
+        
+        // Smaller "CHANGE DENOM" label (bottom)
+        const denomLabelText = new Text('CHANGE DENOM', { 
+          fontFamily: 'Arial', 
+          fontSize: 18, // Smaller font for label
+          fill: 0xFFFFFF, 
+          fontWeight: 'normal' as const,
+          align: 'center'
+        })
+        denomLabelText.anchor.set(0.5)
+        denomLabelText.x = OVERLAY_POSITIONS.DENOM.x
+        denomLabelText.y = OVERLAY_POSITIONS.DENOM.y + 20 // Position lower
+        denomLabelTextRef.current = denomLabelText
+        uiContainer.addChild(denomLabelText)
         
         // CENTER: CREDIT display (no panel - using overlay)
         
@@ -1311,30 +1349,7 @@ export default function Home() {
         winAmountText.y = OVERLAY_POSITIONS.WIN.y +10
         uiContainer.addChild(winAmountText)
         
-        // RIGHT SIDE: Info button (no panel - using overlay)
         
-        const infoText = new Text('i', {
-          fontFamily: 'Arial',
-          fontSize: 32,
-          fill: 0xFFFFFF,
-          fontWeight: 'bold' as const
-        })
-        infoText.anchor.set(0.5)
-        infoText.x = OVERLAY_POSITIONS.INFO.x
-        infoText.y = OVERLAY_POSITIONS.INFO.y
-        uiContainer.addChild(infoText)
-        
-        // Language flag (no panel - using overlay)
-        
-        const flagText = new Text('🇬🇧', {
-          fontFamily: 'Arial',
-          fontSize: 24,
-          fill: 0xFFFFFF
-        })
-        flagText.anchor.set(0.5)
-        flagText.x = OVERLAY_POSITIONS.FLAG.x
-        flagText.y = OVERLAY_POSITIONS.FLAG.y
-        uiContainer.addChild(flagText)
         
         // Autostart indicator
         const autoStartText = new Text('AUTO', {
@@ -1366,12 +1381,14 @@ export default function Home() {
         app.stage.addChild(rightLinesIndicator)
 
         // UI Cabinet overlay - full screen overlay (loaded directly as PNG) - ADD BEFORE UI ELEMENTS
-        const uiCabinetTexture = Assets.cache.get('/assets/ui-cabinet-overlay.png')
+        const overlayPath = currentLanguage === 'en' ? '/assets/ui-cabinet-overlay.png' : '/assets/ui-cabinet-overlay-mk.png'
+        const uiCabinetTexture = Assets.cache.get(overlayPath)
         const uiCabinetOverlay = new Sprite(uiCabinetTexture)
         uiCabinetOverlay.width = 1920
         uiCabinetOverlay.height = 1080
         uiCabinetOverlay.x = 0
         uiCabinetOverlay.y = 0
+        uiCabinetOverlayRef.current = uiCabinetOverlay
         app.stage.addChild(uiCabinetOverlay)
 
         // Reel border overlay - centered and scaled
@@ -2026,6 +2043,31 @@ export default function Home() {
         
         // Set the ref for external access
         completeWildExpansionsRef.current = completeWildExpansions
+
+        // Function to update overlay language
+        const updateOverlay = (newLanguage: 'en' | 'mk') => {
+          console.log('🔧 updateOverlay called with:', newLanguage)
+          console.log('🔍 uiCabinetOverlayRef.current:', !!uiCabinetOverlayRef.current)
+          console.log('🔍 app:', !!app)
+          console.log('🔍 Assets.cache:', !!Assets.cache)
+          
+          if (uiCabinetOverlayRef.current && app && Assets.cache) {
+            const overlayPath = newLanguage === 'en' ? '/assets/ui-cabinet-overlay.png' : '/assets/ui-cabinet-overlay-mk.png'
+            console.log('🔍 Loading texture from:', overlayPath)
+            const newTexture = Assets.cache.get(overlayPath)
+            console.log('🔍 New texture:', !!newTexture)
+            
+            if (newTexture) {
+              uiCabinetOverlayRef.current.texture = newTexture
+              console.log('✅ Overlay updated to:', newLanguage)
+            } else {
+              console.error('❌ Failed to load overlay texture for language:', newLanguage, 'from path:', overlayPath)
+            }
+          } else {
+            console.error('❌ Missing required refs/objects for overlay update')
+          }
+        }
+        updateOverlayRef.current = updateOverlay
 
         // Function to animate expanding wild
         const animateExpandingWild = (wildSymbol: Sprite, reelIndex: number) => {
@@ -2951,7 +2993,23 @@ export default function Home() {
           enterGambleMode: () => enterGambleMode(),
           chooseGambleColor: (color: 'red' | 'black') => chooseGambleColor(color),
           collectGambleWin: () => collectGambleWin(),
-          toggleAutoStart: () => setIsAutoStart(prev => !prev)
+          toggleAutoStart: () => setIsAutoStart(prev => !prev),
+          toggleLanguage: () => {
+            console.log('🌐 toggleLanguage called')
+            setCurrentLanguage(prev => {
+              const newLang = prev === 'en' ? 'mk' : 'en'
+              console.log('🌐 Language toggled to:', newLang)
+              console.log('🔍 updateOverlayRef.current:', !!updateOverlayRef.current)
+              console.log('🔍 uiCabinetOverlayRef.current:', !!uiCabinetOverlayRef.current)
+              // Trigger overlay update
+              if (updateOverlayRef.current) {
+                updateOverlayRef.current(newLang)
+              } else {
+                console.error('❌ updateOverlayRef.current is null')
+              }
+              return newLang
+            })
+          }
         }}
       />
     </div>

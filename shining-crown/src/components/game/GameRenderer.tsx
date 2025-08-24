@@ -33,21 +33,22 @@ const GAME_ASSETS = [
   { alias: 'reelAtlas', src: '/assets/reelImages.json' },
   { alias: 'backgroundAtlas', src: '/assets/background.json' },
   
-  // UI Textures
-  '/assets/ui-cabinet-overlay.png'
+  // UI Textures (both language variants)
+  { alias: 'uiOverlayEN', src: '/assets/ui-cabinet-overlay.png' },
+  { alias: 'uiOverlayMK', src: '/assets/ui-cabinet-overlay-mk.png' }
   
   // Note: Sound files are handled separately by SoundManager
 ]
 
-// Background configuration
-const BACKGROUND_CONFIG = {
+// Dynamic background configuration function
+const getBackgroundConfig = (language: 'en' | 'mk') => ({
   main: 'backgroundAtlas',
   reel: 'mainAtlas', 
-  overlay: '/assets/ui-cabinet-overlay.png',
+  overlay: language === 'en' ? 'uiOverlayEN' : 'uiOverlayMK',
   border: 'mainAtlas',
   borderScale: 1.30,
   borderOffset: { x: 0, y: 0 }
-}
+})
 
 export function useGameRenderer({
   gameConfig = {},
@@ -67,6 +68,7 @@ export function useGameRenderer({
   // Game state
   const [isInitialized, setIsInitialized] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'mk'>('en')
   const [gameState, setGameState] = useState({
     balance: initialBalance,
     lastWin: 0,
@@ -80,10 +82,10 @@ export function useGameRenderer({
     soundManagerRef.current?.playCustomSound(alias, options)
   }, [])
 
-  // Initialize PIXI canvas
+  // Initialize PIXI canvas with dynamic background config
   const canvas = usePIXICanvas({
     gameConfig: config,
-    backgroundConfig: BACKGROUND_CONFIG,
+    backgroundConfig: getBackgroundConfig(currentLanguage),
     assetList: GAME_ASSETS,
     onAppReady: handleAppReady,
     onAssetsLoaded: handleAssetsLoaded,
@@ -157,6 +159,10 @@ export function useGameRenderer({
         } else {
           autoplay.startAutoplay()
         }
+      },
+      toggleLanguage: () => {
+        setCurrentLanguage(prev => prev === 'en' ? 'mk' : 'en')
+        console.log('🌐 Language toggled to:', currentLanguage === 'en' ? 'mk' : 'en')
       }
     }
   })

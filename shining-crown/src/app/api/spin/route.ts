@@ -86,7 +86,7 @@ function loadGameData() {
   const assetsPath = path.join(process.cwd(), 'public', 'assets')
   
   // Load virtual reels
-  const virtualReelsPath = path.join(assetsPath, 'reels_rtp91_boosted.json')
+  const virtualReelsPath = path.join(assetsPath, 'virtual_reels_handcrafted.json')
   virtualReels = JSON.parse(fs.readFileSync(virtualReelsPath, 'utf8'))
   
   // Load symbol mapping

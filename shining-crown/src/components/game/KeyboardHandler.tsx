@@ -20,6 +20,9 @@ export interface KeyboardActions {
   
   // Autoplay actions
   toggleAutoStart: () => void
+  
+  // Language actions
+  toggleLanguage: () => void
 }
 
 export interface GameState {
@@ -60,7 +63,8 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [
   { key: 'R', description: 'Max bet / Enter gamble / Choose red', context: 'No pending win / Pending win / Gamble mode', action: 'Red action' },
   { key: 'B', description: 'Cycle bet / Enter gamble / Choose black', context: 'No pending win / Pending win / Gamble mode', action: 'Black/Bet action' },
   { key: 'D', description: 'Cycle denomination', context: 'Normal mode', action: 'Denomination' },
-  { key: 'P', description: 'Toggle autostart', context: 'Any mode', action: 'Autoplay' }
+  { key: 'P', description: 'Toggle autostart', context: 'Any mode', action: 'Autoplay' },
+  { key: 'L', description: 'Toggle language (overlay)', context: 'Any mode', action: 'Language toggle' }
 ]
 
 export function useKeyboardHandler({
@@ -166,6 +170,22 @@ export function useKeyboardHandler({
         }
         if (logKeyPresses) console.log('D key pressed, calling cycleDenomination()')
         actions.cycleDenomination()
+      }
+    }
+    
+    // Language toggle (works in any mode)
+    if (event.code === 'KeyL') {
+      console.log('🎯 KeyL detected in component handler')
+      console.log('🔍 actions.toggleLanguage:', !!actions.toggleLanguage)
+      if (preventDefaults) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      if (logKeyPresses) console.log('L key pressed - toggling language')
+      if (actions.toggleLanguage) {
+        actions.toggleLanguage()
+      } else {
+        console.error('❌ actions.toggleLanguage is not available')
       }
     }
   }, [enabled, preventDefaults, logKeyPresses])
