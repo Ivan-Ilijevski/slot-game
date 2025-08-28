@@ -5,6 +5,7 @@ import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 import { formatCurrency } from '../config/currency'
 import MobileController from '../components/game/MobileController'
 import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence, updateGambleModeState, startWinCountingSound, stopWinCountingSound } from '../utils/winSystem'
+import { WebSocketClient } from '../lib/websocketClient'
 
 // Dynamic import for PIXI Sound to avoid SSR issues
 let sound: {
@@ -122,8 +123,13 @@ export default function Home() {
   const gambleWinTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const gambleLoseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Ref to store current bet amount to avoid stale closures
+  // WebSocket client for remote control
+  const wsClient = useRef<WebSocketClient | null>(null)
+  
+  // Refs to store current values to avoid stale closures in WebSocket handlers
   const currentBetRef = useRef<number>(currentBet)
+  const denominationRef = useRef<number>(denomination)
+  const gambleStageRef = useRef<'choice' | 'reveal' | 'result'>(gambleStage)
 
   // Helper function to check if bet controls should be disabled
   const isBetControlsDisabled = useCallback(() => {
@@ -157,7 +163,6 @@ export default function Home() {
     const currentIndex = BET_OPTIONS.indexOf(currentBet)
     const nextIndex = (currentIndex + 1) % BET_OPTIONS.length
     const newBet = BET_OPTIONS[nextIndex]
-    console.log(`Cycling bet: currentBet=$${currentBet}, currentIndex=${currentIndex}, nextIndex=${nextIndex}, newBet=$${newBet}`)
     setCurrentBet(newBet)
   }, [currentBet, BET_OPTIONS, isBetControlsDisabled])
 
@@ -166,14 +171,11 @@ export default function Home() {
     const currentIndex = DENOMINATION_OPTIONS.indexOf(denomination)
     const nextIndex = (currentIndex + 1) % DENOMINATION_OPTIONS.length
     const newDenomination = DENOMINATION_OPTIONS[nextIndex]
-    console.log(`Cycling denomination: current=$${denomination.toFixed(2)}, next=$${newDenomination.toFixed(2)}`)
-    console.log(`Sample conversion: $100 = ${Math.round(100 / newDenomination)} credits at $${newDenomination.toFixed(2)} denom`)
     setDenomination(newDenomination)
   }, [denomination, DENOMINATION_OPTIONS, isBetControlsDisabled])
 
   // Function to collect pending win
   const collectWin = useCallback(() => {
-    console.log(`Collecting win: $${pendingWin}`)
     
     if (pendingWin > 0) {
       // Balance is already updated by the server in the spin response
@@ -199,42 +201,34 @@ export default function Home() {
 
   // Function to stop all sounds immediately (for gamble mode and takeWin)
   const stopAllSounds = useCallback(() => {
-    console.log('🔇 Stopping all sounds')
     
     // Stop wild expansion sound timeout
     if (wildExpansionSoundTimeoutRef.current) {
       clearTimeout(wildExpansionSoundTimeoutRef.current)
       wildExpansionSoundTimeoutRef.current = null
-      console.log('  ✓ Stopped wild expansion sound timeout')
     }
     
     // Stop all win sound sequences
     stopWinSoundSequence()
-    console.log('  ✓ Stopped win sound sequences')
     
     // Stop win counting sounds
     if (sound) {
       stopWinCountingSound(sound)
-      console.log('  ✓ Stopped win counting sounds')
     }
     
-    console.log('🔇 All sounds stopped')
   }, [])
 
   // Function to complete all animations to final state (for gamble mode)
   const completeAllAnimations = useCallback(() => {
-    console.log('⚡ Completing all animations to final state')
     
     // Complete win counting animation to final amount
     if (winAnimationRef.current) {
       clearInterval(winAnimationRef.current)
       winAnimationRef.current = null
-      console.log('  ✓ Completed win counting animation')
     }
     
     // Complete wild expansion animations instantly
     if (animationsRunningRef.current.size > 0 && completeWildExpansionsRef.current) {
-      console.log('  ✓ Completing wild expansions instantly')
       completeWildExpansionsRef.current()
     }
     
@@ -242,30 +236,25 @@ export default function Home() {
     if (winCycleIntervalRef.current) {
       clearTimeout(winCycleIntervalRef.current)
       winCycleIntervalRef.current = null
-      console.log('  ✓ Cleared win cycle interval')
     }
     
     if (autoCollectTimeoutRef.current) {
       clearTimeout(autoCollectTimeoutRef.current)
       autoCollectTimeoutRef.current = null
-      console.log('  ✓ Cleared auto-collect timeout')
     }
     
     // Clear wild expansion timeout to prevent delayed win animations
     if (wildExpansionTimeoutRef.current) {
       clearTimeout(wildExpansionTimeoutRef.current)
       wildExpansionTimeoutRef.current = null
-      console.log('  ✓ Cleared wild expansion timeout')
     }
     
     // Clear pending win lines to prevent win animations
     pendingWinLinesRef.current = null
-    console.log('  ✓ Cleared pending win lines')
     
     // Set win amount to final value
     if (pendingWinRef.current > 0) {
       setAnimatedWinAmount(pendingWinRef.current)
-      console.log('  ✓ Set win amount to final value:', pendingWinRef.current)
     }
     
     // Reset animation states to complete
@@ -273,13 +262,11 @@ export default function Home() {
     setIsWinAnimating(false)
     setHasRunningAnimations(false)
     
-    console.log('⚡ All animations completed to final state')
   }, [])
 
 
   // Function to take win immediately (skip slow animations)
   const takeWin = useCallback(() => {
-    console.log('Take win triggered - skipping slow animations')
     
     if (pendingWin > 0) {
       // Mark that take win is active to distinguish from new spin cancellations
@@ -299,7 +286,6 @@ export default function Home() {
         clearTimeout(autoCollectTimeoutRef.current)
       }
       autoCollectTimeoutRef.current = setTimeout(() => {
-        console.log('Auto-collecting win after take win')
         if (collectWinRef.current) {
           collectWinRef.current()
         }
@@ -312,7 +298,6 @@ export default function Home() {
 
   // Function to start auto-collect timeout
   const startAutoCollectTimeout = useCallback(() => {
-    console.log('Starting auto-collect timeout (10 seconds)')
     
     // Clear any existing timeout
     if (autoCollectTimeoutRef.current) {
@@ -320,14 +305,12 @@ export default function Home() {
     }
 
     autoCollectTimeoutRef.current = setTimeout(() => {
-      console.log('Auto-collecting win due to timeout')
       collectWin()
-    }, 10000) // 10 seconds
+    }, 30000) // 30 seconds - more time for gamble mode
   }, [collectWin])
 
   // Function to animate win amount counting up
   const animateWinAmount = useCallback((targetAmount: number) => {
-    console.log(`Starting win animation from 0 to $${targetAmount}`)
     
     // Clear any existing animation
     if (winAnimationRef.current) {
@@ -345,7 +328,6 @@ export default function Home() {
 
     // Mark that win animations are active
     isWinAnimatingRef.current = true
-    console.log('💰 Win animations started - press SPACE to take win and skip slow animations')
 
     const duration = 2000 // 2 seconds animation
     const steps = 50 // Number of animation steps
@@ -393,6 +375,14 @@ export default function Home() {
   }, [currentBet])
 
   useEffect(() => {
+    denominationRef.current = denomination
+  }, [denomination])
+
+  useEffect(() => {
+    gambleStageRef.current = gambleStage
+  }, [gambleStage])
+
+  useEffect(() => {
     animateWinRef.current = animateWinAmount
   }, [animateWinAmount])
 
@@ -415,7 +405,6 @@ export default function Home() {
     const playGambleSoundLoop = () => {
       if (gambleSoundLoopIntervalRef.current) {
         loopCount++
-        console.log(`🎵 Playing gamble sound loop #${loopCount}`)
         
         // Play the sound starting at 13 seconds for 400ms duration
         if (sound) {
@@ -484,7 +473,6 @@ export default function Home() {
   // Gamble feature functions
   const enterGambleMode = useCallback(() => {
     if (pendingWin > 0 && !isSpinningRef.current) {
-      console.log('Entering gamble mode with amount:', pendingWin)
       
       // Complete animations to final state (don't stop them entirely)
       completeAllAnimations()
@@ -544,7 +532,6 @@ export default function Home() {
   }, [pendingWin, startCardFlashing, completeAllAnimations, stopAllSounds])
 
   const exitGambleMode = useCallback(() => {
-    console.log('Exiting gamble mode')
     
     // Clear any pending gamble timeouts first
     if (gambleWinTimeoutRef.current) {
@@ -568,7 +555,6 @@ export default function Home() {
     
     // Clear any pending win lines to prevent win animations after gamble
     pendingWinLinesRef.current = null
-    console.log('🚫 Cleared pending win lines - no win animations will play after gamble')
     
     // Stop card flashing
     stopCardFlashing()
@@ -580,7 +566,6 @@ export default function Home() {
   }, [stopCardFlashing])
 
   const collectGambleWin = useCallback(() => {
-    console.log(`Collecting gamble win: $${gambleAmount}`)
     
     // Add the gamble amount to balance (server will handle this later)
     setTotalBalance(prev => prev + gambleAmount)
@@ -594,8 +579,6 @@ export default function Home() {
 
   const chooseGambleColor = useCallback((color: 'red' | 'black') => {
     if (gambleStage === 'choice' && gambleContainerRef.current) {
-      console.log('🎴 FUNCTION START: chooseGambleColor called with color =', color, typeof color)
-      console.log('Player chose:', color)
       setSelectedColor(color)
       setGambleStage('reveal')
       
@@ -625,9 +608,6 @@ export default function Home() {
         const availableCards = cardTextures[randomColor] || cardTextures.red
         const randomCardTexture = availableCards[Math.floor(Math.random() * availableCards.length)]
         
-        console.log(`🎴 Gamble Debug: Player chose ${color}, card is ${randomColor}, showing texture ${randomCardTexture}, should ${color === randomColor ? 'WIN' : 'LOSE'}`)
-        console.log(`🎴 Current mapping - Red textures: cardFront0.png, cardFront2.png | Black textures: cardFront1.png, cardFront3.png`)
-        console.log(`🎴 If this is wrong, the mapping needs to be flipped!`)
         
         setTimeout(() => {
           // Hide face-down card, show face-up card
@@ -639,8 +619,6 @@ export default function Home() {
       
       // Determine win/lose
       const won = color === randomColor
-      console.log(`🎴 WIN/LOSS LOGIC: Player chose "${color}", Random card is "${randomColor}", Match: ${color === randomColor}, Result: ${won ? 'WON' : 'LOST'}`)
-      console.log(`🎴 DETAILED: color variable = "${color}", randomColor variable = "${randomColor}", comparison = ${color} === ${randomColor} = ${color === randomColor}`)
       
       setTimeout(() => {
         setGambleStage('result')
@@ -660,7 +638,6 @@ export default function Home() {
         }
             elements.gambleAmountText.text = formatCurrency(newAmount)
             elements.instructionsText.text = 'You won! Starting next round... Press Space to collect'
-            console.log('Gamble won! New amount:', newAmount)
             
             // Auto-continue to next gamble round after showing win
             gambleWinTimeoutRef.current = setTimeout(() => {
@@ -695,7 +672,6 @@ export default function Home() {
             }
             elements.gambleAmountText.text = formatCurrency(0)
             elements.instructionsText.text = 'You lost! Better luck next time.'
-            console.log('Gamble lost! Amount reset to 0')
             
             // Exit gamble mode after a short delay
             gambleLoseTimeoutRef.current = setTimeout(() => {
@@ -737,31 +713,40 @@ export default function Home() {
         }
       }, 800)
       
-      console.log('💸 Insufficient funds - flashing credit display')
     }
+  }, [])
+
+  // Language toggle function - used by both L key and WebSocket commands
+  const toggleLanguage = useCallback(() => {
+    setCurrentLanguage(prev => {
+      const newLang = prev === 'en' ? 'mk' : 'en'
+      // Trigger overlay update
+      if (updateOverlayRef.current) {
+        updateOverlayRef.current(newLang)
+      } else {
+        console.error('❌ updateOverlayRef.current is null')
+      }
+      return newLang
+    })
   }, [])
 
   // Add keyboard event listener at component level
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log('Component level key pressed:', event.code)
       
       // Gamble mode controls
       if (isGambleModeRef.current) {
         if (event.code === 'KeyR' && gambleStage === 'choice') {
           event.preventDefault()
           event.stopPropagation()
-          console.log('R key pressed in gamble mode - choosing red')
           chooseGambleColor('red')
         } else if (event.code === 'KeyB' && gambleStage === 'choice') {
           event.preventDefault()
           event.stopPropagation()
-          console.log('B key pressed in gamble mode - choosing black')
           chooseGambleColor('black')
         } else if (event.code === 'Space' && (gambleStage === 'result' || gambleStage === 'choice')) {
           event.preventDefault()  
           event.stopPropagation()
-          console.log('Space pressed in gamble mode - collecting win')
           collectGambleWin()
         }
       }
@@ -770,27 +755,22 @@ export default function Home() {
         if (event.code === 'KeyR' && pendingWinRef.current > 0) {
           event.preventDefault()
           event.stopPropagation()
-          console.log('R key pressed with pending win - entering gamble mode')
           enterGambleMode()
         } else if (event.code === 'KeyB' && pendingWinRef.current > 0) {
           event.preventDefault()
           event.stopPropagation()
-          console.log('B key pressed with pending win - entering gamble mode')
           enterGambleMode()
         } else if (event.code === 'KeyB' && pendingWinRef.current === 0) {
           event.preventDefault()
           event.stopPropagation()
-          console.log('B key pressed, calling cycleBet()')
           cycleBet()
         } else if (event.code === 'KeyR' && pendingWinRef.current === 0) {
           event.preventDefault()
           event.stopPropagation()
-          console.log('R key pressed, calling setMaxBet()')
           setMaxBet()
         } else if (event.code === 'KeyD') {
           event.preventDefault()
           event.stopPropagation()
-          console.log('D key pressed, calling cycleDenomination()')
           cycleDenomination()
         }
       }
@@ -799,20 +779,7 @@ export default function Home() {
       if (event.code === 'KeyL') {
         event.preventDefault()
         event.stopPropagation()
-        console.log('🌐 L key pressed - toggling language')
-        setCurrentLanguage(prev => {
-          const newLang = prev === 'en' ? 'mk' : 'en'
-          console.log('🌐 Language toggled to:', newLang)
-          console.log('🔍 updateOverlayRef.current:', !!updateOverlayRef.current)
-          console.log('🔍 uiCabinetOverlayRef.current:', !!uiCabinetOverlayRef.current)
-          // Trigger overlay update
-          if (updateOverlayRef.current) {
-            updateOverlayRef.current(newLang)
-          } else {
-            console.error('❌ updateOverlayRef.current is null')
-          }
-          return newLang
-        })
+        toggleLanguage()
       }
     }
 
@@ -826,12 +793,12 @@ export default function Home() {
   useEffect(() => {
     if (denomTextRef.current) {
       denomTextRef.current.text = formatCurrency(denomination)
+    } else {
     }
   }, [denomination])
 
   // Update all UI displays when denomination or values change
   useEffect(() => {
-    console.log(`UI recalculation triggered: balance=$${totalBalance}, bet=$${currentBet}, win=$${animatedWinAmount}, denom=$${denomination}`)
     
     if (creditDollarTextRef.current) {
       creditDollarTextRef.current.text = formatCurrency(totalBalance)
@@ -863,7 +830,6 @@ export default function Home() {
           const data = await response.json()
           if (data.success) {
             setTotalBalance(data.balance)
-            console.log('Wallet balance loaded:', data.balance)
           }
         }
       } catch (error) {
@@ -1046,7 +1012,6 @@ export default function Home() {
           return
         }
         
-        console.log('✅ Win animation atlases loaded:', Object.keys(winAtlases).map(key => `${key}: ${winAtlases[key]?.textures ? 'OK' : 'MISSING'}`).join(', '))
         
         // Symbol name to number mapping
         const symbolNameToNumber: { [key: string]: string } = {
@@ -1063,7 +1028,6 @@ export default function Home() {
           'Crown': '10'
         }
         
-        console.log('📋 Symbol name mapping:', symbolNameToNumber)
 
         // Main background - use full screen
         const mainBackground = new Sprite(backgroundAtlas.textures['background.png'])
@@ -1404,7 +1368,6 @@ export default function Home() {
 
         // Add keyboard event listener for space key and 'p' for autostart
         keydownHandler = (event: KeyboardEvent) => {
-          console.log('PIXI level key pressed:', event.code)
           
           // Prevent space in gamble mode
           if (isGambleModeRef.current) {
@@ -1416,7 +1379,6 @@ export default function Home() {
             if (!isSpinningRef.current && pendingWinRef.current > 0 && (isWinAnimatingRef.current || animationsRunningRef.current.size > 0)) {
               // Take win feature - skip slow animations during wins
               if (takeWinRef.current) {
-                console.log('Space pressed during win - activating take win')
                 takeWinRef.current()
               }
             } else if (!isSpinningRef.current) {
@@ -1436,7 +1398,6 @@ export default function Home() {
             setIsAutoStart(prev => {
               const newAutoStart = !prev
               isAutoStartRef.current = newAutoStart
-              console.log('Autostart toggled:', newAutoStart ? 'ON' : 'OFF')
               
               if (newAutoStart && !isSpinningRef.current) {
                 // Start autostart immediately if not spinning
@@ -1551,7 +1512,6 @@ export default function Home() {
           
           // Check for pending wins and collect them before starting new spin
           if (pendingWinRef.current > 0 && collectWinRef.current) {
-            console.log('Collecting pending win before new spin:', pendingWinRef.current)
             collectWinRef.current()
           }
           
@@ -1576,7 +1536,6 @@ export default function Home() {
           Object.keys(runningWinAnimations).forEach(key => {
             delete runningWinAnimations[key]
           })
-          console.log('⏹️ Stopped all running win animations')
           
           // Clear any pending win animation timeouts
           reelsRef.current.forEach((reel) => {
@@ -1641,7 +1600,6 @@ export default function Home() {
               // Update balance from server response
               if (typeof data.balance === 'number') {
                 setTotalBalance(data.balance)
-                console.log('Balance updated from server:', data.balance)
               }
               
               // Update win amounts and start collection system
@@ -1651,16 +1609,13 @@ export default function Home() {
               
               // Use the new win collection system instead of immediately adding to balance
               if (winAmount > 0) {
-                console.log('💰 Setting pendingWin to:', winAmount)
                 setPendingWin(winAmount)
                 // Win animation will start with payline animations in showWinHighlights
               } else {
                 // Reset win states for non-winning spins
-                console.log('❌ No win - resetting win states')
                 setPendingWin(0)
                 setAnimatedWinAmount(0)
               }
-              console.log('Win amount:', winAmount, 'Win lines:', data.winLines)
             }
           } catch (error) {
             console.error('Failed to get server results:', error)
@@ -1827,7 +1782,6 @@ export default function Home() {
                       if (!simultaneousStopRef.current) {
                         // Check if this reel has wild symbols and play appropriate sound
                         if (reelHasWild(index)) {
-                          console.log(`🌟 Wild detected on reel ${index + 1}, playing wild sound instead of reel sound`)
                           playWildReelSound()
                         } else {
                           playReelStopSound()
@@ -1893,14 +1847,11 @@ export default function Home() {
                     // Check for autostart - trigger next spin after delay
                     if (isAutoStartRef.current) {
                       const delay = serverResults?.winLines && serverResults.winLines.length > 0 ? 5000 : 300 // Longer delay for wins
-                      console.log(`🔄 Autostart active - next spin in ${delay}ms`)
                       
                       autoStartTimeoutRef.current = setTimeout(() => {
                         if (isAutoStartRef.current && !isSpinningRef.current) {
-                          console.log('🔄 Autostart triggering next spin')
                           spinReels()
                         } else {
-                          console.log('🔄 Autostart cancelled:', isAutoStartRef.current ? 'spinning in progress' : 'autostart disabled')
                         }
                       }, delay)
                     }
@@ -1920,7 +1871,6 @@ export default function Home() {
                       if (hasWildExpansions) {
                         // Delay highlighting to let wild expansion animations complete first
                         // Wild animations take ~2300ms (69 frames at 30fps), so wait 2500ms
-                        console.log('🌟 Wild expansions detected, delaying win animations by 2500ms')
                         
                         // Store win lines for potential take win use
                         pendingWinLinesRef.current = serverResults.winLines
@@ -1930,7 +1880,6 @@ export default function Home() {
                           if (!isGambleModeRef.current) {
                             showWinHighlights(serverResults.winLines)
                           } else {
-                            console.log('🚫 Skipping win highlights - gamble mode active')
                           }
                           wildExpansionTimeoutRef.current = null
                           pendingWinLinesRef.current = null
@@ -1939,10 +1888,8 @@ export default function Home() {
                         // No wild expansions, start win animations immediately
                         // But only if not in gamble mode
                         if (!isGambleModeRef.current) {
-                          console.log('✨ No wild expansions, starting win animations immediately')
                           showWinHighlights(serverResults.winLines)
                         } else {
-                          console.log('🚫 Skipping win animations - gamble mode active')
                         }
                       }
                     }
@@ -1966,11 +1913,9 @@ export default function Home() {
             return
           }
 
-          console.log('Reels to expand (from server):', winResults.expandedReels)
           
           // Mark that win animations are active (expanding wilds are slow animations)
           isWinAnimatingRef.current = true
-          console.log('🌟 Wild expansion animations started - press SPACE to take win and skip slow animations')
           
           // Play wild expansion sound once for all expanding reels
           if (winResults.expandedReels.length > 0) {
@@ -1981,7 +1926,6 @@ export default function Home() {
           winResults.expandedReels.forEach(reelIndex => {
             const reel = reelsRef.current[reelIndex]
             if (reel && reel.children[2]) { // Get first symbol (skip mask and overshoot)
-              console.log(`Animating wild expansion for reel ${reelIndex}`)
               animateExpandingWild(reel.children[2] as Sprite, reelIndex)
             }
           })
@@ -1989,7 +1933,6 @@ export default function Home() {
 
         // Function to instantly complete wild expansions (for take win feature)
         const completeWildExpansions = () => {
-          console.log('🌟 Instantly completing wild expansions for take win')
           
           // Get all reels that have running wild animations
           const expandingReels = Array.from(animationsRunningRef.current)
@@ -1998,7 +1941,6 @@ export default function Home() {
             const reel = reelsRef.current[reelIndex]
             if (!reel) return
             
-            console.log(`Completing wild expansion for reel ${reelIndex}`)
             
             // Get all symbols in this reel (skip mask at 0 and overshoot at 1)
             const reelSymbols: Sprite[] = []
@@ -2034,7 +1976,6 @@ export default function Home() {
               }
             })
             
-            console.log(`Completed wild expansion for reel ${reelIndex} - converted ${reelSymbols.length} symbols to wild`)
           })
           
           // Clear all expanding animations after completion
@@ -2046,20 +1987,13 @@ export default function Home() {
 
         // Function to update overlay language
         const updateOverlay = (newLanguage: 'en' | 'mk') => {
-          console.log('🔧 updateOverlay called with:', newLanguage)
-          console.log('🔍 uiCabinetOverlayRef.current:', !!uiCabinetOverlayRef.current)
-          console.log('🔍 app:', !!app)
-          console.log('🔍 Assets.cache:', !!Assets.cache)
           
           if (uiCabinetOverlayRef.current && app && Assets.cache) {
             const overlayPath = newLanguage === 'en' ? '/assets/ui-cabinet-overlay.png' : '/assets/ui-cabinet-overlay-mk.png'
-            console.log('🔍 Loading texture from:', overlayPath)
             const newTexture = Assets.cache.get(overlayPath)
-            console.log('🔍 New texture:', !!newTexture)
             
             if (newTexture) {
               uiCabinetOverlayRef.current.texture = newTexture
-              console.log('✅ Overlay updated to:', newLanguage)
             } else {
               console.error('❌ Failed to load overlay texture for language:', newLanguage, 'from path:', overlayPath)
             }
@@ -2134,7 +2068,6 @@ export default function Home() {
 
           // If no symbols need expansion, exit early
           if (expandSprites.length === 0) {
-            console.log(`No symbols to expand on reel ${reelIndex} - all are already wild`)
             return
           }
 
@@ -2162,9 +2095,7 @@ export default function Home() {
                     symbol.visible = true
                   }
                 })
-                console.log(`Expanding wild animation cancelled for reel ${reelIndex} - restored ${symbolsToHide.length} symbols`)
               } else {
-                console.log(`Expanding wild animation cancelled for reel ${reelIndex} - symbols already converted to wilds by take win`)
               }
               return
             }
@@ -2199,7 +2130,6 @@ export default function Home() {
               
               // Check if all expanding wild animations are complete
               if (animationsRunningRef.current.size === 0) {
-                console.log('All expanding wild animations complete')
                 // Note: Don't reset isWinAnimatingRef here as win counting might still be running
                 
                 // Trigger win sound sequence now that wild expansions are complete
@@ -2207,7 +2137,6 @@ export default function Home() {
                 if (pendingWinRef.current > 0 && sound && !isGambleModeRef.current) {
                   const totalWinAmount = pendingWinRef.current
                   const winLines = pendingWinLinesRef.current || []
-                  console.log('🎵 Starting win sound sequence after wild expansion completion')
                   startWinSoundSequence(
                     totalWinAmount, 
                     currentBetRef.current, 
@@ -2217,11 +2146,9 @@ export default function Home() {
                     isGambleMode
                   )
                 } else if (isGambleModeRef.current) {
-                  console.log('🚫 Skipping win sound sequence - gamble mode active')
                 }
               }
               
-              console.log(`Expanding wild animation complete for reel ${reelIndex} - ${symbolsToHide.length} symbols converted to wild`)
             }
           }
 
@@ -2234,11 +2161,9 @@ export default function Home() {
         // Function to animate winning symbols (with pre-loaded assets)
         const animateWinningSymbols = async (winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[], customSpeed?: number) => {
           if (winningPositions.length === 0) {
-            console.log('❌ No winning positions to animate')
             return
           }
           
-          console.log('🎯 Animating', winningPositions.length, 'winning symbols with pre-loaded assets')
           
           winningPositions.forEach(({ reelIndex, rowIndex, symbolName }) => {
             const animationKey = `${reelIndex}-${rowIndex}`
@@ -2246,7 +2171,6 @@ export default function Home() {
             
             const reel = reelsRef.current[reelIndex]
             if (!reel) {
-              console.log(`❌ No reel found at index ${reelIndex}`)
               delete runningWinAnimations[animationKey]
               return
             }
@@ -2254,7 +2178,6 @@ export default function Home() {
             // Get the symbol at this position (skip mask at 0 and overshoot at 1)
             const symbolSprite = reel.children[rowIndex + 2] as Sprite
             if (!symbolSprite) {
-              console.log(`❌ No symbol found at reel ${reelIndex}, row ${rowIndex}`)
               return
             }
             
@@ -2263,16 +2186,13 @@ export default function Home() {
             
             // Handle case where server sends clean name (like "Wild") vs filename (like "Wild.png")
             const symbolNumber = symbolNameToNumber[cleanSymbolName] || cleanSymbolName
-            console.log(`🎨 Creating animation for symbol ${symbolName} -> ${cleanSymbolName} -> ${symbolNumber} at reel ${reelIndex}, row ${rowIndex}`)
             
             // Special logging for wild symbols - check both the clean name and number
             if (cleanSymbolName === 'Wild' || symbolNumber === '08' || symbolName === 'Wild') {
-              console.log(`🌟 WILD SYMBOL DETECTED: original="${symbolName}", clean="${cleanSymbolName}", number="${symbolNumber}" - should use 08-0.json atlas`)
             }
             
             // Special logging for grapes
             if (cleanSymbolName === 'Grape' || symbolNumber === '05' || symbolName === 'Grape') {
-              console.log(`🍇 GRAPES SYMBOL DETECTED: original="${symbolName}", clean="${cleanSymbolName}", number="${symbolNumber}" - should use 05-0.json atlas`)
             }
             
             const winAtlas = winAtlases[symbolNumber]
@@ -2294,17 +2214,13 @@ export default function Home() {
               return
             }
             
-            console.log(`✅ Found pre-loaded atlas for symbol ${symbolNumber}`)
             
             // Additional debugging for wild symbols
             if (symbolNumber === '08') {
-              console.log(`🌟 Using WILD WIN animation atlas (08-0.json) with ${Object.keys(winAtlas.textures).length} textures`)
-              console.log(`🌟 Sample wild frames:`, Object.keys(winAtlas.textures).slice(0, 5))
             }
             
             // Create animation frames array (use all frames for smoothest animation)
             const winFrames: import('pixi.js').Texture[] = []
-            console.log(`🔍 Available textures in ${symbolNumber} atlas:`, Object.keys(winAtlas.textures).slice(0, 10)) // Show first 10
             
             // Use all 57 frames for complete smooth animation
             for (let i = 0; i < 57; i++) {
@@ -2318,7 +2234,6 @@ export default function Home() {
               }
             }
             
-            console.log(`🎞️ Using ${winFrames.length} frames out of 57 total frames`)
             
             // Log missing frames for debugging
             if (winFrames.length < 57) {
@@ -2338,7 +2253,6 @@ export default function Home() {
               return
             }
             
-            console.log(`🎞️ Created ${winFrames.length} animation frames for symbol ${symbolNumber}`)
             
             // Hide the original symbol
             symbolSprite.visible = false
@@ -2357,7 +2271,6 @@ export default function Home() {
             winAnimSprite.y = rowIndex * SYMBOL_HEIGHT
             
             reel.addChild(winAnimSprite)
-            console.log(`🎭 Created win animation sprite for ${symbolNumber} with ${winFrames.length} valid frames`)
             
             // Animate through frames at smooth speed
             let currentFrame = 0
@@ -2375,7 +2288,6 @@ export default function Home() {
                 if (symbolSprite && !symbolSprite.destroyed) {
                   symbolSprite.visible = true
                 }
-                console.log(`⏹️ Win animation stopped for ${symbolNumber}`)
                 return
               }
               
@@ -2383,12 +2295,6 @@ export default function Home() {
                 const frameTexture = winFrames[currentFrame]
                 if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
                   winAnimSprite.texture = frameTexture
-                } else {
-                  console.warn(`⚠️ Invalid texture at frame ${currentFrame} for ${symbolNumber}`)
-                }
-                // Log only every 10th frame to reduce console spam
-                if (currentFrame % 10 === 0) {
-                  console.log(`🎬 Frame ${currentFrame + 1}/${winFrames.length} for ${symbolNumber}`)
                 }
                 currentFrame++
                 setTimeout(animateFrames, animationSpeed)
@@ -2396,15 +2302,14 @@ export default function Home() {
                 // Animation complete - start looping the last 20 frames
                 isLooping = true
                 currentFrame = loopStartFrame
-                console.log(`🔄 Starting loop animation for ${symbolNumber} (frames ${loopStartFrame + 1}-${winFrames.length})`)
                 setTimeout(animateFrames, animationSpeed)
               } else {
-                // Loop through last 20 frames
-                const frameTexture = winFrames[currentFrame]
-                if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
-                  winAnimSprite.texture = frameTexture
-                } else {
-                  console.warn(`⚠️ Invalid loop texture at frame ${currentFrame} for ${symbolNumber}`)
+                // Loop through last 20 frames - ensure currentFrame is within bounds
+                if (currentFrame >= 0 && currentFrame < winFrames.length) {
+                  const frameTexture = winFrames[currentFrame]
+                  if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
+                    winAnimSprite.texture = frameTexture
+                  }
                 }
                 currentFrame++
                 if (currentFrame >= winFrames.length) {
@@ -2486,15 +2391,11 @@ export default function Home() {
           const symbolNumber = symbolNameToNumber[cleanSymbolName] || cleanSymbolName
           const reelImageSymbolName = `s${symbolNumber}.png`
           
-          console.log(`🔍 Converting symbol: ${winLine.symbol} -> ${cleanSymbolName} -> ${symbolNumber} -> ${reelImageSymbolName}`)
           
           // Try to find the symbol in reelImages.json format
           if (reelAtlas.textures[reelImageSymbolName]) {
             symbolTexture = reelAtlas.textures[reelImageSymbolName]
-            console.log(`✅ Found reel symbol texture: ${reelImageSymbolName}`)
           } else {
-            console.log(`❌ Reel symbol texture not found: ${reelImageSymbolName}`)
-            console.log('Available reel textures:', Object.keys(reelAtlas.textures).filter(name => name.startsWith('s')))
           }
           
           if (symbolTexture) {
@@ -2535,24 +2436,19 @@ export default function Home() {
         
         // Function to show win highlights with cycling
         const showWinHighlights = (winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => {
-          console.log('🏆 showWinHighlights called with', winLines.length, 'win lines:', winLines)
           clearWinHighlights()
           
           if (winLines.length === 0) {
-            console.log('❌ No win lines, skipping animations')
             return
           }
 
           // Classify the win and get appropriate configuration
           const totalWinAmount = pendingWinRef.current
           const winConfig = getWinConfig(totalWinAmount, currentBetRef.current, winLines)
-          console.log(`🎰 Win classified as: ${winConfig.type} (${winConfig.description})`)
-          console.log(`💰 Win amount: $${totalWinAmount}, Bet: $${currentBetRef.current}, Multiplier: ${(totalWinAmount / currentBetRef.current).toFixed(2)}x`)
           
           // Trigger win sound sequence immediately if no wild expansions are happening
           const hasWildExpansions = animationsRunningRef.current.size > 0
           if (!hasWildExpansions && sound) {
-            console.log('🎵 Starting win sound sequence immediately (no wild expansions)')
             startWinSoundSequence(
               totalWinAmount, 
               currentBetRef.current, 
@@ -2562,16 +2458,13 @@ export default function Home() {
               isGambleMode
             )
           } else if (hasWildExpansions) {
-            console.log('🎵 Win sound sequence will start after wild expansions complete')
           }
 
           // Start win count-up animation synchronized with payline animations
           // But only if gamble mode is not active
           if (pendingWinRef.current > 0 && animateWinRef.current && !isGambleMode) {
-            console.log('🎰 Starting win count-up animation with paylines:', pendingWinRef.current)
             animateWinRef.current(pendingWinRef.current)
           } else if (isGambleMode) {
-            console.log('🚫 Skipping win animation - gamble mode is active')
           }
           
           // First, collect all winning symbol positions from all winning lines
@@ -2593,9 +2486,7 @@ export default function Home() {
                 // Check if this position shows a wild symbol
                 if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
                   actualSymbolName = 'Wild'
-                  console.log(`🌟 Position [${reelIndex},${rowIndex}] shows Wild instead of ${winLine.symbol}`)
                 } else {
-                  console.log(`🎯 Position [${reelIndex},${rowIndex}] shows ${winLine.symbol} (keeping original)`)
                 }
                 
                 winningPositions.push({ reelIndex, rowIndex, symbolName: `${actualSymbolName}.png` })
@@ -2608,14 +2499,11 @@ export default function Home() {
           
           if (ENABLE_WIN_ANIMATIONS && winningPositions.length > 0) {
             // Start win animations
-            console.log('🎊 Starting win animations for positions:', winningPositions)
             
             // Start animations with win-type-specific speed
             const animationSpeed = getAnimationSpeed(winConfig.type)
-            console.log(`🎬 Using ${winConfig.type} animation speed: ${animationSpeed}ms per frame`)
             
             animateWinningSymbols(winningPositions, animationSpeed).then(() => {
-              console.log('✅ Win animations started successfully')
             }).catch(error => {
               console.error('❌ Win animation error:', error)
             })
@@ -2623,7 +2511,6 @@ export default function Home() {
             // Start payline highlights and win line display simultaneously with win animations
             showWinHighlightsAfterAnimation(winLines)
           } else {
-            console.log('🚫 Win animations disabled or no positions:', { enabled: ENABLE_WIN_ANIMATIONS, positions: winningPositions.length })
             // Show highlights immediately without animations
             showWinHighlightsAfterAnimation(winLines)
           }
@@ -2889,7 +2776,6 @@ export default function Home() {
 
   // Update UI when state changes
   useEffect(() => {
-    console.log(`UI Update triggered: balance=$${totalBalance}, bet=$${currentBet}, win=$${lastWin}, denom=$${denomination}`)
     if (uiUpdateRef.current) {
       uiUpdateRef.current(totalBalance, currentBet, lastWin)
     }
@@ -2901,7 +2787,6 @@ export default function Home() {
     if (autoStartTextRef.current) {
       autoStartTextRef.current.visible = isAutoStart
       autoStartTextRef.current.style.fill = 0x00FF00 // Always green when visible
-      console.log('Autostart indicator updated:', isAutoStart ? 'VISIBLE (ACTIVE)' : 'HIDDEN (INACTIVE)')
     }
   }, [isAutoStart])
 
@@ -2929,6 +2814,165 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
+  // WebSocket initialization for real-time tablet communication
+  useEffect(() => {
+    wsClient.current = new WebSocketClient('main-game')
+
+    // Debug: Log all WebSocket messages
+    wsClient.current.on('connection-confirmed', (message) => {
+    })
+
+    wsClient.current.on('game-state', (message) => {
+    })
+
+    // Handle tablet commands
+    wsClient.current.on('execute-command', (message) => {
+      const { commandId, action, payload } = message.data as {
+        commandId: string
+        action: string
+        payload: Record<string, unknown>
+      }
+
+      
+      let success = true
+      let errorMessage = ''
+      
+      try {
+        switch (action) {
+          case 'set-bet':
+            if (payload?.amount && !isBetControlsDisabled()) {
+              setCurrentBet(payload.amount as number)
+            } else {
+              success = false
+              errorMessage = 'Cannot change bet at this time'
+            }
+            break
+
+          case 'cycle-denomination':
+            if (!isBetControlsDisabled()) {
+              const DENOMINATION_OPTIONS = [0.01, 0.10, 0.50, 1.00]
+              const currentDenomination = denominationRef.current
+              const currentIndex = DENOMINATION_OPTIONS.indexOf(currentDenomination)
+              const nextIndex = (currentIndex + 1) % DENOMINATION_OPTIONS.length
+              const newDenomination = DENOMINATION_OPTIONS[nextIndex]
+              setDenomination(newDenomination)
+            } else {
+              success = false
+              errorMessage = 'Cannot change denomination at this time'
+            }
+            break
+
+          case 'language-toggle':
+            toggleLanguage()
+            break
+
+          case 'enter-gamble':
+            if (pendingWinRef.current > 0 && !isSpinningRef.current && !isGambleModeRef.current) {
+              enterGambleMode()
+            } else {
+              success = false
+              errorMessage = 'Cannot enter gamble mode - no pending win or game is busy'
+            }
+            break
+
+          case 'gamble-choice':
+            if (isGambleModeRef.current && payload?.color && gambleStageRef.current === 'choice') {
+              chooseGambleColor(payload.color as 'red' | 'black')
+            } else {
+              success = false
+              errorMessage = 'Not in gamble mode, invalid color, or not in choice stage'
+            }
+            break
+
+          case 'collect-gamble':
+            if (isGambleModeRef.current) {
+              setIsGambleMode(false)
+              isGambleModeRef.current = false
+              setPendingWin(gambleAmount)
+              setGambleAmount(0)
+            } else {
+              success = false
+              errorMessage = 'Not in gamble mode'
+            }
+            break
+
+          case 'cash-out':
+            if (pendingWin > 0) {
+              collectWin()
+            } else {
+              success = false
+              errorMessage = 'No pending win to cash out'
+            }
+            break
+
+          case 'volume-toggle':
+            // Volume toggle logic would go here
+            break
+
+          case 'start-spin':
+            if (spinReelsRef.current && !isSpinningRef.current) {
+              spinReelsRef.current()
+            } else {
+              success = false
+              errorMessage = 'Cannot start spin - game is busy'
+            }
+            break
+
+          case 'toggle-autostart':
+            setIsAutoStart(prev => !prev)
+            break
+
+          default:
+            success = false
+            errorMessage = `Unknown command: ${action}`
+        }
+      } catch (error) {
+        success = false
+        errorMessage = `Error executing command: ${error}`
+        console.error('[Main Game] Error processing WebSocket command:', error)
+      }
+
+      // Send command result back to server
+      wsClient.current?.sendCommandResult(commandId, success, success ? 'Command executed successfully' : errorMessage)
+    })
+
+    // Connect to WebSocket server with a small delay to ensure server is ready
+    setTimeout(() => {
+      wsClient.current?.connect()
+        .then(() => {
+        })
+        .catch((error) => {
+          console.error('❌ [Main Game] WebSocket connection failed:', error)
+        })
+    }, 500) // Reduced delay
+
+    return () => {
+      if (wsClient.current) {
+        wsClient.current.disconnect()
+      }
+    }
+  }, []) // Empty dependency array to avoid reconnections
+
+  // Send game state updates to WebSocket server
+  useEffect(() => {
+    if (wsClient.current?.isConnected()) {
+      const gameState = {
+        currentBet,
+        denomination,
+        isGambleMode,
+        gambleStage,
+        gambleAmount,
+        canEnterGamble: pendingWin > 0 && !isSpinning && !isGambleMode,
+        pendingWin,
+        currentLanguage,
+        balance: totalBalance,
+        isSpinning: isSpinning
+      }
+
+      wsClient.current.sendGameState(gameState)
+    }
+  }, [currentBet, denomination, isGambleMode, gambleStage, gambleAmount, pendingWin, currentLanguage, totalBalance, isSpinning])
+
   return (
     <div
       style={{
@@ -2949,58 +2993,77 @@ export default function Home() {
           left: '0',
           width: '100%',
           height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
         }}
       />
       <MobileController
         gameState={{
-          isSpinning: isSpinning,
-          isGambleMode: isGambleMode,
-          gambleStage: gambleStage,
+          isSpinning,
+          isGambleMode,
+          gambleStage,
           hasPendingWin: pendingWin > 0,
-          isWinAnimating: isWinAnimating,
-          stopRequested: stopRequested,
-          hasRunningAnimations: hasRunningAnimations,
-          isAutoStart: isAutoStart
+          isWinAnimating,
+          stopRequested,
+          hasRunningAnimations,
+          isAutoStart
         }}
         actions={{
           spinReels: () => {
-            if (!isSpinningRef.current && spinReelsRef.current) {
+            if (spinReelsRef.current) {
               spinReelsRef.current()
+            } else {
+              console.error('❌ spinReelsRef.current is null')
             }
           },
           stopReels: () => {
-            if (isSpinningRef.current && !stopRequestedRef.current) {
-              console.log('Mobile controller: Requesting stop')
-              stopRequestedRef.current = true
-              if (reelsStoppedCountRef.current === 0 && playReelStopSoundRef.current) {
-                playReelStopSoundRef.current()
-              }
-            } else {
-              console.log('Mobile controller: Stop request ignored - spinning:', isSpinningRef.current, 'stopRequested:', stopRequestedRef.current)
+            if (playReelStopSoundRef.current) {
+              playReelStopSoundRef.current()
             }
+            simultaneousStopRef.current = true
+            stopRequestedRef.current = true
           },
           takeWin: () => {
             if (takeWinRef.current) {
               takeWinRef.current()
+            } else {
+              console.error('❌ takeWinRef.current is null')
             }
           },
-          cycleBet: () => cycleBet(),
-          setMaxBet: () => setMaxBet(),
-          cycleDenomination: () => cycleDenomination(),
-          enterGambleMode: () => enterGambleMode(),
-          chooseGambleColor: (color: 'red' | 'black') => chooseGambleColor(color),
-          collectGambleWin: () => collectGambleWin(),
-          toggleAutoStart: () => setIsAutoStart(prev => !prev),
+          cycleBet: () => {
+            cycleBet()
+          },
+          setMaxBet: () => {
+            setMaxBet()
+          },
+          cycleDenomination: () => {
+            cycleDenomination()
+          },
+          enterGambleMode: () => {
+            if (pendingWin > 0 && !isSpinningRef.current && !isGambleModeRef.current) {
+              setIsGambleMode(true)
+              setGambleAmount(pendingWin)
+              setPendingWin(0)
+              isGambleModeRef.current = true
+            }
+          },
+          chooseGambleColor: (color: 'red' | 'black') => {
+            if (isGambleModeRef.current) {
+              setSelectedColor(color)
+            }
+          },
+          collectGambleWin: () => {
+            if (isGambleModeRef.current) {
+              setIsGambleMode(false)
+              isGambleModeRef.current = false
+              setPendingWin(gambleAmount)
+              setGambleAmount(0)
+            }
+          },
+          toggleAutoStart: () => {
+            setIsAutoStart(prev => !prev)
+          },
           toggleLanguage: () => {
-            console.log('🌐 toggleLanguage called')
             setCurrentLanguage(prev => {
               const newLang = prev === 'en' ? 'mk' : 'en'
-              console.log('🌐 Language toggled to:', newLang)
-              console.log('🔍 updateOverlayRef.current:', !!updateOverlayRef.current)
-              console.log('🔍 uiCabinetOverlayRef.current:', !!uiCabinetOverlayRef.current)
               // Trigger overlay update
               if (updateOverlayRef.current) {
                 updateOverlayRef.current(newLang)
