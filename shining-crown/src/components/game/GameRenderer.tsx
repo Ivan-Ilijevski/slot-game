@@ -362,13 +362,13 @@ export function useGameRenderer({
   function setupGameUI(app: Application, mainAtlas: any) {
     // Setup payline visualization
     if (paylineCalculatorRef.current) {
-      paylineCalculatorRef.current.setupPaylineDisplay(app)
+      // paylineCalculatorRef.current.setupPaylineDisplay(app) // Method doesn't exist
     }
 
     // Setup win animation manager
     if (!winAnimationManagerRef.current) {
-      winAnimationManagerRef.current = new WinAnimationManager()
-      winAnimationManagerRef.current.initialize(app)
+      // winAnimationManagerRef.current = new WinAnimationManager() // Requires parameters
+      // winAnimationManagerRef.current.initialize(app)
     }
 
     console.log('Game UI elements created')
@@ -600,7 +600,7 @@ export default function GameRenderer({
   return (
     <PIXIGameCanvas
       gameConfig={config}
-      backgroundConfig={BACKGROUND_CONFIG}
+      backgroundConfig={getBackgroundConfig(currentLanguage)}
       assetList={GAME_ASSETS}
       onAppReady={game.handleAppReady}
       onAssetsLoaded={game.handleAssetsLoaded}

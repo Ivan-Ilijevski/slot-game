@@ -130,6 +130,7 @@ export default function Home() {
   const currentBetRef = useRef<number>(currentBet)
   const denominationRef = useRef<number>(denomination)
   const gambleStageRef = useRef<'choice' | 'reveal' | 'result'>(gambleStage)
+  const gambleAmountRef = useRef<number>(gambleAmount)
 
   // Helper function to check if bet controls should be disabled
   const isBetControlsDisabled = useCallback(() => {
@@ -379,6 +380,10 @@ export default function Home() {
   }, [denomination])
 
   useEffect(() => {
+    gambleAmountRef.current = gambleAmount
+  }, [gambleAmount])
+
+  useEffect(() => {
     gambleStageRef.current = gambleStage
   }, [gambleStage])
 
@@ -472,7 +477,14 @@ export default function Home() {
 
   // Gamble feature functions
   const enterGambleMode = useCallback(() => {
-    if (pendingWin > 0 && !isSpinningRef.current) {
+    console.log('🎰 [DEBUG] enterGambleMode() function called')
+    console.log('🎰 [DEBUG] pendingWin (state):', pendingWin)
+    console.log('🎰 [DEBUG] pendingWinRef.current:', pendingWinRef.current)
+    console.log('🎰 [DEBUG] isSpinningRef.current:', isSpinningRef.current)
+    console.log('🎰 [DEBUG] Condition check: pendingWinRef.current > 0 && !isSpinningRef.current =', pendingWinRef.current > 0 && !isSpinningRef.current)
+    
+    if (pendingWinRef.current > 0 && !isSpinningRef.current) {
+      console.log('🎰 [DEBUG] Condition passed - executing gamble mode setup')
       
       // Complete animations to final state (don't stop them entirely)
       completeAllAnimations()
@@ -490,7 +502,7 @@ export default function Home() {
       }
       
       setIsGambleMode(true)
-      setGambleAmount(pendingWin)
+      setGambleAmount(pendingWinRef.current)
       setGambleStage('choice')
       setSelectedColor(null)
       setCardColor(null)
@@ -513,7 +525,7 @@ export default function Home() {
           elements.faceUpCard.visible = false
           
           // Update amount display
-          elements.gambleAmountText.text = formatCurrency(pendingWin)
+          elements.gambleAmountText.text = formatCurrency(pendingWinRef.current)
           
           // Update instructions
           elements.instructionsText.text = 'Press R for Red, B for Black, Space to Collect'
@@ -528,6 +540,10 @@ export default function Home() {
         clearTimeout(autoCollectTimeoutRef.current)
         autoCollectTimeoutRef.current = null
       }
+    } else {
+      console.log('🎰 [DEBUG] Condition failed - cannot enter gamble mode')
+      console.log('🎰 [DEBUG] pendingWinRef.current > 0:', pendingWinRef.current > 0)
+      console.log('🎰 [DEBUG] !isSpinningRef.current:', !isSpinningRef.current)
     }
   }, [pendingWin, startCardFlashing, completeAllAnimations, stopAllSounds])
 
@@ -725,6 +741,10 @@ export default function Home() {
         updateOverlayRef.current(newLang)
       } else {
         console.error('❌ updateOverlayRef.current is null')
+      }
+      // Update denomination label text
+      if (denomLabelTextRef.current) {
+        denomLabelTextRef.current.text = newLang === 'en' ? 'CHANGE DENOM' : 'СМЕНИ ЈА\nДЕНОМИНАЦИЈАТА'
       }
       return newLang
     })
@@ -1184,7 +1204,7 @@ export default function Home() {
         uiContainer.addChild(denomNumberText)
         
         // Smaller "CHANGE DENOM" label (bottom)
-        const denomLabelText = new Text('CHANGE DENOM', { 
+        const denomLabelText = new Text(currentLanguage === 'en' ? 'CHANGE DENOM' : 'СМЕНИ ЈА ДЕНОМИНАЦИЈАТА', { 
           fontFamily: 'Arial', 
           fontSize: 18, // Smaller font for label
           fill: 0xFFFFFF, 
@@ -2827,13 +2847,14 @@ export default function Home() {
 
     // Handle tablet commands
     wsClient.current.on('execute-command', (message) => {
+      console.log('🎰 [Main Game] Received execute-command:', message.data)
       const { commandId, action, payload } = message.data as {
         commandId: string
         action: string
         payload: Record<string, unknown>
       }
 
-      
+      console.log('🎰 [Main Game] Processing command:', { commandId, action, payload })
       let success = true
       let errorMessage = ''
       
@@ -2867,11 +2888,23 @@ export default function Home() {
             break
 
           case 'enter-gamble':
-            if (pendingWinRef.current > 0 && !isSpinningRef.current && !isGambleModeRef.current) {
+            console.log('🎰 [DEBUG] Enter-gamble command received')
+            console.log('🎰 [DEBUG] pendingWinRef.current:', pendingWinRef.current)
+            console.log('🎰 [DEBUG] isSpinningRef.current:', isSpinningRef.current)
+            console.log('🎰 [DEBUG] isGambleModeRef.current:', isGambleModeRef.current)
+            
+            const canEnterGamble = pendingWinRef.current > 0 && !isSpinningRef.current && !isGambleModeRef.current
+            console.log('🎰 [DEBUG] Can enter gamble mode:', canEnterGamble)
+            
+            if (canEnterGamble) {
+              console.log('🎰 [DEBUG] Condition passed - entering gamble mode')
               enterGambleMode()
+              console.log('🎰 [DEBUG] enterGambleMode() called successfully')
             } else {
+              console.log('🎰 [DEBUG] Condition failed - cannot enter gamble mode')
               success = false
               errorMessage = 'Cannot enter gamble mode - no pending win or game is busy'
+              console.log('🎰 [DEBUG] Error message set:', errorMessage)
             }
             break
 
@@ -2885,12 +2918,20 @@ export default function Home() {
             break
 
           case 'collect-gamble':
+            console.log('🎰 [Main Game] Processing collect-gamble command')
+            console.log('🎰 [Main Game] Current state:', {
+              isGambleModeRef: isGambleModeRef.current,
+              gambleAmountRef: gambleAmountRef.current,
+              gambleAmount: gambleAmount,
+              pendingWin: pendingWin
+            })
             if (isGambleModeRef.current) {
-              setIsGambleMode(false)
-              isGambleModeRef.current = false
-              setPendingWin(gambleAmount)
-              setGambleAmount(0)
+              console.log('🎰 [Main Game] Exiting gamble mode and setting pending win to:', gambleAmountRef.current)
+              exitGambleMode()
+              setPendingWin(gambleAmountRef.current)
+              console.log('🎰 [Main Game] Collect-gamble command executed successfully')
             } else {
+              console.log('🎰 [Main Game] Cannot collect - not in gamble mode')
               success = false
               errorMessage = 'Not in gamble mode'
             }
@@ -2933,6 +2974,7 @@ export default function Home() {
       }
 
       // Send command result back to server
+      console.log('🎰 [Main Game] Sending command result:', { commandId, success, message: success ? 'Command executed successfully' : errorMessage })
       wsClient.current?.sendCommandResult(commandId, success, success ? 'Command executed successfully' : errorMessage)
     })
 
@@ -3054,7 +3096,7 @@ export default function Home() {
             if (isGambleModeRef.current) {
               setIsGambleMode(false)
               isGambleModeRef.current = false
-              setPendingWin(gambleAmount)
+              setPendingWin(gambleAmountRef.current)
               setGambleAmount(0)
             }
           },
