@@ -210,14 +210,14 @@ export default function KeyboardPage() {
   }, [gameState])
 
   return (
-    <div className="min-h-screen bg-black p-4 touch-manipulation select-none flex flex-col">
+    <div className="min-h-screen bg-black p-4 touch-manipulation select-none flex flex-col relative overflow-hidden">
       {/* Top Row - Icon Buttons */}
       <div className="flex justify-between items-center mb-6 px-4">
         {/* Cash Out */}
         <button
           onClick={handleCashOut}
           disabled={isLoading || gameState.pendingWin === 0}
-          className="w-20 h-20 rounded-xl bg-gradient-to-br from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-green-400 hover:border-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
           aria-label="Cash out winnings"
         >
           <Banknote size={28} />
@@ -227,7 +227,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleCycleDenomination}
           disabled={isLoading || gameState.isGambleMode}
-          className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex flex-col items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-blue-400 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(0,255,255,0.3)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
           aria-label={`Change denomination (current: $${gameState.denomination.toFixed(2)})`}
         >
           <Coins size={24} />
@@ -238,7 +238,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleVolumeToggle}
           disabled={isLoading}
-          className="w-20 h-20 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-cyan-400 hover:border-cyan-300 hover:shadow-[0_0_15px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-cyan-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
           aria-label={isMuted ? "Unmute sound" : "Mute sound"}
         >
           {isMuted ? <VolumeOff size={28} /> : <Volume2 size={28} />}
@@ -248,7 +248,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleToggleLanguage}
           disabled={isLoading}
-          className="w-20 h-20 rounded-xl bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-400 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex flex-col items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-orange-400 hover:border-orange-300 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-orange-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
           aria-label={`Toggle language (current: ${gameState.currentLanguage.toUpperCase()})`}
         >
           <Globe size={24} />
@@ -261,18 +261,18 @@ export default function KeyboardPage() {
         <div className="w-full max-w-4xl">
           {gameState.isGambleMode ? (
             /* Gamble Mode Display */
-            <div className="h-full flex flex-col bg-gradient-to-br from-red-800 to-red-900 rounded-2xl p-6 border-4 border-red-600 shadow-xl">
+            <div className="h-full flex flex-col bg-transparent border-2 border-red-400 rounded-2xl p-6 shadow-xl">
               {/* Top Corner Amounts */}
               <div className="flex justify-between items-start mb-8">
                 {/* Left Corner - Current Win */}
-                <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 shadow-lg">
-                  <p className="text-green-100 font-bold text-sm">Current Win</p>
+                <div className="bg-transparent border-2 border-green-400 rounded-xl p-4 shadow-lg">
+                  <p className="text-green-400 font-bold text-sm">Current Win</p>
                   <p className="text-white text-2xl font-bold">${gameState.pendingWin.toFixed(2)}</p>
                 </div>
                 
                 {/* Right Corner - Gamble Amount */}
-                <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-4 shadow-lg">
-                  <p className="text-yellow-100 font-bold text-sm">Gamble to</p>
+                <div className="bg-transparent border-2 border-yellow-400 rounded-xl p-4 shadow-lg">
+                  <p className="text-yellow-400 font-bold text-sm">Gamble to</p>
                   <p className="text-white text-2xl font-bold">${(gameState.gambleAmount * 2).toFixed(2)}</p>
                 </div>
               </div>
@@ -282,7 +282,7 @@ export default function KeyboardPage() {
                 <button
                   onClick={() => handleGambleChoice('red')}
                   disabled={isLoading || gameState.gambleStage !== 'choice'}
-                  className="w-40 h-40 rounded-3xl bg-gradient-to-br from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex flex-col items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-xl border-4 border-red-400"
+                  className="w-40 h-40 rounded-3xl bg-transparent border-3 border-red-400 hover:border-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-red-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-xl"
                   aria-label="Choose red"
                 >
                   <Heart size={48} />
@@ -292,7 +292,7 @@ export default function KeyboardPage() {
                 <button
                   onClick={() => handleGambleChoice('black')}
                   disabled={isLoading || gameState.gambleStage !== 'choice'}
-                  className="w-40 h-40 rounded-3xl bg-gradient-to-br from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex flex-col items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-xl border-4 border-gray-500"
+                  className="w-40 h-40 rounded-3xl bg-transparent border-3 border-gray-300 hover:border-white hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-white disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-xl"
                   aria-label="Choose black"
                 >
                   <Spade size={48} />
@@ -305,7 +305,7 @@ export default function KeyboardPage() {
                 <button
                   onClick={handleCollectGamble}
                   disabled={isLoading}
-                  className="px-12 py-6 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 text-white font-bold text-xl transition-all active:scale-95 touch-manipulation shadow-xl border-4 border-green-400 flex items-center gap-3"
+                  className="px-12 py-6 rounded-2xl bg-transparent border-3 border-green-400 hover:border-green-300 hover:shadow-[0_0_25px_rgba(34,197,94,0.5)] disabled:border-gray-600 disabled:opacity-50 text-green-400 disabled:text-gray-600 font-bold text-xl transition-all active:scale-95 touch-manipulation shadow-xl flex items-center gap-3"
                   aria-label="Collect winnings"
                 >
                   <Banknote size={28} />
@@ -315,8 +315,8 @@ export default function KeyboardPage() {
             </div>
           ) : (
             /* Normal Bet Options Display */
-            <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-8 border-4 border-gray-600 shadow-xl">
-              <h2 className="text-white text-3xl font-bold text-center mb-8">BET OPTIONS</h2>
+            <div className="bg-transparent border-2 border-gray-500 rounded-2xl p-8 shadow-xl">
+          
               <div className="grid grid-cols-4 gap-6">
                 {BET_OPTIONS.map((bet) => (
                   <button
@@ -324,13 +324,13 @@ export default function KeyboardPage() {
                     onClick={() => handleSetBet(bet)}
                     disabled={isLoading || gameState.isGambleMode}
                     className={`
-                      aspect-square rounded-2xl text-2xl font-bold border-4 transition-all transform touch-manipulation shadow-lg
+                      aspect-square rounded-2xl text-2xl font-bold border-2 transition-all transform touch-manipulation shadow-lg bg-transparent
                       ${gameState.currentBet === bet
-                        ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 border-yellow-300 text-black scale-105 shadow-yellow-500/50'
-                        : 'bg-gradient-to-br from-gray-600 to-gray-700 border-gray-500 text-white hover:from-gray-500 hover:to-gray-600 hover:border-gray-400 hover:scale-105'
+                        ? 'border-green-400 text-green-400 scale-105 shadow-[0_0_20px_rgba(34,197,94,0.4)]'
+                        : 'border-gray-400 text-white hover:border-blue-400 hover:text-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:scale-105'
                       }
                       ${(isLoading || gameState.isGambleMode) 
-                        ? 'opacity-50 cursor-not-allowed from-gray-800 to-gray-900' 
+                        ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-600' 
                         : 'active:scale-95'
                       }
                     `}
@@ -344,8 +344,8 @@ export default function KeyboardPage() {
         </div>
       </div>
 
-      {/* Bottom Row - Action Buttons */}
-      <div className="flex justify-between items-center mt-6 px-4">
+      {/* Bottom Row - Action Buttons with Overflowing Corners */}
+      <div className="flex justify-between items-center mt-6 px-4 relative">
         {gameState.isGambleMode ? (
           /* Gamble Mode - Simplified Bottom Row */
           <>
@@ -365,20 +365,12 @@ export default function KeyboardPage() {
             <div className="w-24 h-24"></div>
           </>
         ) : (
-          /* Normal Mode - Full Controls */
+          /* Normal Mode - Full Controls with Corner Buttons */
           <>
-            {/* Autostart - Circle Button */}
-            <button
-              onClick={handleToggleAutostart}
-              disabled={isLoading}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex flex-col items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-lg"
-              aria-label="Toggle autostart"
-            >
-              <RotateCcw size={20} />
-              <div className="text-xs font-bold mt-1">AUTO</div>
-            </button>
-
-            {/* Enter Gamble Button */}
+            {/* Left spacer for corner button */}
+            <div className="w-24 h-24"></div>
+            
+            {/* Enter Gamble Button - Center */}
             <button
               onClick={() => {
                 console.log('🎲 [Tablet] Button physically clicked!')
@@ -386,10 +378,10 @@ export default function KeyboardPage() {
               }}
               disabled={isLoading || !gameState.canEnterGamble || gameState.isGambleMode}
               className={`
-                px-12 py-6 rounded-2xl font-bold text-xl transition-all touch-manipulation flex items-center gap-2 shadow-lg
+                px-12 py-6 rounded-2xl font-bold text-xl transition-all touch-manipulation flex items-center gap-2 shadow-lg bg-transparent border-2
                 ${gameState.canEnterGamble && !gameState.isGambleMode
-                  ? 'bg-gradient-to-br from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white active:scale-95'
-                  : 'bg-gradient-to-br from-gray-600 to-gray-800 text-gray-400 cursor-not-allowed opacity-50'
+                  ? 'border-orange-400 text-orange-400 hover:border-red-400 hover:text-red-400 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] active:scale-95'
+                  : 'border-gray-600 text-gray-600 cursor-not-allowed opacity-50'
                 }
               `}
               aria-label="Enter gamble mode"
@@ -398,15 +390,29 @@ export default function KeyboardPage() {
               GAMBLE
             </button>
 
-            {/* Start - Circle Button */}
+            {/* Right spacer for corner button */}
+            <div className="w-24 h-24"></div>
+
+            {/* Autostart - Overflowing Bottom Left */}
+            <button
+              onClick={handleToggleAutostart}
+              disabled={isLoading}
+              className="absolute bottom-0 left-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-blue-400 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg z-10"
+              aria-label="Toggle autostart"
+            >
+              <RotateCcw size={32} />
+              <div className="text-sm font-bold mt-1">AUTO</div>
+            </button>
+
+            {/* Start - Overflowing Bottom Right */}
             <button
               onClick={handleStartSpin}
               disabled={isLoading}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 disabled:from-gray-600 disabled:to-gray-800 disabled:opacity-50 flex flex-col items-center justify-center text-white transition-all active:scale-95 touch-manipulation shadow-lg"
+              className="absolute bottom-0 right-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-green-400 hover:border-green-300 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg z-10"
               aria-label="Start spin"
             >
-              <Play size={20} />
-              <div className="text-xs font-bold mt-1">START</div>
+              <Play size={32} />
+              <div className="text-sm font-bold mt-1">START</div>
             </button>
           </>
         )}

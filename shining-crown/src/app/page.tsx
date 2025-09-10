@@ -25,7 +25,15 @@ interface GambleElements {
   faceDownCard: Sprite
   faceUpCard: Sprite
   gambleAmountText: Text
+  gambleToWinText: Text
   instructionsText: Text
+  historyContainer: Container
+}
+
+// Type for gamble history entry
+interface GambleHistoryEntry {
+  cardTexture: string
+  won: boolean
 }
 
 export default function Home() {
@@ -53,6 +61,7 @@ export default function Home() {
   const [gambleStage, setGambleStage] = useState<'choice' | 'reveal' | 'result'>('choice') // Current gamble stage
   const [selectedColor, setSelectedColor] = useState<'red' | 'black' | null>(null) // Player's color choice
   const [cardColor, setCardColor] = useState<'red' | 'black' | null>(null) // Revealed card color
+  const [gambleHistory, setGambleHistory] = useState<GambleHistoryEntry[]>([]) // History of gamble results
   
   // Mobile controller state tracking
   const [isSpinning, setIsSpinning] = useState(false)
@@ -525,10 +534,12 @@ export default function Home() {
           elements.faceUpCard.visible = false
           
           // Update amount display
-          elements.gambleAmountText.text = formatCurrency(pendingWinRef.current)
-          
+          const currentAmount = pendingWinRef.current
+          elements.gambleAmountText.text = `GAMBLE AMOUNT\n${formatCurrency(currentAmount)}`
+          elements.gambleToWinText.text = `GAMBLE TO WIN\n${formatCurrency(currentAmount * 2)}`
+
           // Update instructions
-          elements.instructionsText.text = 'Press R for Red, B for Black, Space to Collect'
+          elements.instructionsText.text = 'Select RED or BLACK'
         }
       }
       
@@ -564,6 +575,7 @@ export default function Home() {
     setGambleStage('choice')
     setSelectedColor(null)
     setCardColor(null)
+    // Keep gamble history - don't clear when exiting gamble mode
     isGambleModeRef.current = false
     
     // Reset gamble mode state for win sounds
@@ -578,6 +590,8 @@ export default function Home() {
     // Hide gamble UI if it exists
     if (gambleContainerRef.current) {
       gambleContainerRef.current.visible = false
+      
+      // Keep visual history - don't clear when hiding gamble UI
     }
   }, [stopCardFlashing])
 
@@ -592,6 +606,49 @@ export default function Home() {
     setAnimatedWinAmount(0)
     exitGambleMode()
   }, [gambleAmount, exitGambleMode])
+
+  const updateGambleHistory = useCallback((cardTexture: string, won: boolean) => {
+    if (gambleContainerRef.current) {
+      const elements = (gambleContainerRef.current as Container & { gambleElements?: GambleElements }).gambleElements
+      if (elements) {
+        // Add to history state
+        setGambleHistory(prev => [...prev, { cardTexture, won }])
+        
+        // Update visual history display
+        const historyContainer = elements.historyContainer
+        historyContainer.removeChildren() // Clear existing history
+        
+        // Get updated history (including new entry)
+        const updatedHistory = [...gambleHistory, { cardTexture, won }]
+        
+        // Display last 5 results (or fewer if less than 5)
+        const historyToShow = updatedHistory.slice(-5)
+        
+        historyToShow.forEach((entry, index) => {
+          const gambleAtlas = Assets.get('/assets/gambleResources.json')
+          const historyCard = new Sprite(gambleAtlas.textures[entry.cardTexture])
+          historyCard.width = 40
+          historyCard.height = 60
+          historyCard.x = (index - historyToShow.length + 1) * 50
+          historyCard.y = 0
+          historyCard.anchor.set(0.5)
+          
+          // Add a colored boredr to indicate win/loss
+          const border = new Graphics()
+          if (entry.won) {
+            border.roundRect(-22, -32, 44, 64, 5).stroke({ color: 0x358308, width: 3 })
+          } else {
+            border.roundRect(-22, -32, 44, 64, 5).stroke({ color: 0xDD0016, width: 3 })
+          }
+          border.x = historyCard.x
+          border.y = historyCard.y
+          
+          historyContainer.addChild(historyCard)
+          historyContainer.addChild(border)
+        })
+      }
+    }
+  }, [gambleHistory])
 
   const chooseGambleColor = useCallback((color: 'red' | 'black') => {
     if (gambleStage === 'choice' && gambleContainerRef.current) {
@@ -625,15 +682,21 @@ export default function Home() {
         const randomCardTexture = availableCards[Math.floor(Math.random() * availableCards.length)]
         
         
+        // Determine win/lose
+        const won = color === randomColor
+        
         setTimeout(() => {
           // Hide face-down card, show face-up card
           elements.faceDownCard.visible = false
           elements.faceUpCard.texture = gambleAtlas.textures[randomCardTexture]
           elements.faceUpCard.visible = true
         }, 50)
+        
+        // Add to history
+        updateGambleHistory(randomCardTexture, won)
       }
       
-      // Determine win/lose
+      // Access won variable for timeout logic
       const won = color === randomColor
       
       setTimeout(() => {
@@ -652,8 +715,9 @@ export default function Home() {
             volume: 0.9
           })
         }
-            elements.gambleAmountText.text = formatCurrency(newAmount)
-            elements.instructionsText.text = 'You won! Starting next round... Press Space to collect'
+            elements.gambleAmountText.text = `GAMBLE AMOUNT\n${formatCurrency(newAmount)}`
+            elements.gambleToWinText.text = `GAMBLE TO WIN\n${formatCurrency(newAmount * 2)}`
+            elements.instructionsText.text = 'You won!'
             
             // Auto-continue to next gamble round after showing win
             gambleWinTimeoutRef.current = setTimeout(() => {
@@ -666,7 +730,7 @@ export default function Home() {
               if (elements) {
                 elements.faceDownCard.visible = true
                 elements.faceUpCard.visible = false
-                elements.instructionsText.text = 'Press R for Red, B for Black, Space to Collect'
+                elements.instructionsText.text = 'Select Red or Black'
               }
               
               // Start card flashing for new gamble round
@@ -686,7 +750,8 @@ export default function Home() {
                 volume: 0.9
               })
             }
-            elements.gambleAmountText.text = formatCurrency(0)
+            elements.gambleAmountText.text = 'GAMBLE AMOUNT\n' + formatCurrency(0)
+            elements.gambleToWinText.text = 'GAMBLE TO WIN\n' + formatCurrency(0)
             elements.instructionsText.text = 'You lost! Better luck next time.'
             
             // Exit gamble mode after a short delay
@@ -1480,24 +1545,40 @@ export default function Home() {
           
           // Red and black buttons removed - using mobile/keyboard controls instead
           
-          // Gamble amount text
+          // Gamble amount text (top left)
           const gambleAmountText = new Text({
-            text: '0',
+            text: 'GAMBLE AMOUNT\n0',
             style: {
               fontFamily: 'Arial Black',
               fontSize: 48,
-              fill: 0xFFFF00,
+              fill: 0xFFFFFF,
               stroke: { color: 0x000000, width: 3 }
             }
           })
-          gambleAmountText.anchor.set(0.5)
-          gambleAmountText.x = cardX
+          gambleAmountText.anchor.set(0, 0.5)
+          gambleAmountText.x = cardX - 800
           gambleAmountText.y = cardY - 200
           gambleContainer.addChild(gambleAmountText)
           
+          // Gamble to win text (top right)
+          const gambleToWinText = new Text({
+            text: 'GAMBLE TO WIN\n0',
+            style: {
+              fontFamily: 'Arial Black',
+              fontSize: 48,
+              fill: 0xFFFFFF,
+              stroke: { color: 0x000000, width: 3 },
+              align: 'right'
+            }
+          })
+          gambleToWinText.anchor.set(1, 0.5)
+          gambleToWinText.x = cardX + 800
+          gambleToWinText.y = cardY - 200
+          gambleContainer.addChild(gambleToWinText)
+          
           // Instructions text
           const instructionsText = new Text({
-            text: 'Press R for Red, B for Black, Space to Collect',
+            text: 'Choose RED or BLACK',
             style: {
               fontFamily: 'Arial',
               fontSize: 24,
@@ -1510,12 +1591,20 @@ export default function Home() {
           instructionsText.y = cardY + 250
           gambleContainer.addChild(instructionsText)
           
+          // History container for showing previous gamble results
+          const historyContainer = new Container()
+          historyContainer.x = cardX
+          historyContainer.y = cardY - 350
+          gambleContainer.addChild(historyContainer)
+          
           // Store references for updates using type assertion
           ;(gambleContainer as Container & { gambleElements: GambleElements }).gambleElements = {
             faceDownCard,
             faceUpCard,
             gambleAmountText,
-            instructionsText
+            gambleToWinText,
+            instructionsText,
+            historyContainer
           }
         }
 
