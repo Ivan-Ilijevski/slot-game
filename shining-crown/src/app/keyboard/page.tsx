@@ -217,7 +217,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleCashOut}
           disabled={isLoading || gameState.pendingWin === 0}
-          className="w-20 h-20 rounded-xl bg-transparent border-2 border-green-400 hover:border-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-green-300 shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
           aria-label="Cash out winnings"
         >
           <Banknote size={28} />
@@ -227,7 +227,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleCycleDenomination}
           disabled={isLoading || gameState.isGambleMode}
-          className="w-20 h-20 rounded-xl bg-transparent border-2 border-blue-400 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(0,255,255,0.3)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.3)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
           aria-label={`Change denomination (current: $${gameState.denomination.toFixed(2)})`}
         >
           <Coins size={24} />
@@ -238,7 +238,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleVolumeToggle}
           disabled={isLoading}
-          className="w-20 h-20 rounded-xl bg-transparent border-2 border-cyan-400 hover:border-cyan-300 hover:shadow-[0_0_15px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-cyan-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-cyan-300 shadow-[0_0_15px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-cyan-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
           aria-label={isMuted ? "Unmute sound" : "Mute sound"}
         >
           {isMuted ? <VolumeOff size={28} /> : <Volume2 size={28} />}
@@ -248,7 +248,7 @@ export default function KeyboardPage() {
         <button
           onClick={handleToggleLanguage}
           disabled={isLoading}
-          className="w-20 h-20 rounded-xl bg-transparent border-2 border-orange-400 hover:border-orange-300 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-orange-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg"
+          className="w-20 h-20 rounded-xl bg-transparent border-2 border-orange-300 shadow-[0_0_15px_rgba(249,115,22,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-orange-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
           aria-label={`Toggle language (current: ${gameState.currentLanguage.toUpperCase()})`}
         >
           <Globe size={24} />
@@ -282,7 +282,7 @@ export default function KeyboardPage() {
                 <button
                   onClick={() => handleGambleChoice('red')}
                   disabled={isLoading || gameState.gambleStage !== 'choice'}
-                  className="w-40 h-40 rounded-3xl bg-transparent border-3 border-red-400 hover:border-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-red-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-xl"
+                  className="w-40 h-40 rounded-3xl bg-transparent border-3 border-red-300 shadow-[0_0_20px_rgba(239,68,68,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-red-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
                   aria-label="Choose red"
                 >
                   <Heart size={48} />
@@ -292,7 +292,7 @@ export default function KeyboardPage() {
                 <button
                   onClick={() => handleGambleChoice('black')}
                   disabled={isLoading || gameState.gambleStage !== 'choice'}
-                  className="w-40 h-40 rounded-3xl bg-transparent border-3 border-gray-300 hover:border-white hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-white disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-xl"
+                  className="w-40 h-40 rounded-3xl bg-transparent border-3 border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-white disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
                   aria-label="Choose black"
                 >
                   <Spade size={48} />
@@ -305,7 +305,7 @@ export default function KeyboardPage() {
                 <button
                   onClick={handleCollectGamble}
                   disabled={isLoading}
-                  className="px-12 py-6 rounded-2xl bg-transparent border-3 border-green-400 hover:border-green-300 hover:shadow-[0_0_25px_rgba(34,197,94,0.5)] disabled:border-gray-600 disabled:opacity-50 text-green-400 disabled:text-gray-600 font-bold text-xl transition-all active:scale-95 touch-manipulation shadow-xl flex items-center gap-3"
+                  className="px-12 py-6 rounded-2xl bg-transparent border-3 border-green-300 shadow-[0_0_25px_rgba(34,197,94,0.5)] disabled:border-gray-600 disabled:opacity-50 text-green-400 disabled:text-gray-600 font-bold text-xl transition-all active:scale-95 touch-manipulation flex items-center gap-3"
                   aria-label="Collect winnings"
                 >
                   <Banknote size={28} />
@@ -324,10 +324,10 @@ export default function KeyboardPage() {
                     onClick={() => handleSetBet(bet)}
                     disabled={isLoading || gameState.isGambleMode}
                     className={`
-                      aspect-square rounded-2xl text-2xl font-bold border-2 transition-all transform touch-manipulation shadow-lg bg-transparent
+                      aspect-square rounded-2xl text-2xl font-bold border-2 transition-all transform touch-manipulation bg-transparent
                       ${gameState.currentBet === bet
                         ? 'border-green-400 text-green-400 scale-105 shadow-[0_0_20px_rgba(34,197,94,0.4)]'
-                        : 'border-gray-400 text-white hover:border-blue-400 hover:text-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:scale-105'
+                        : 'border-blue-400 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)] scale-105'
                       }
                       ${(isLoading || gameState.isGambleMode) 
                         ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-600' 
@@ -378,9 +378,9 @@ export default function KeyboardPage() {
               }}
               disabled={isLoading || !gameState.canEnterGamble || gameState.isGambleMode}
               className={`
-                px-12 py-6 rounded-2xl font-bold text-xl transition-all touch-manipulation flex items-center gap-2 shadow-lg bg-transparent border-2
+                px-12 py-6 rounded-2xl font-bold text-xl transition-all touch-manipulation flex items-center gap-2 bg-transparent border-2
                 ${gameState.canEnterGamble && !gameState.isGambleMode
-                  ? 'border-orange-400 text-orange-400 hover:border-red-400 hover:text-red-400 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] active:scale-95'
+                  ? 'border-red-400 text-red-400 shadow-[0_0_20px_rgba(249,115,22,0.4)] active:scale-95'
                   : 'border-gray-600 text-gray-600 cursor-not-allowed opacity-50'
                 }
               `}
@@ -397,7 +397,7 @@ export default function KeyboardPage() {
             <button
               onClick={handleToggleAutostart}
               disabled={isLoading}
-              className="absolute bottom-0 left-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-blue-400 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg z-10"
+              className="absolute bottom-0 left-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation z-10"
               aria-label="Toggle autostart"
             >
               <RotateCcw size={32} />
@@ -408,7 +408,7 @@ export default function KeyboardPage() {
             <button
               onClick={handleStartSpin}
               disabled={isLoading}
-              className="absolute bottom-0 right-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-green-400 hover:border-green-300 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation shadow-lg z-10"
+              className="absolute bottom-0 right-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-green-300 shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation z-10"
               aria-label="Start spin"
             >
               <Play size={32} />
