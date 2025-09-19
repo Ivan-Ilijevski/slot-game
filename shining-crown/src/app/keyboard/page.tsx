@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { WebSocketClient } from '../../lib/websocketClient'
+import TabletCashoutButton from '../../components/game/TabletCashoutButton'
+import PrinterDebugPanel from '../../components/game/PrinterDebugPanel'
 import { 
   Banknote, 
   Coins, 
@@ -25,6 +27,7 @@ interface GameState {
   canEnterGamble: boolean
   pendingWin: number
   currentLanguage: 'en' | 'mk'
+  balance: number
 }
 
 export default function KeyboardPage() {
@@ -36,12 +39,31 @@ export default function KeyboardPage() {
     gambleAmount: 0,
     canEnterGamble: false,
     pendingWin: 0,
-    currentLanguage: 'en'
+    currentLanguage: 'en',
+    balance: 0
   })
   const [isLoading, setIsLoading] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
   const [isMuted, setIsMuted] = useState(false)
+  const [showDebugPanel, setShowDebugPanel] = useState(false)
   const wsClient = useRef<WebSocketClient | null>(null)
+
+  // Load wallet balance on component mount
+  useEffect(() => {
+    const loadWalletBalance = async () => {
+      try {
+        const response = await fetch('/api/wallet')
+        const data = await response.json()
+        if (data.success) {
+          setGameState(prev => ({ ...prev, balance: data.balance }))
+        }
+      } catch (error) {
+        console.error('Failed to load wallet balance:', error)
+      }
+    }
+    
+    loadWalletBalance()
+  }, [])
 
   // Bet options available in the game
   const BET_OPTIONS = [5.00, 10.00, 20.00, 50.00, 100.00, 200.00, 500.00, 1000.00]
@@ -68,7 +90,8 @@ export default function KeyboardPage() {
           gambleAmount: (gameStateData.gambleAmount as number) || 0,
           canEnterGamble: (gameStateData.canEnterGamble as boolean) || false,
           pendingWin: (gameStateData.pendingWin as number) || 0,
-          currentLanguage: (gameStateData.currentLanguage as 'en' | 'mk') || 'en'
+          currentLanguage: (gameStateData.currentLanguage as 'en' | 'mk') || 'en',
+          balance: (gameStateData.balance as number) || 0
         })
       }
     })
@@ -187,9 +210,6 @@ export default function KeyboardPage() {
     sendCommand('collect-gamble')
   }
 
-  const handleCashOut = () => {
-    sendCommand('cash-out')
-  }
 
   const handleVolumeToggle = () => {
     setIsMuted(prev => !prev)
@@ -214,14 +234,24 @@ export default function KeyboardPage() {
       {/* Top Row - Icon Buttons */}
       <div className="flex justify-between items-center mb-6 px-4">
         {/* Cash Out */}
-        <button
-          onClick={handleCashOut}
-          disabled={isLoading || gameState.pendingWin === 0}
-          className="w-20 h-20 rounded-xl bg-transparent border-2 border-green-300 shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
-          aria-label="Cash out winnings"
-        >
-          <Banknote size={28} />
-        </button>
+        <TabletCashoutButton
+          balance={gameState.balance}
+          currency="MKD"
+          disabled={isLoading}
+          useUSB={true}
+          machineId="SHINING-CROWN-TABLET"
+          onCashoutSuccess={(result) => {
+            console.log('Cashout successful:', result)
+            // Update balance after successful cashout
+            setGameState(prev => ({ ...prev, balance: result.balance.current }))
+            // Optionally notify the main game via WebSocket
+            sendCommand('balance-updated', { balance: result.balance.current })
+          }}
+          onCashoutError={(error) => {
+            console.error('Cashout failed:', error)
+            alert(`Cashout failed: ${error}`)
+          }}
+        />
 
         {/* Denomination Icon */}
         <button
@@ -272,7 +302,7 @@ export default function KeyboardPage() {
                 
                 {/* Right Corner - Gamble Amount */}
                 <div className="bg-transparent border-2 border-yellow-400 rounded-xl p-4 shadow-lg">
-                  <p className="text-yellow-400 font-bold text-sm">Gamble to</p>
+                  <p className="text-yellow-400 font-bold text-sm">Gamble to Win</p>
                   <p className="text-white text-2xl font-bold">${(gameState.gambleAmount * 2).toFixed(2)}</p>
                 </div>
               </div>
@@ -315,7 +345,7 @@ export default function KeyboardPage() {
             </div>
           ) : (
             /* Normal Bet Options Display */
-            <div className="bg-transparent border-2 border-gray-500 rounded-2xl p-8 shadow-xl">
+            <div className="bg-transparent border-2 border-gray-500 rounded-2xl p-4 shadow-xl">
           
               <div className="grid grid-cols-4 gap-6">
                 {BET_OPTIONS.map((bet) => (
@@ -324,7 +354,7 @@ export default function KeyboardPage() {
                     onClick={() => handleSetBet(bet)}
                     disabled={isLoading || gameState.isGambleMode}
                     className={`
-                      aspect-square rounded-2xl text-2xl font-bold border-2 transition-all transform touch-manipulation bg-transparent
+                      w-40 h-30 rounded-xl text-xl font-bold border-2 transition-all transform touch-manipulation bg-transparent flex items-center justify-center
                       ${gameState.currentBet === bet
                         ? 'border-green-400 text-green-400 scale-105 shadow-[0_0_20px_rgba(34,197,94,0.4)]'
                         : 'border-blue-400 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)] scale-105'
@@ -335,7 +365,7 @@ export default function KeyboardPage() {
                       }
                     `}
                   >
-                    ${bet.toFixed(0)}
+                    {bet.toFixed(0)} MKD
                   </button>
                 ))}
               </div>
@@ -411,20 +441,37 @@ export default function KeyboardPage() {
               className="absolute bottom-0 right-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-green-300 shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-green-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation z-10"
               aria-label="Start spin"
             >
-              <Play size={32} />
-              <div className="text-sm font-bold mt-1">START</div>
+              {/* <Play size={32} /> */}
+              <div className="text-lg font-bold pr-20 pb-10">START</div>
             </button>
           </>
         )}
       </div>
 
-      {/* Connection Status - Minimal */}
-      <div className="text-center mt-4">
+      {/* Connection Status and Debug Toggle */}
+      <div className="text-center mt-4 space-y-2">
         <div className={`inline-block w-3 h-3 rounded-full ${
           connectionStatus === 'connected' ? 'bg-green-500' : 
           connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'
         }`}></div>
+        
+        {/* Debug Panel Toggle */}
+        <div>
+          <button
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            className="text-xs text-gray-400 hover:text-white underline"
+          >
+            {showDebugPanel ? 'Hide' : 'Show'} Printer Debug
+          </button>
+        </div>
       </div>
+
+      {/* Printer Debug Panel */}
+      {showDebugPanel && (
+        <div className="mt-4">
+          <PrinterDebugPanel />
+        </div>
+      )}
     </div>
   )
 }

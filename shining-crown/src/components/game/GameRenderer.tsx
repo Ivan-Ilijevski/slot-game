@@ -600,7 +600,7 @@ export default function GameRenderer({
   return (
     <PIXIGameCanvas
       gameConfig={config}
-      backgroundConfig={getBackgroundConfig(currentLanguage)}
+      //backgroundConfig={getBackgroundConfig(currentLanguage)} Ne e gotovo, izbrishano namerno za BUILD
       assetList={GAME_ASSETS}
       onAppReady={game.handleAppReady}
       onAssetsLoaded={game.handleAssetsLoaded}

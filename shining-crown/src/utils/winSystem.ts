@@ -173,7 +173,7 @@ export const WIN_ANIMATION_CONFIG: { [key in WinType]: WinTypeConfig } = {
 export function classifyWin(
   winAmount: number, 
   currentBet: number, 
-  winLines: Array<{ symbol: string, count: number }> = [], 
+  winLines: Array<{ symbol: string, count?: number }> = [], 
   hasWilds: boolean = false
 ): WinType {
   // Special case for wild symbols - always use wild classification
@@ -183,7 +183,7 @@ export function classifyWin(
   
   // Special case for two sevens - check before standard classification
   const hasTwoSevens = winLines.some(line => 
-    line.symbol === 'Seven' && line.count === 2
+    line.symbol === 'Seven' && (line.count || 0) === 2
   )
   if (hasTwoSevens) {
     return 'twoSevens'
@@ -386,7 +386,7 @@ let soundQueue: SoundQueueState = {
 export function startWinSoundSequence(
   winAmount: number,
   currentBet: number,
-  winLines: Array<{ symbol: string }>,
+  winLines: Array<{ symbol: string, count?: number }>,
   soundInstance: unknown,
   hasWildExpansion: boolean = false,
   isGambleMode: boolean = false

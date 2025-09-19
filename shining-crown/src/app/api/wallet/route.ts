@@ -62,9 +62,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Update balance
+    // Update balance with transaction logging
     const amountToUpdate = operation === 'add' ? amount : -amount
-    const updatedWallet = updateBalance(amountToUpdate)
+    const transactionType = operation === 'add' ? 'credit_add' : 'cashout'
+    const updatedWallet = updateBalance(amountToUpdate, transactionType, { operation })
     
     return NextResponse.json({
       success: true,

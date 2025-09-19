@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { logTransaction, TransactionType } from './transactionLogger'
 
 // Wallet data structure
 export interface WalletData {
@@ -83,8 +84,9 @@ export function getBalance(): number {
 }
 
 // Update balance (positive to add, negative to subtract)
-export function updateBalance(amount: number): WalletData {
+export function updateBalance(amount: number, transactionType?: TransactionType, metadata?: any): WalletData {
   const wallet = readWallet()
+  const balanceBefore = wallet.balance
   const newBalance = wallet.balance + amount
   
   // Prevent negative balance
@@ -98,6 +100,17 @@ export function updateBalance(amount: number): WalletData {
   }
   
   writeWallet(updatedWallet)
+  
+  // Log transaction if type is provided
+  if (transactionType) {
+    try {
+      logTransaction(transactionType, amount, balanceBefore, newBalance, metadata)
+    } catch (error) {
+      console.error('Failed to log transaction:', error)
+      // Don't throw error for logging failure - wallet update should proceed
+    }
+  }
+  
   return updatedWallet
 }
 
@@ -108,7 +121,7 @@ export function validateBalance(amount: number): boolean {
 }
 
 // Deduct amount from wallet (throws error if insufficient funds)
-export function deductBalance(amount: number): WalletData {
+export function deductBalance(amount: number, transactionType: TransactionType = 'adjustment', metadata?: any): WalletData {
   if (amount <= 0) {
     throw new Error('Deduction amount must be positive')
   }
@@ -117,14 +130,14 @@ export function deductBalance(amount: number): WalletData {
     throw new Error('Insufficient funds')
   }
   
-  return updateBalance(-amount)
+  return updateBalance(-amount, transactionType, metadata)
 }
 
 // Add amount to wallet
-export function addBalance(amount: number): WalletData {
+export function addBalance(amount: number, transactionType: TransactionType = 'credit_add', metadata?: any): WalletData {
   if (amount <= 0) {
     throw new Error('Addition amount must be positive')
   }
   
-  return updateBalance(amount)
+  return updateBalance(amount, transactionType, metadata)
 }
