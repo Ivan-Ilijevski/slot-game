@@ -3,9 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 import { formatCurrency } from '../config/currency'
+import { formatNumberWithSpaces } from '../utils/currency'
 import MobileController from '../components/game/MobileController'
+import VoucherInput from '../components/game/VoucherInput'
+import VoucherPrintingScreen from '../components/game/VoucherPrintingScreen'
+import MessagePopup from '../components/game/MessagePopup'
+import { useBetManager } from '../components/game/useBetManager'
+import { useDenominationManager } from '../components/game/useDenominationManager'
+import { useWallet } from '../components/game/useWallet'
+import { useKeyboardHandler } from '../components/game/useKeyboardHandler'
+import { useTouchKeyboardConnection } from '../components/game/useTouchKeyboardConnection'
 import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence, updateGambleModeState, startWinCountingSound, stopWinCountingSound } from '../utils/winSystem'
-import { WebSocketClient } from '../lib/websocketClient'
 
 // Dynamic import for PIXI Sound to avoid SSR issues
 let sound: {
@@ -37,45 +45,139 @@ interface GambleHistoryEntry {
 }
 
 export default function Home() {
-  // Helper function to format numbers with spaces instead of commas
-  const formatNumberWithSpaces = (num: number): string => {
-    return num.toLocaleString().replace(/,/g, ' ')
-  }
+  // ===== NEW: Integrated Hooks =====
 
-  // Denomination options available
-  const DENOMINATION_OPTIONS = [0.01, 0.10, 0.50, 1.00]
-  
-  // Bet management state (all in currency values)
-  const [currentBet, setCurrentBet] = useState(5.00)
-  const [totalBalance, setTotalBalance] = useState(0) // Will be loaded from wallet
+  // Gamble and spin state (needed for disabling bet controls)
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [isGambleMode, setIsGambleMode] = useState(false)
+  const [pendingWin, setPendingWin] = useState(0)
+
+  // Bet management using useBetManager hook
+  const betManager = useBetManager({
+    isSpinning,
+    hasPendingWin: pendingWin > 0,
+    isGambleMode,
+    onBetChange: (newBet) => {
+      console.log('Bet changed to:', newBet)
+    }
+  })
+
+  // Denomination management using useDenominationManager hook
+  const denomManager = useDenominationManager({
+    isDisabled: isSpinning || isGambleMode,
+    onDenominationChange: (newDenom) => {
+      console.log('Denomination changed to:', newDenom)
+    }
+  })
+
+  // Wallet/balance management using useWallet hook
+  const wallet = useWallet({
+    autoFetch: true,
+    onBalanceChange: (newBalance) => {
+      console.log('Balance updated to:', newBalance)
+    },
+    onCashoutSuccess: (result) => {
+      console.log('Cashout successful:', result)
+      setShowPrintingScreen(false)
+    },
+    onCashoutError: (error) => {
+      console.error('Cashout failed:', error)
+      setShowPrintingScreen(false)
+    }
+  })
+
+  // Access hook values with shorter aliases for backward compatibility
+  const currentBet = betManager.currentBet
+  const denomination = denomManager.denomination
+
+  // Display balance: subtract pending win to show balance before win was added
+  // (The server already added the win, but we display it as pending for animation)
+  const totalBalance = pendingWin > 0 ? wallet.balance - pendingWin : wallet.balance
+
+  // ===== END: Integrated Hooks =====
+
+  // Remaining state (not yet extracted to hooks)
   const [lastWin, setLastWin] = useState(0)
-  const [denomination, setDenomination] = useState(0.01)
-  const [pendingWin, setPendingWin] = useState(0) // Win amount waiting to be collected
   const [animatedWinAmount, setAnimatedWinAmount] = useState(0) // Animated display amount
   const [isAutoStart, setIsAutoStart] = useState(false) // Autostart feature toggle
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'mk'>('en') // Language for UI overlay
-  
-  // Gamble feature state
-  const [isGambleMode, setIsGambleMode] = useState(false) // Whether gamble mode is active
+
+  // Gamble feature state (kept in main component - tightly coupled to PIXI)
   const [gambleAmount, setGambleAmount] = useState(0) // Amount being gambled
   const [gambleStage, setGambleStage] = useState<'choice' | 'reveal' | 'result'>('choice') // Current gamble stage
   const [selectedColor, setSelectedColor] = useState<'red' | 'black' | null>(null) // Player's color choice
   const [cardColor, setCardColor] = useState<'red' | 'black' | null>(null) // Revealed card color
   const [gambleHistory, setGambleHistory] = useState<GambleHistoryEntry[]>([]) // History of gamble results
-  
+
   // Mobile controller state tracking
-  const [isSpinning, setIsSpinning] = useState(false)
   const [stopRequested, setStopRequested] = useState(false)
   const [isWinAnimating, setIsWinAnimating] = useState(false)
   const [hasRunningAnimations, setHasRunningAnimations] = useState(false)
+  
+  // Voucher system state
+  // Message popup state
+  const [showMessagePopup, setShowMessagePopup] = useState(false)
+  const [messagePopupType, setMessagePopupType] = useState<'success' | 'error' | 'info' | 'warning'>('info')
+  const [messagePopupTitle, setMessagePopupTitle] = useState<string>('')
+  const [messagePopupMessage, setMessagePopupMessage] = useState<string>('')
+  
+  // Printing screen state
+  const [showPrintingScreen, setShowPrintingScreen] = useState(false)
+  const [printingAmount, setPrintingAmount] = useState(0)
 
   // Helper function to convert currency to credits for UI display
   const currencyToCredits = useCallback((amount: number): number => {
     return Math.round(amount / denomination) // Credits based on denomination
   }, [denomination])
   
-  // Available bet options in MKD currency
-  const BET_OPTIONS = [5.00, 10.00, 20.00, 50.00, 100.00, 200.00, 500.00, 1000.00]
+  // Message popup helper
+  const showMessage = useCallback((type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => {
+    setMessagePopupType(type)
+    setMessagePopupTitle(title)
+    setMessagePopupMessage(message)
+    setShowMessagePopup(true)
+  }, [])
+  
+  // Voucher system handlers (updated to use wallet hook)
+  const handleVoucherValidated = useCallback((credit: number) => {
+    // Refresh balance from server after voucher validation
+    wallet.refreshBalance()
+    showMessage('success', 'Voucher Redeemed', `Successfully added ${formatCurrency(credit)} to your balance`)
+  }, [showMessage, wallet])
+
+  const handleVoucherError = useCallback((message: string) => {
+    showMessage('error', 'Voucher Error', message)
+  }, [showMessage])
+
+  // Use wallet hook's methods directly
+  const refreshBalance = wallet.refreshBalance
+
+  // Cashout function (updated to use wallet hook)
+  const performCashout = useCallback(async (amount: number) => {
+    // Show printing screen
+    setPrintingAmount(amount)
+    setShowPrintingScreen(true)
+
+    // Use wallet hook's cashout method
+    const result = await wallet.cashout({
+      amount,
+      useUSB: true,
+      machineId: 'SHINING-CROWN-001'
+    })
+
+    return result
+  }, [wallet])
+  
+  // Printing screen handlers
+  const handlePrintingComplete = useCallback(() => {
+    setShowPrintingScreen(false)
+  }, [])
+  
+  const handlePrintingError = useCallback((error: string) => {
+    console.error('Printing error:', error)
+    setShowPrintingScreen(false)
+  }, [])
+
   const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const reelsRef = useRef<Container[]>([])
@@ -131,58 +233,20 @@ export default function Home() {
   const gambleSoundLoopIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const gambleWinTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const gambleLoseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // WebSocket client for remote control
-  const wsClient = useRef<WebSocketClient | null>(null)
-  
-  // Refs to store current values to avoid stale closures in WebSocket handlers
+
+  // Refs to store current values to avoid stale closures in handlers
   const currentBetRef = useRef<number>(currentBet)
   const denominationRef = useRef<number>(denomination)
   const gambleStageRef = useRef<'choice' | 'reveal' | 'result'>(gambleStage)
   const gambleAmountRef = useRef<number>(gambleAmount)
 
-  // Helper function to check if bet controls should be disabled
-  const isBetControlsDisabled = useCallback(() => {
-    return isSpinningRef.current || pendingWin > 0 || isGambleModeRef.current
-  }, [pendingWin])
-
-  // Bet management functions
-  const increaseBet = () => {
-    if (isBetControlsDisabled()) return
-    const currentIndex = BET_OPTIONS.indexOf(currentBet)
-    if (currentIndex < BET_OPTIONS.length - 1) {
-      setCurrentBet(BET_OPTIONS[currentIndex + 1])
-    }
-  }
-
-  const decreaseBet = () => {
-    if (isBetControlsDisabled()) return
-    const currentIndex = BET_OPTIONS.indexOf(currentBet)
-    if (currentIndex > 0) {
-      setCurrentBet(BET_OPTIONS[currentIndex - 1])
-    }
-  }
-
-  const setMaxBet = useCallback(() => {
-    if (isBetControlsDisabled()) return
-    setCurrentBet(BET_OPTIONS[BET_OPTIONS.length - 1])
-  }, [BET_OPTIONS, isBetControlsDisabled])
-
-  const cycleBet = useCallback(() => {
-    if (isBetControlsDisabled()) return
-    const currentIndex = BET_OPTIONS.indexOf(currentBet)
-    const nextIndex = (currentIndex + 1) % BET_OPTIONS.length
-    const newBet = BET_OPTIONS[nextIndex]
-    setCurrentBet(newBet)
-  }, [currentBet, BET_OPTIONS, isBetControlsDisabled])
-
-  const cycleDenomination = useCallback(() => {
-    if (isBetControlsDisabled()) return
-    const currentIndex = DENOMINATION_OPTIONS.indexOf(denomination)
-    const nextIndex = (currentIndex + 1) % DENOMINATION_OPTIONS.length
-    const newDenomination = DENOMINATION_OPTIONS[nextIndex]
-    setDenomination(newDenomination)
-  }, [denomination, DENOMINATION_OPTIONS, isBetControlsDisabled])
+  // ===== Use hook methods directly (replaces old inline functions) =====
+  const increaseBet = betManager.increaseBet
+  const decreaseBet = betManager.decreaseBet
+  const setMaxBet = betManager.setMaxBet
+  const cycleBet = betManager.cycleBet
+  const cycleDenomination = denomManager.cycleDenomination
+  const isBetControlsDisabled = () => betManager.isDisabled
 
   // Function to collect pending win
   const collectWin = useCallback(() => {
@@ -596,16 +660,16 @@ export default function Home() {
   }, [stopCardFlashing])
 
   const collectGambleWin = useCallback(() => {
-    
-    // Add the gamble amount to balance (server will handle this later)
-    setTotalBalance(prev => prev + gambleAmount)
-    
+
+    // Refresh balance from server (server handles the update)
+    wallet.refreshBalance()
+
     // Clear pending win and exit gamble mode
     setPendingWin(0)
-    setLastWin(0) 
+    setLastWin(0)
     setAnimatedWinAmount(0)
     exitGambleMode()
-  }, [gambleAmount, exitGambleMode])
+  }, [gambleAmount, exitGambleMode, wallet])
 
   const updateGambleHistory = useCallback((cardTexture: string, won: boolean) => {
     if (gambleContainerRef.current) {
@@ -815,64 +879,57 @@ export default function Home() {
     })
   }, [])
 
-  // Add keyboard event listener at component level
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      
-      // Gamble mode controls
-      if (isGambleModeRef.current) {
-        if (event.code === 'KeyR' && gambleStage === 'choice') {
-          event.preventDefault()
-          event.stopPropagation()
-          chooseGambleColor('red')
-        } else if (event.code === 'KeyB' && gambleStage === 'choice') {
-          event.preventDefault()
-          event.stopPropagation()
-          chooseGambleColor('black')
-        } else if (event.code === 'Space' && (gambleStage === 'result' || gambleStage === 'choice')) {
-          event.preventDefault()  
-          event.stopPropagation()
-          collectGambleWin()
-        }
-      }
-      // Normal game controls (only when not in gamble mode)
-      else if (!isSpinningRef.current) {
-        if (event.code === 'KeyR' && pendingWinRef.current > 0) {
-          event.preventDefault()
-          event.stopPropagation()
-          enterGambleMode()
-        } else if (event.code === 'KeyB' && pendingWinRef.current > 0) {
-          event.preventDefault()
-          event.stopPropagation()
-          enterGambleMode()
-        } else if (event.code === 'KeyB' && pendingWinRef.current === 0) {
-          event.preventDefault()
-          event.stopPropagation()
-          cycleBet()
-        } else if (event.code === 'KeyR' && pendingWinRef.current === 0) {
-          event.preventDefault()
-          event.stopPropagation()
-          setMaxBet()
-        } else if (event.code === 'KeyD') {
-          event.preventDefault()
-          event.stopPropagation()
-          cycleDenomination()
-        }
-      }
-      
-      // Language toggle (works in any mode)
-      if (event.code === 'KeyL') {
-        event.preventDefault()
-        event.stopPropagation()
-        toggleLanguage()
-      }
-    }
+  // ===== NEW: Keyboard handler hook (replaces lines 883-940) =====
+  useKeyboardHandler({
+    isSpinning: isSpinningRef.current,
+    isGambleMode: isGambleModeRef.current,
+    gambleStage,
+    pendingWin: pendingWinRef.current,
+    cycleBet,
+    setMaxBet,
+    cycleDenomination,
+    toggleLanguage,
+    chooseGambleColor,
+    collectGambleWin,
+    enterGambleMode
+  })
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [cycleBet, setMaxBet, cycleDenomination, gambleStage, chooseGambleColor, collectGambleWin, enterGambleMode])
+  // ===== NEW: Touch keyboard WebSocket connection hook (replaces lines 2930-3201) =====
+  useTouchKeyboardConnection({
+    currentBet,
+    denomination,
+    totalBalance,
+    pendingWin,
+    animatedWinAmount,
+    isSpinning,
+    isGambleMode,
+    gambleStage,
+    gambleAmount,
+    isAutoStart,
+    isSpinningRef,
+    isGambleModeRef,
+    pendingWinRef,
+    gambleStageRef,
+    gambleAmountRef,
+    spinReelsRef,
+    denominationRef,
+    winAnimationRef,
+    winCycleIntervalRef,
+    setCurrentBet: betManager.setBet,
+    setDenomination: denomManager.setDenomination,
+    setPendingWin,
+    setIsAutoStart,
+    setPrintingAmount,
+    setShowPrintingScreen,
+    isBetControlsDisabled,
+    toggleLanguage,
+    enterGambleMode,
+    exitGambleMode,
+    chooseGambleColor,
+    performCashout,
+    refreshBalance,
+    showMessage
+  })
 
   // Update denomination display when denomination changes
   useEffect(() => {
@@ -908,22 +965,8 @@ export default function Home() {
 
   // Load wallet balance on component mount
   useEffect(() => {
-    const loadWalletBalance = async () => {
-      try {
-        const response = await fetch('/api/wallet')
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success) {
-            setTotalBalance(data.balance)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load wallet balance:', error)
-      }
-    }
-    
-    loadWalletBalance()
-  }, [])
+    refreshBalance()
+  }, [refreshBalance])
 
   useEffect(() => {
     let app: Application | null = null
@@ -1705,12 +1748,10 @@ export default function Home() {
             
             if (data.success) {
               serverResults = data
-              
-              // Update balance from server response
-              if (typeof data.balance === 'number') {
-                setTotalBalance(data.balance)
-              }
-              
+
+              // Refresh balance from server after spin (bet has been deducted)
+              refreshBalance()
+
               // Update win amounts and start collection system
               const winAmount = data.totalWin || 0 // Server already returns MKD
               lastWinRef.current = winAmount
@@ -2923,186 +2964,6 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  // WebSocket initialization for real-time tablet communication
-  useEffect(() => {
-    wsClient.current = new WebSocketClient('main-game')
-
-    // Debug: Log all WebSocket messages
-    wsClient.current.on('connection-confirmed', (message) => {
-    })
-
-    wsClient.current.on('game-state', (message) => {
-    })
-
-    // Handle tablet commands
-    wsClient.current.on('execute-command', (message) => {
-      console.log('🎰 [Main Game] Received execute-command:', message.data)
-      const { commandId, action, payload } = message.data as {
-        commandId: string
-        action: string
-        payload: Record<string, unknown>
-      }
-
-      console.log('🎰 [Main Game] Processing command:', { commandId, action, payload })
-      let success = true
-      let errorMessage = ''
-      
-      try {
-        switch (action) {
-          case 'set-bet':
-            if (payload?.amount && !isBetControlsDisabled()) {
-              setCurrentBet(payload.amount as number)
-            } else {
-              success = false
-              errorMessage = 'Cannot change bet at this time'
-            }
-            break
-
-          case 'cycle-denomination':
-            if (!isBetControlsDisabled()) {
-              const DENOMINATION_OPTIONS = [0.01, 0.10, 0.50, 1.00]
-              const currentDenomination = denominationRef.current
-              const currentIndex = DENOMINATION_OPTIONS.indexOf(currentDenomination)
-              const nextIndex = (currentIndex + 1) % DENOMINATION_OPTIONS.length
-              const newDenomination = DENOMINATION_OPTIONS[nextIndex]
-              setDenomination(newDenomination)
-            } else {
-              success = false
-              errorMessage = 'Cannot change denomination at this time'
-            }
-            break
-
-          case 'language-toggle':
-            toggleLanguage()
-            break
-
-          case 'enter-gamble':
-            console.log('🎰 [DEBUG] Enter-gamble command received')
-            console.log('🎰 [DEBUG] pendingWinRef.current:', pendingWinRef.current)
-            console.log('🎰 [DEBUG] isSpinningRef.current:', isSpinningRef.current)
-            console.log('🎰 [DEBUG] isGambleModeRef.current:', isGambleModeRef.current)
-            
-            const canEnterGamble = pendingWinRef.current > 0 && !isSpinningRef.current && !isGambleModeRef.current
-            console.log('🎰 [DEBUG] Can enter gamble mode:', canEnterGamble)
-            
-            if (canEnterGamble) {
-              console.log('🎰 [DEBUG] Condition passed - entering gamble mode')
-              enterGambleMode()
-              console.log('🎰 [DEBUG] enterGambleMode() called successfully')
-            } else {
-              console.log('🎰 [DEBUG] Condition failed - cannot enter gamble mode')
-              success = false
-              errorMessage = 'Cannot enter gamble mode - no pending win or game is busy'
-              console.log('🎰 [DEBUG] Error message set:', errorMessage)
-            }
-            break
-
-          case 'gamble-choice':
-            if (isGambleModeRef.current && payload?.color && gambleStageRef.current === 'choice') {
-              chooseGambleColor(payload.color as 'red' | 'black')
-            } else {
-              success = false
-              errorMessage = 'Not in gamble mode, invalid color, or not in choice stage'
-            }
-            break
-
-          case 'collect-gamble':
-            console.log('🎰 [Main Game] Processing collect-gamble command')
-            console.log('🎰 [Main Game] Current state:', {
-              isGambleModeRef: isGambleModeRef.current,
-              gambleAmountRef: gambleAmountRef.current,
-              gambleAmount: gambleAmount,
-              pendingWin: pendingWin
-            })
-            if (isGambleModeRef.current) {
-              console.log('🎰 [Main Game] Exiting gamble mode and setting pending win to:', gambleAmountRef.current)
-              exitGambleMode()
-              setPendingWin(gambleAmountRef.current)
-              console.log('🎰 [Main Game] Collect-gamble command executed successfully')
-            } else {
-              console.log('🎰 [Main Game] Cannot collect - not in gamble mode')
-              success = false
-              errorMessage = 'Not in gamble mode'
-            }
-            break
-
-          case 'cash-out':
-            if (pendingWin > 0) {
-              collectWin()
-            } else {
-              success = false
-              errorMessage = 'No pending win to cash out'
-            }
-            break
-
-          case 'volume-toggle':
-            // Volume toggle logic would go here
-            break
-
-          case 'start-spin':
-            if (spinReelsRef.current && !isSpinningRef.current) {
-              spinReelsRef.current()
-            } else {
-              success = false
-              errorMessage = 'Cannot start spin - game is busy'
-            }
-            break
-
-          case 'toggle-autostart':
-            setIsAutoStart(prev => !prev)
-            break
-
-          default:
-            success = false
-            errorMessage = `Unknown command: ${action}`
-        }
-      } catch (error) {
-        success = false
-        errorMessage = `Error executing command: ${error}`
-        console.error('[Main Game] Error processing WebSocket command:', error)
-      }
-
-      // Send command result back to server
-      console.log('🎰 [Main Game] Sending command result:', { commandId, success, message: success ? 'Command executed successfully' : errorMessage })
-      wsClient.current?.sendCommandResult(commandId, success, success ? 'Command executed successfully' : errorMessage)
-    })
-
-    // Connect to WebSocket server with a small delay to ensure server is ready
-    setTimeout(() => {
-      wsClient.current?.connect()
-        .then(() => {
-        })
-        .catch((error) => {
-          console.error('❌ [Main Game] WebSocket connection failed:', error)
-        })
-    }, 500) // Reduced delay
-
-    return () => {
-      if (wsClient.current) {
-        wsClient.current.disconnect()
-      }
-    }
-  }, []) // Empty dependency array to avoid reconnections
-
-  // Send game state updates to WebSocket server
-  useEffect(() => {
-    if (wsClient.current?.isConnected()) {
-      const gameState = {
-        currentBet,
-        denomination,
-        isGambleMode,
-        gambleStage,
-        gambleAmount,
-        canEnterGamble: pendingWin > 0 && !isSpinning && !isGambleMode,
-        pendingWin,
-        currentLanguage,
-        balance: totalBalance,
-        isSpinning: isSpinning
-      }
-
-      wsClient.current.sendGameState(gameState)
-    }
-  }, [currentBet, denomination, isGambleMode, gambleStage, gambleAmount, pendingWin, currentLanguage, totalBalance, isSpinning])
 
   return (
     <div
@@ -3205,6 +3066,26 @@ export default function Home() {
             })
           }
         }}
+      />
+      <VoucherInput
+        onVoucherValidated={handleVoucherValidated}
+        onError={handleVoucherError}
+        className="voucher-input-overlay"
+      />
+      <MessagePopup
+        isVisible={showMessagePopup}
+        type={messagePopupType}
+        title={messagePopupTitle}
+        message={messagePopupMessage}
+        onClose={() => setShowMessagePopup(false)}
+        autoCloseDelay={3000}
+      />
+      <VoucherPrintingScreen
+        amount={printingAmount}
+        currency="MKD"
+        onComplete={handlePrintingComplete}
+        onError={handlePrintingError}
+        isVisible={showPrintingScreen}
       />
     </div>
   )

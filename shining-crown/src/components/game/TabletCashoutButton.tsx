@@ -12,6 +12,7 @@ export interface TabletCashoutButtonProps {
   className?: string
   useUSB?: boolean
   machineId?: string
+  sendCommand?: (action: string, payload?: Record<string, unknown>) => void
 }
 
 export default function TabletCashoutButton({
@@ -22,7 +23,8 @@ export default function TabletCashoutButton({
   disabled = false,
   className = '',
   useUSB = true,
-  machineId = 'SHINING-CROWN-TABLET'
+  machineId = 'SHINING-CROWN-TABLET',
+  sendCommand
 }: TabletCashoutButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -37,6 +39,15 @@ export default function TabletCashoutButton({
     setIsProcessing(true)
 
     try {
+      // Send cashout-started command to main game
+      if (sendCommand) {
+        sendCommand('cashout-started', {
+          amount: balance,
+          currency
+        })
+        console.log('📡 Sent cashout-started command from tablet')
+      }
+
       // Process cashout
       const response = await fetch('/api/cashout', {
         method: 'POST',
@@ -54,14 +65,46 @@ export default function TabletCashoutButton({
 
       if (data.success) {
         console.log('Cashout successful:', data)
+        
+        // Send cashout-completed command to main game
+        if (sendCommand) {
+          sendCommand('cashout-completed', {
+            amount: balance,
+            currency
+          })
+          console.log('📡 Sent cashout-completed command from tablet')
+        }
+        
         onCashoutSuccess?.(data)
       } else {
         console.error('Cashout failed:', data.error)
+        
+        // Send cashout-failed command to main game
+        if (sendCommand) {
+          sendCommand('cashout-failed', {
+            amount: balance,
+            currency,
+            error: data.error || 'Cashout failed'
+          })
+          console.log('📡 Sent cashout-failed command from tablet')
+        }
+        
         onCashoutError?.(data.error || 'Cashout failed')
       }
 
     } catch (error) {
       console.error('Cashout error:', error)
+      
+      // Send cashout-failed command for network errors
+      if (sendCommand) {
+        sendCommand('cashout-failed', {
+          amount: balance,
+          currency,
+          error: 'Network error. Please try again.'
+        })
+        console.log('📡 Sent cashout-failed (network error) command from tablet')
+      }
+      
       onCashoutError?.('Network error. Please try again.')
     }
 

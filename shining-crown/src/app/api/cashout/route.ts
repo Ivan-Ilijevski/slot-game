@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readWallet, updateBalance } from '../../../utils/wallet'
 import { printCashoutTicket, generateTicketId, CashoutTicket } from '../../../utils/thermalPrinter'
 import { printCashoutTicketRaw } from '../../../utils/rawPrinter'
+import { generateVoucher } from '../../../utils/voucherGenerator'
 
 // POST /api/cashout - Process cashout and print ticket
 export async function POST(request: NextRequest) {
@@ -44,7 +45,26 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Generate ticket ID
+    // Note: Cashout notifications are now handled by the tablet interface
+    
+    // Generate voucher code from server
+    console.log('🎫 Generating voucher code...')
+    const voucherResult = await generateVoucher(amount)
+    
+    if (!voucherResult.success) {
+      // Note: Cashout failure notification will be handled by tablet based on API response
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Voucher generation failed: ${voucherResult.message}`,
+          voucherError: true
+        }, 
+        { status: 500 }
+      )
+    }
+    
+    // Generate ticket ID for internal tracking
     const ticketId = generateTicketId()
     const timestamp = new Date()
     
@@ -53,21 +73,28 @@ export async function POST(request: NextRequest) {
       amount,
       currency: wallet.currency,
       ticketId,
+      voucherId: voucherResult.id, // Add voucher ID from server
       machineId,
       timestamp,
       balanceAfter: wallet.balance - amount
     }
     
     // Try printing with node-thermal-printer first, then fallback to raw printing
+    console.log('🖨️ Attempting thermal printer first...')
     let printResult = await printCashoutTicket(ticketData, useUSB)
     
     if (!printResult.success) {
       console.log('📋 node-thermal-printer failed, trying raw printing...')
+      console.log('🖨️ Fallback to raw printing with lp command')
       // Fallback to raw printing (like your terminal command)
       printResult = await printCashoutTicketRaw(ticketData, 'STMicroelectronics_POS58_Printer_USB')
+    } else {
+      console.log('✅ Thermal printer succeeded')
     }
     
     if (!printResult.success) {
+      // Note: Cashout failure notification will be handled by tablet based on API response
+      
       return NextResponse.json(
         { 
           success: false, 
@@ -81,11 +108,14 @@ export async function POST(request: NextRequest) {
     // Deduct amount from balance (with transaction logging)
     const updatedWallet = updateBalance(-amount, 'cashout', {
       ticketId,
+      voucherId: voucherResult.id,
       machineId,
       printedAt: timestamp.toISOString()
     })
     
     console.log(`Cashout processed: ${amount} ${wallet.currency}, Ticket: ${ticketId}`)
+    
+    // Note: Cashout success notification will be handled by tablet based on API response
     
     return NextResponse.json({
       success: true,
@@ -93,6 +123,7 @@ export async function POST(request: NextRequest) {
         amount,
         currency: wallet.currency,
         ticketId,
+        voucherId: voucherResult.id,
         timestamp: timestamp.toISOString(),
         machineId
       },
@@ -104,6 +135,11 @@ export async function POST(request: NextRequest) {
       printer: {
         success: true,
         ticketPrinted: true
+      },
+      voucher: {
+        id: voucherResult.id,
+        formatted: voucherResult.id ? `${voucherResult.id.slice(0, 2)}-${voucherResult.id.slice(2, 6)}-${voucherResult.id.slice(6, 10)}-${voucherResult.id.slice(10, 14)}-${voucherResult.id.slice(14, 18)}` : '',
+        redeemable: true
       }
     })
     

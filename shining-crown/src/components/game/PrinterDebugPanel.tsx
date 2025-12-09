@@ -2,10 +2,23 @@
 
 import { useState } from 'react'
 import { Printer, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import MessagePopup from './MessagePopup'
 
 export default function PrinterDebugPanel() {
   const [debugInfo, setDebugInfo] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [showMessagePopup, setShowMessagePopup] = useState(false)
+  const [messagePopupType, setMessagePopupType] = useState<'success' | 'error' | 'info' | 'warning'>('info')
+  const [messagePopupTitle, setMessagePopupTitle] = useState<string>('')
+  const [messagePopupMessage, setMessagePopupMessage] = useState<string>('')
+
+  // Message popup helper
+  const showMessage = (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => {
+    setMessagePopupType(type)
+    setMessagePopupTitle(title)
+    setMessagePopupMessage(message)
+    setShowMessagePopup(true)
+  }
 
   const runDebug = async () => {
     setIsLoading(true)
@@ -36,12 +49,12 @@ export default function PrinterDebugPanel() {
       const data = await response.json()
       
       if (data.success) {
-        alert(`✅ ${configName} test successful! Check your printer.`)
+        showMessage('success', 'Test Successful', `${configName} test completed successfully! Check your printer for output.`)
       } else {
-        alert(`❌ ${configName} test failed: ${data.error}`)
+        showMessage('error', 'Test Failed', `${configName} test failed: ${data.error}`)
       }
     } catch (error) {
-      alert(`❌ ${configName} test error: Network error`)
+      showMessage('error', 'Test Error', `${configName} test error: Network error`)
     }
   }
 
@@ -246,6 +259,15 @@ export default function PrinterDebugPanel() {
           Click "Check Printers" to diagnose your POS58 printer connection
         </div>
       )}
+      
+      <MessagePopup
+        isVisible={showMessagePopup}
+        type={messagePopupType}
+        title={messagePopupTitle}
+        message={messagePopupMessage}
+        onClose={() => setShowMessagePopup(false)}
+        autoCloseDelay={4000}
+      />
     </div>
   )
 }

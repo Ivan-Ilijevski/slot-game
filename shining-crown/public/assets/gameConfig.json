@@ -1,0 +1,35 @@
+{
+  "betOptions": [5.00, 10.00, 20.00, 50.00, 100.00, 200.00, 500.00, 1000.00],
+  "denominationOptions": [0.01, 0.10, 0.50, 1.00],
+  "defaultValues": {
+    "bet": 5.00,
+    "denomination": 0.01,
+    "language": "en",
+    "balance": 0
+  },
+  "winCollection": {
+    "animationDuration": 2000,
+    "autoCollectDelay": 30000,
+    "takeWinDelay": 500
+  },
+  "autostart": {
+    "defaultEnabled": false,
+    "normalDelay": 300,
+    "winDelay": 5000
+  },
+  "languages": ["en", "mk"],
+  "gambleColors": ["red", "black"],
+  "gambleStages": ["choice", "reveal", "result"],
+  "messageTypes": ["success", "error", "info", "warning"],
+  "keyBindings": {
+    "cycleBet": "KeyB",
+    "maxBet": "KeyR",
+    "cycleDenomination": "KeyD",
+    "toggleLanguage": "KeyL",
+    "gambleRed": "KeyR",
+    "gambleBlack": "KeyB",
+    "gambleCollect": "Space",
+    "enterGamble": ["KeyR", "KeyB"],
+    "spin": "Space"
+  }
+}

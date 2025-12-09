@@ -27,7 +27,7 @@ export class WebSocketClient {
     this.clientType = clientType
     // Use the current host instead of hardcoded localhost for cross-device compatibility
     const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-    this.url = `ws://${host}:${port}/ws` // Connect to /ws path
+    this.url = `ws://${host}:${port}/ws` // Connect to main server WebSocket on port 3000 with /ws path
   }
 
   async connect(): Promise<void> {

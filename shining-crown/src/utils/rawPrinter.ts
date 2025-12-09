@@ -4,6 +4,15 @@ import { CashoutTicket } from './thermalPrinter'
 
 const execAsync = promisify(exec)
 
+// Format voucher ID for display (xx-xxxx-xxxx-xxxx-xxxx)
+function formatVoucherId(voucherId: string): string {
+  if (voucherId.length !== 18) {
+    return voucherId // Return as-is if not expected length
+  }
+  
+  return `${voucherId.slice(0, 2)}-${voucherId.slice(2, 6)}-${voucherId.slice(6, 10)}-${voucherId.slice(10, 14)}-${voucherId.slice(14, 18)}`
+}
+
 // Raw printing using macOS lp command (like your terminal command)
 export async function printCashoutTicketRaw(
   ticketData: CashoutTicket,
@@ -15,7 +24,7 @@ export async function printCashoutTicketRaw(
     // Build receipt content with ESC/POS commands
     const escCodes = {
       INIT: '\\x1B\\x40',              // ESC @ - Initialize
-      CHARSET: '\\x1B\\x74\\x49',     // ESC t I - Set character set to Cyrillic
+      CHARSET: '\\x1B\\x74\\x12',     // ESC t 18 - Set character set to PC852 (Latin2)
       CENTER: '\\x1B\\x61\\x01',      // ESC a 1 - Center alignment
       LEFT: '\\x1B\\x61\\x00',        // ESC a 0 - Left alignment
       BOLD_ON: '\\x1B\\x45\\x01',     // ESC E 1 - Bold on
@@ -40,15 +49,6 @@ export async function printCashoutTicketRaw(
       // Initialize and set charset
       escCodes.INIT,
       escCodes.CHARSET,
-      
-      // Header
-      escCodes.CENTER,
-      escCodes.BOLD_ON,
-      escCodes.DOUBLE_HEIGHT,
-      convertText('SHINING CROWN SLOT'),
-      escCodes.NEWLINE,
-      escCodes.BOLD_OFF,
-      escCodes.NORMAL,
       
       // Separator
       '================================',
@@ -78,6 +78,19 @@ export async function printCashoutTicketRaw(
       escCodes.BOLD_OFF,
       escCodes.NORMAL,
       
+      // Voucher Code (if available)
+      ...(ticketData.voucherId ? [
+        escCodes.NEWLINE,
+        escCodes.BOLD_ON,
+        convertText('VOUCHER CODE:'),
+        escCodes.NEWLINE,
+        escCodes.DOUBLE_HEIGHT,
+        convertText(formatVoucherId(ticketData.voucherId)),
+        escCodes.NEWLINE,
+        escCodes.BOLD_OFF,
+        escCodes.NORMAL
+      ] : []),
+      
       // Separator
       '================================',
       escCodes.NEWLINE,
@@ -89,19 +102,15 @@ export async function printCashoutTicketRaw(
       convertText('Present to cashier'),
       escCodes.NEWLINE,
       
-      // Barcode and QR code
-      escCodes.NEWLINE,
-      convertText('Ticket Barcode:'),
-      escCodes.NEWLINE,
-      generateBarcodeCommands(ticketData.ticketId),
-      escCodes.NEWLINE,
-      escCodes.NEWLINE,
-      escCodes.NEWLINE,
-      convertText('QR Code (Large):'),
-      escCodes.NEWLINE,
-      generateQRCodeCommands(ticketData.ticketId),
-      escCodes.NEWLINE,
-      escCodes.NEWLINE,
+      // Voucher QR code (if available)
+      ...(ticketData.voucherId ? [
+        escCodes.NEWLINE,
+        convertText('SCAN TO REDEEM:'),
+        escCodes.NEWLINE,
+        generateQRCodeCommands(ticketData.voucherId),
+        escCodes.NEWLINE,
+      ] : []),
+      
       
       // Footer
       '================================',
@@ -110,7 +119,8 @@ export async function printCashoutTicketRaw(
       escCodes.NEWLINE,
       convertText('Malfunction voids all pays'),
       escCodes.DOUBLELINEFD,
-      
+      escCodes.NEWLINE,
+      escCodes.NEWLINE,
       // Cut paper
       escCodes.CUT
     ]
@@ -149,7 +159,11 @@ export async function printCashoutTicketRaw(
 
 // Generate ESC/POS barcode commands for raw printing
 function generateBarcodeCommands(ticketId: string): string {
+  console.log(`🔍 RAW: generateBarcodeCommands called with ticketId: "${ticketId}" (length: ${ticketId.length})`)
+  
   const commands = [
+    // Switch to ASCII character set for barcode
+    '\\x1B\\x74\\x00',  // ESC t 0 - ASCII character set
     // Set barcode height (162 dots ≈ 20mm)
     '\\x1D\\x68\\xA2',
     // Set barcode width (2 = medium)
@@ -158,30 +172,43 @@ function generateBarcodeCommands(ticketId: string): string {
     '\\x1D\\x48\\x02',
     // Set HRI font
     '\\x1D\\x66\\x00',
-    // Print CODE128 barcode
-    `\\x1D\\x6B\\x49\\x${(ticketId.length).toString(16).padStart(2, '0')}${ticketId}`
+    // Print UPC-A barcode (12 digits, no length byte needed)
+    `\\x1D\\x6B\\x00${ticketId.slice(-12).padStart(12, '0')}`,
+    // Switch back to Latin2 for text
+    '\\x1B\\x74\\x12'   // ESC t 18 - PC852 (Latin2)
   ]
-  return commands.join('')
+  
+  const result = commands.join('')
+  console.log(`🖨️ RAW: Generated barcode commands: ${result.substring(0, 100)}...`)
+  return result
 }
 
 // Generate ESC/POS QR code commands for raw printing
 function generateQRCodeCommands(ticketId: string): string {
+  console.log(`🔍 RAW: generateQRCodeCommands called with ticketId: "${ticketId}" (length: ${ticketId.length})`)
+  
   const dataLength = ticketId.length + 3
-  const lengthLow = (dataLength & 0xFF).toString(16).padStart(2, '0')
-  const lengthHigh = ((dataLength >> 8) & 0xFF).toString(16).padStart(2, '0')
   
   const commands = [
     // QR Code model 2
     '\\x1D\\x28\\x6B\\x04\\x00\\x31\\x41\\x32\\x00',
-    // Module size 16 (MAXIMUM size for 58mm paper)
-    '\\x1D\\x28\\x6B\\x03\\x00\\x31\\x43\\x10',
-    // Error correction level M (better for large QR codes)
-    '\\x1D\\x28\\x6B\\x03\\x00\\x31\\x45\\x31',
-    // Store QR data
-    `\\x1D\\x28\\x6B\\x${lengthLow}\\x${lengthHigh}\\x31\\x50\\x30${ticketId}`,
-    // Print QR code
-    '\\x1D\\x28\\x6B\\x03\\x00\\x31\\x51\\x30'
+    // Module size 8
+    '\\x1D\\x28\\x6B\\x03\\x00\\x31\\x43\\x08',
+    // Error correction level H (30% - highest error correction)
+    '\\x1D\\x28\\x6B\\x03\\x00\\x31\\x45\\x33'
   ]
+  
+  // Store QR data - build with proper length encoding
+  const storeCommand = '\\x1D\\x28\\x6B' + 
+    '\\x' + (dataLength & 0xFF).toString(16).padStart(2, '0') + 
+    '\\x' + ((dataLength >> 8) & 0xFF).toString(16).padStart(2, '0') + 
+    '\\x31\\x50\\x30' + ticketId
+  
+  commands.push(storeCommand)
+  
+  // Print QR code
+  commands.push('\\x1D\\x28\\x6B\\x03\\x00\\x31\\x51\\x30')
+  
   return commands.join('')
 }
 
@@ -200,8 +227,6 @@ export async function testRawPrinter(
       'TEST RECEIPT\\n',
       `Time: ${new Date().toLocaleString()}\\n`,
       '\\n',
-      'Test Barcode:\\n',
-      generateBarcodeCommands(testTicketId),
       '\\n\\n\\n',
       'Large QR Code Test:\\n',
       generateQRCodeCommands(testTicketId),

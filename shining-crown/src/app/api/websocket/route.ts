@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { WebSocketServer, WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import gameController from '@/lib/gameController'
+import { setMainGameSocket } from '@/lib/websocketNotifications'
 
 // Global WebSocket server instance
 let wss: WebSocketServer | null = null
@@ -9,7 +10,7 @@ let mainGameSocket: WebSocket | null = null
 let tabletSocket: WebSocket | null = null
 
 interface WebSocketMessage {
-  type: 'game-state-update' | 'tablet-command' | 'connection-type' | 'command-result'
+  type: 'game-state-update' | 'tablet-command' | 'connection-type' | 'command-result' | 'cashout-notification'
   data?: Record<string, unknown>
   clientType?: 'main-game' | 'tablet'
   commandId?: string
@@ -45,6 +46,7 @@ function initWebSocketServer() {
       console.log('WebSocket connection closed')
       if (ws === mainGameSocket) {
         mainGameSocket = null
+        setMainGameSocket(null) // Update the notification utility
         console.log('Main game disconnected')
       }
       if (ws === tabletSocket) {
@@ -75,6 +77,7 @@ async function handleWebSocketMessage(ws: WebSocket, msg: WebSocketMessage) {
         // Identify client type
         if (msg.clientType === 'main-game') {
           mainGameSocket = ws
+          setMainGameSocket(ws) // Update the notification utility
           console.log('Main game client connected')
           
           // Send current game state to main game
@@ -193,6 +196,7 @@ async function handleWebSocketMessage(ws: WebSocket, msg: WebSocketMessage) {
     }))
   }
 }
+
 
 // Initialize server when this module loads
 initWebSocketServer()

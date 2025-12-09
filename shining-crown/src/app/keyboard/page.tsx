@@ -240,12 +240,12 @@ export default function KeyboardPage() {
           disabled={isLoading}
           useUSB={true}
           machineId="SHINING-CROWN-TABLET"
+          sendCommand={sendCommand}
           onCashoutSuccess={(result) => {
             console.log('Cashout successful:', result)
             // Update balance after successful cashout
             setGameState(prev => ({ ...prev, balance: result.balance.current }))
-            // Optionally notify the main game via WebSocket
-            sendCommand('balance-updated', { balance: result.balance.current })
+            // Balance update notification is now handled by cashout-completed command
           }}
           onCashoutError={(error) => {
             console.error('Cashout failed:', error)

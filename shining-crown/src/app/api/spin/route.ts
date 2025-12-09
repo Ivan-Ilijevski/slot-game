@@ -327,10 +327,10 @@ export async function POST(request: NextRequest) {
       finalWallet = addBalance(totalWin)
       console.log(`Win added: ${formatCurrency(totalWin)}, new balance: ${formatCurrency(finalWallet.balance)}`)
     }
-    
+
     // Add small delay to simulate server processing
     await new Promise(resolve => setTimeout(resolve, 100))
-    
+
     return NextResponse.json({
       success: true,
       results,
@@ -338,6 +338,7 @@ export async function POST(request: NextRequest) {
       totalWin,
       expandedReels,
       balance: finalWallet.balance,
+      balanceBeforeWin: walletAfterBet.balance, // Balance after bet deduction (for display purposes)
       timestamp: Date.now()
     })
     

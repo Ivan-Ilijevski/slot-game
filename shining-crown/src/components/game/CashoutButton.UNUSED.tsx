@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { formatCurrency } from './CurrencyUtils'
+import MessagePopup from './MessagePopup'
 
 export interface CashoutButtonProps {
   balance: number
@@ -30,6 +31,18 @@ export default function CashoutButton({
     connected: boolean
     error?: string
   } | null>(null)
+  const [showMessagePopup, setShowMessagePopup] = useState(false)
+  const [messagePopupType, setMessagePopupType] = useState<'success' | 'error' | 'info' | 'warning'>('info')
+  const [messagePopupTitle, setMessagePopupTitle] = useState<string>('')
+  const [messagePopupMessage, setMessagePopupMessage] = useState<string>('')
+
+  // Message popup helper
+  const showMessage = (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => {
+    setMessagePopupType(type)
+    setMessagePopupTitle(title)
+    setMessagePopupMessage(message)
+    setShowMessagePopup(true)
+  }
 
   // Check if cashout is available
   const minCashout = 10
@@ -112,15 +125,15 @@ export default function CashoutButton({
       const data = await response.json()
 
       if (data.success) {
-        alert('Printer test successful! Check your printer for the test receipt.')
+        showMessage('success', 'Test Successful', 'Printer test completed successfully! Check your printer for the test receipt.')
         setPrinterStatus({ connected: true })
       } else {
-        alert(`Printer test failed: ${data.error}`)
+        showMessage('error', 'Test Failed', `Printer test failed: ${data.error}`)
         setPrinterStatus({ connected: false, error: data.error })
       }
 
     } catch (error) {
-      alert('Failed to test printer connection.')
+      showMessage('error', 'Connection Error', 'Failed to test printer connection.')
       setPrinterStatus({ connected: false, error: 'Network error' })
     }
 
@@ -225,6 +238,15 @@ export default function CashoutButton({
           </div>
         </div>
       )}
+      
+      <MessagePopup
+        isVisible={showMessagePopup}
+        type={messagePopupType}
+        title={messagePopupTitle}
+        message={messagePopupMessage}
+        onClose={() => setShowMessagePopup(false)}
+        autoCloseDelay={4000}
+      />
     </div>
   )
 }

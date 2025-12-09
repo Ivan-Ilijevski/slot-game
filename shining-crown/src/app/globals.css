@@ -24,3 +24,35 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Voucher Input Styles */
+.voucher-input-overlay {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+}
+
+.voucher-status {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  min-width: 200px;
+  text-align: center;
+}
+
+.processing-indicator {
+  color: #FFA500;
+}
+
+.scanning-indicator {
+  color: #00FF00;
+}
+
+.ready-indicator {
+  color: #FFFFFF;
+  opacity: 0.7;
+}

@@ -124,6 +124,7 @@ app.prepare().then(() => {
       case 'connection-type':
         if (message.clientType === 'main-game') {
           mainGameSocket = ws
+          console.log('✅ Main game client connected')
           
           // Send current game state
           if (ws.readyState === 1) {

@@ -8,7 +8,7 @@ const MACOS_CONFIGS = [
     config: {
       type: PrinterTypes.EPSON,
       interface: 'printer:STMicroelectronics_POS58_Printer_USB',
-      characterSet: CharacterSet.WPC1251_CYRILLIC, // Use Cyrillic for your Macedonian text
+      characterSet: CharacterSet.PC852_LATIN2, // Use Latin2 for better compatibility
       width: 32,
       removeSpecialCharacters: false,
       lineCharacter: '='
@@ -20,7 +20,7 @@ const MACOS_CONFIGS = [
     config: {
       type: PrinterTypes.EPSON,
       interface: 'printer:STMicroelectronics_POS58_Printer_USB',
-      characterSet: CharacterSet.WPC1251_CYRILLIC,
+      characterSet: CharacterSet.PC852_LATIN2,
       width: 32,
       removeSpecialCharacters: false,
       lineCharacter: '=',
@@ -35,7 +35,7 @@ const MACOS_CONFIGS = [
     config: {
       type: PrinterTypes.EPSON,
       interface: 'printer:USB Receipt Printer',
-      characterSet: CharacterSet.WPC1251_CYRILLIC,
+      characterSet: CharacterSet.PC852_LATIN2,
       width: 32,
       removeSpecialCharacters: false,
       lineCharacter: '='
@@ -46,7 +46,7 @@ const MACOS_CONFIGS = [
     config: {
       type: PrinterTypes.EPSON,
       interface: 'printer:POS-58',
-      characterSet: CharacterSet.WPC1251_CYRILLIC,
+      characterSet: CharacterSet.PC852_LATIN2,
       width: 32,
       removeSpecialCharacters: false,
       lineCharacter: '='
@@ -59,6 +59,7 @@ export interface CashoutTicket {
   amount: number
   currency: string
   ticketId: string
+  voucherId?: string // Optional voucher ID from server
   machineId: string
   timestamp: Date
   balanceAfter: number
@@ -122,53 +123,102 @@ function formatCurrency(amount: number, currency: string): string {
   return `${amount.toFixed(2)} ${currency}`
 }
 
-// Generate ESC/POS barcode commands
+// Generate ESC/POS barcode commands using raw commands
 function addBarcodeCommands(printer: any, ticketId: string): void {
-  // CODE128 Barcode (most common for receipts)
-  printer.newLine()
-  printer.alignCenter()
+  console.log(`🔍 addBarcodeCommands called with ticketId: "${ticketId}"`)
   
-  // Set barcode height (in dots, 162 = ~20mm height)
-  printer.code('\x1D\x68\xA2') // GS h 162
-  
-  // Set barcode width (2 = medium width)
-  printer.code('\x1D\x77\x02') // GS w 2
-  
-  // Print barcode with HRI (Human Readable Interpretation) below
-  printer.code('\x1D\x48\x02') // GS H 2 (print HRI below barcode)
-  
-  // Set font for HRI
-  printer.code('\x1D\x66\x00') // GS f 0 (font A)
-  
-  // Print CODE128 barcode
-  const barcodeData = `\x1D\x6B\x49${String.fromCharCode(ticketId.length)}${ticketId}`
-  printer.code(barcodeData) // GS k 73 (CODE128)
-  
-  printer.newLine()
+  try {
+    printer.newLine()
+    printer.alignCenter()
+    
+    console.log(`🖨️ Attempting to print barcode for: ${ticketId}`)
+    
+    // Set barcode height (in dots, 162 = ~20mm height)
+    printer.raw(Buffer.from('\x1D\x68\xA2', 'binary')) // GS h 162
+    
+    // Set barcode width (2 = medium width)
+    printer.raw(Buffer.from('\x1D\x77\x02', 'binary')) // GS w 2
+    
+    // Print barcode with HRI (Human Readable Interpretation) below
+    printer.raw(Buffer.from('\x1D\x48\x02', 'binary')) // GS H 2 (print HRI below barcode)
+    
+    // Set font for HRI
+    printer.raw(Buffer.from('\x1D\x66\x00', 'binary')) // GS f 0 (font A)
+    
+    // Print CODE128 barcode
+    const barcodeCommand = Buffer.concat([
+      Buffer.from('\x1D\x6B\x49', 'binary'), // GS k 73 (CODE128)
+      Buffer.from([ticketId.length]), // Length byte
+      Buffer.from(ticketId, 'ascii') // Data
+    ])
+    printer.raw(barcodeCommand)
+    
+    console.log(`✅ Barcode command sent successfully`)
+    printer.newLine()
+  } catch (error) {
+    console.error('❌ Barcode generation failed:', error)
+    // Fallback: print the ticket ID as text
+    printer.newLine()
+    printer.alignCenter()
+    printer.println(`ID: ${ticketId}`)
+    printer.newLine()
+    console.log(`📝 Printed fallback text: ID: ${ticketId}`)
+  }
 }
 
-// Generate ESC/POS QR code commands  
-function addQRCodeCommands(printer: any, ticketId: string): void {
+// Format voucher ID for display (xx-xxxx-xxxx-xxxx-xxxx)
+function formatVoucherId(voucherId: string): string {
+  if (voucherId.length !== 18) {
+    return voucherId // Return as-is if not expected length
+  }
+  
+  return `${voucherId.slice(0, 2)}-${voucherId.slice(2, 6)}-${voucherId.slice(6, 10)}-${voucherId.slice(10, 14)}-${voucherId.slice(14, 18)}`
+}
+
+// Generate ESC/POS QR code commands using raw commands
+function addQRCodeCommands(printer: any, data: string, label?: string): void {
+  console.log(`🔍 addQRCodeCommands called with data: "${data}", label: "${label}"`)
+  
   printer.newLine()
   printer.alignCenter()
   
-  // QR Code model
-  printer.code('\x1D\x28\x6B\x04\x00\x31\x41\x32\x00') // GS ( k - QR Code model 2
+  if (label) {
+    printer.println(label)
+    printer.newLine()
+  }
   
-  // QR Code size (16 = MAXIMUM size for 58mm paper)
-  // Module sizes: 1-16, where 16 gives largest possible QR code
-  printer.code('\x1D\x28\x6B\x03\x00\x31\x43\x10') // GS ( k - Module size 16 (0x10)
-  
-  // Error correction level M (15%) - better for large QR codes
-  printer.code('\x1D\x28\x6B\x03\x00\x31\x45\x31') // GS ( k - Error correction M
-  
-  // Store QR code data
-  const qrDataLength = ticketId.length + 3
-  const qrCommand = `\x1D\x28\x6B${String.fromCharCode(qrDataLength & 0xFF)}${String.fromCharCode((qrDataLength >> 8) & 0xFF)}\x31\x50\x30${ticketId}`
-  printer.code(qrCommand)
-  
-  // Print stored QR code
-  printer.code('\x1D\x28\x6B\x03\x00\x31\x51\x30') // GS ( k - Print QR code
+  try {
+    console.log(`🖨️ Attempting to print QR code for: ${data}`)
+    
+    // QR Code model 2
+    printer.raw(Buffer.from('\x1D\x28\x6B\x04\x00\x31\x41\x32\x00', 'binary')) // GS ( k - QR Code model 2
+    
+    // QR Code size (8)
+    printer.raw(Buffer.from('\x1D\x28\x6B\x03\x00\x31\x43\x08', 'binary')) // GS ( k - Module size 8
+    
+    // Error correction level H (30% - highest error correction)
+    printer.raw(Buffer.from('\x1D\x28\x6B\x03\x00\x31\x45\x33', 'binary')) // GS ( k - Error correction H
+    
+    // Store QR code data
+    const qrDataLength = data.length + 3
+    const qrStoreCommand = Buffer.concat([
+      Buffer.from('\x1D\x28\x6B', 'binary'), // GS ( k
+      Buffer.from([qrDataLength & 0xFF, (qrDataLength >> 8) & 0xFF]), // Length (little endian)
+      Buffer.from('\x31\x50\x30', 'binary'), // Function 180, store data
+      Buffer.from(data, 'utf8') // QR data
+    ])
+    printer.raw(qrStoreCommand)
+    
+    // Print stored QR code
+    printer.raw(Buffer.from('\x1D\x28\x6B\x03\x00\x31\x51\x30', 'binary')) // GS ( k - Print QR code
+    
+    console.log(`✅ QR code command sent successfully`)
+  } catch (error) {
+    console.error('❌ QR code generation failed:', error)
+    // Fallback: print the voucher ID as text
+    printer.println(`CODE: ${data}`)
+    console.log(`📝 Printed fallback text: CODE: ${data}`)
+  }
   
   printer.newLine()
 }
@@ -191,8 +241,12 @@ export async function printCashoutTicket(
       }
     }
 
-    // Clear any previous content
+    // Clear any previous content and initialize properly
     printer.clear()
+    
+    // Initialize printer with proper character set
+    printer.raw(Buffer.from('\x1B\x40', 'binary')) // ESC @ - Initialize printer
+    printer.raw(Buffer.from('\x1B\x74\x12', 'binary')) // ESC t 18 - Set character set to PC852 (Latin2)
     
     // Header
     printer.alignCenter()
@@ -222,22 +276,35 @@ export async function printCashoutTicket(
     printer.setTextNormal()
     printer.drawLine()
     
+    // Voucher Code (if available)
+    if (ticketData.voucherId) {
+      printer.alignCenter()
+      printer.newLine()
+      printer.setTextSize(1, 1)
+      printer.bold(true)
+      printer.println('VOUCHER CODE:')
+      printer.setTextSize(1, 2)
+      printer.println(formatVoucherId(ticketData.voucherId))
+      printer.bold(false)
+      printer.setTextNormal()
+      printer.drawLine()
+    }
+    
     // Instructions
     printer.alignCenter()
     printer.println('Valid for 30 days')
     printer.println('Present to cashier')
     printer.newLine()
     
-    // Add CODE128 barcode
-    printer.println('Ticket Barcode:')
-    addBarcodeCommands(printer, ticketData.ticketId)
+    // Add voucher QR code (if available)
+    if (ticketData.voucherId) {
+      console.log(`🎫 Printing voucher QR code: ${ticketData.voucherId}`)
+      addQRCodeCommands(printer, ticketData.voucherId, 'SCAN TO REDEEM:')
+      printer.newLine()
+    } else {
+      console.log('⚠️ No voucher ID available for QR code')
+    }
     
-    // Add QR code with same data (large size)
-    printer.newLine()
-    printer.newLine()
-    printer.println('QR Code:')
-    addQRCodeCommands(printer, ticketData.ticketId)
-    printer.newLine()
     
     // Footer
     printer.drawLine()
@@ -300,9 +367,6 @@ export async function testPrinter(useDirectUSB: boolean = true): Promise<{ succe
     printer.println(`Time: ${new Date().toLocaleString()}`)
     printer.newLine()
     
-    // Test barcode
-    printer.println('Test Barcode:')
-    addBarcodeCommands(printer, testTicketId)
     
     // Test QR code (large)
     printer.newLine()
