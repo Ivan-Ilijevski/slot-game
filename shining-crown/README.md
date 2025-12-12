@@ -1,37 +1,149 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shining Crown Slot Game
+
+A modern slot game built with Next.js 15, PIXI.js 8, and PIXI React.
+
+## Tech Stack
+
+- **Framework**: Next.js 15.4.4 with App Router
+- **Rendering**: PIXI.js 8.11.0 + @pixi/react 8.0.5
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Sound**: @pixi/sound 6.0.1
+- **State Management**: React 19 Hooks
+
+## Architecture
+
+The game uses a **hybrid declarative/imperative architecture**:
+- **Declarative (PIXI React)**: Scene structure, UI elements, visual layout
+- **Imperative (vanilla PIXI)**: 60fps animations, win sequences, ticker-based control
+
+See [PIXI_REACT_SUMMARY.md](PIXI_REACT_SUMMARY.md) for details.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm or pnpm
+
+### Installation
 
 ```bash
+npm install
+```
 
-pnpm dev
+### Development
 
+```bash
+npm run dev
+```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to play the game.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+shining-crown/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx              # Main game page
+│   │   └── api/                  # API routes (spin, wallet, printer)
+│   ├── components/game/
+│   │   ├── PixiGame.tsx          # PIXI React component
+│   │   ├── PixiGameIntegration.tsx  # Integration wrapper
+│   │   ├── useSpinLogic.ts       # Reel spin logic
+│   │   ├── useWinAnimations.ts   # Win animation logic
+│   │   └── ...                   # Other game hooks
+│   ├── types/
+│   │   ├── pixi-react.d.ts       # PIXI React JSX types
+│   │   └── keyboard.ts           # Game state types
+│   └── utils/                    # Utilities (currency, sounds, etc)
+├── public/assets/                # Game assets (sprites, sounds)
+└── data/                         # Game data (wallet, transactions)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- ✅ 5-reel, 3-row slot machine
+- ✅ 10 paylines
+- ✅ Wild symbol expansion
+- ✅ Win animations (57-frame sequences)
+- ✅ Gamble feature (double or nothing)
+- ✅ Multiple denominations
+- ✅ Voucher system (in/out)
+- ✅ Thermal printer support
+- ✅ Touch keyboard integration
+- ✅ Mobile controller support
+- ✅ Bilingual UI (English/Macedonian)
+- ✅ Sound effects
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Quick Start
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet for PIXI React
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Integration Guides
+- **[INTEGRATION_EXAMPLE.md](INTEGRATION_EXAMPLE.md)** - Exact code changes for integration
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Step-by-step integration strategy
 
-## ПРАВИЛНИК ЗА НАЧИНОТ НА УТВРДУВАЊЕТО НА ТЕХНИЧКАТА ИСПРАВНОСТ НА АВТОМАТИТЕ ЗА ИГРИ НА СРЕЌА И ФОРМАТА И СОДРЖИНАТА НА УВЕРЕНИЕТО ЗА ТЕХНИЧКА ИСПРАВНОСТ НА АВТОМАТИТЕ ЗА ИГРИ НА СРЕЌА
+### Technical Details
+- **[PIXI_REACT_SUMMARY.md](PIXI_REACT_SUMMARY.md)** - Executive summary of the migration
+- **[PIXI_REACT_MIGRATION_COMPLETE.md](PIXI_REACT_MIGRATION_COMPLETE.md)** - Complete migration details
+- **[PIXI_REACT_QUICK_START.md](PIXI_REACT_QUICK_START.md)** - Developer guide with examples
 
-Член 2
+## Development Scripts
 
-GLI Complience
+```bash
+npm run dev         # Start development server
+npm run build       # Build for production
+npm run start       # Start production server
+npm run lint        # Run ESLint
+```
+
+## Game Configuration
+
+### Denominations
+Available denominations: 0.01, 0.05, 0.10, 0.20, 0.50, 1.00
+
+### Bet Levels
+10 bet levels from 10 to 100 credits
+
+### Paytable
+See game assets for symbol payouts
+
+## API Endpoints
+
+- `POST /api/spin` - Execute a spin
+- `GET /api/wallet` - Get wallet balance
+- `POST /api/cashout` - Process cashout
+- `POST /api/voucher/validate` - Validate voucher
+- `POST /api/remote-control/*` - Touch keyboard commands
+
+## Compliance
+
+GLI Compliant - ПРАВИЛНИК ЗА НАЧИНОТ НА УТВРДУВАЊЕТО НА ТЕХНИЧКАТА ИСПРАВНОСТ НА АВТОМАТИТЕ ЗА ИГРИ НА СРЕЌА (Член 2)
+
+## Hardware Integration
+
+- **Thermal Printer**: USB/Serial thermal receipt printer
+- **Touch Keyboard**: Custom touch keyboard controller
+- **USB Support**: For peripheral devices
+
+## License
+
+Proprietary - All rights reserved
+
+## Credits
+
+Built with:
+- [Next.js](https://nextjs.org/)
+- [PIXI.js](https://pixijs.com/)
+- [@pixi/react](https://github.com/pixijs/pixi-react)
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)

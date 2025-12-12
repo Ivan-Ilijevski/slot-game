@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { KeyboardActions, GameState } from './KeyboardHandler'
+import { KeyboardActions, GameState } from '@/types/keyboard'
 import { isMobile } from '@/utils/mobile'
 
 interface MobileControllerProps {

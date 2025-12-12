@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixi/react": "^8.0.5",
     "@pixi/sound": "^6.0.1",
     "@types/ws": "^8.18.1",
     "lucide-react": "^0.542.0",
