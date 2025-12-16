@@ -14,6 +14,7 @@ import { useWallet } from '../components/game/useWallet'
 import { useKeyboardHandler } from '../components/game/useKeyboardHandler'
 import { useTouchKeyboardConnection } from '../components/game/useTouchKeyboardConnection'
 import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence, updateGambleModeState, startWinCountingSound, stopWinCountingSound } from '../utils/winSystem'
+import walletData from '../data/wallet.json'
 
 // Dynamic import for PIXI Sound to avoid SSR issues
 let sound: {
@@ -72,6 +73,7 @@ export default function Home() {
 
   // Wallet/balance management using useWallet hook
   const wallet = useWallet({
+    initialBalance: walletData.balance,
     autoFetch: true,
     onBalanceChange: (newBalance) => {
       console.log('Balance updated to:', newBalance)
@@ -844,6 +846,13 @@ export default function Home() {
       // Flash to gray
       creditDollarTextRef.current.style.fill = 0x666666
       creditAmountTextRef.current.style.fill = 0x666666
+      if (sound) {
+          sound.play('reelSound', {
+            start: 13,
+            end: 13.1, // 400ms = 0.4 seconds
+            volume: 0.7
+          })
+        }
       
       // Clear any existing timeout
       if (creditFlashTimeoutRef.current) {
@@ -856,7 +865,7 @@ export default function Home() {
           creditDollarTextRef.current.style.fill = originalDollarColor
           creditAmountTextRef.current.style.fill = originalAmountColor
         }
-      }, 800)
+      }, 200)
       
     }
   }, [])
@@ -1342,6 +1351,7 @@ export default function Home() {
         uiContainer.addChild(creditDollarText)
         
         // Large white credit amount (converted from currency)
+        
         const creditAmountText = new Text(formatNumberWithSpaces(currencyToCredits(totalBalance)), {
           fontFamily: 'Arial Black',
           fontSize: 50,
@@ -1353,6 +1363,7 @@ export default function Home() {
         creditAmountText.x = OVERLAY_POSITIONS.CREDIT.x - 2
         creditAmountText.y = OVERLAY_POSITIONS.CREDIT.y +10
         uiContainer.addChild(creditAmountText)
+
         
         // BET display (no panel - using overlay)
         
@@ -1529,11 +1540,26 @@ export default function Home() {
               
               if (newAutoStart && !isSpinningRef.current) {
                 // Start autostart immediately if not spinning
+                if (sound) {
+                  sound.play('reelSound', {
+                    start: 14.0,
+                    end: 14.8, // 400ms = 0.4 seconds
+                    volume: 0.9
+                  })
+                }
                 spinReels()
               } else if (!newAutoStart && autoStartTimeoutRef.current) {
                 // Stop autostart
+                if (sound) {
+                  sound.play('reelSound', {
+                    start: 14.9,
+                    end: 15.3, // 400ms = 0.4 seconds
+                    volume: 0.9
+                  })
+                }
                 clearTimeout(autoStartTimeoutRef.current)
                 autoStartTimeoutRef.current = null
+                
               }
               
               return newAutoStart

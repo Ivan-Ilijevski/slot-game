@@ -1,0 +1,62 @@
+{
+    "frames": {
+        "gameName.png": {
+            "frame": { "x": 1, "y": 1, "w": 362, "h": 42 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 362, "h": 42 },
+            "sourceSize": { "w": 362, "h": 42 }
+        },
+        "gameName_Portrait.png": {
+            "frame": { "x": 365, "y": 1, "w": 558, "h": 66 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 558, "h": 66 },
+            "sourceSize": { "w": 558, "h": 66 }
+        },
+        "linesIndicator.png": {
+            "frame": { "x": 925, "y": 1, "w": 102, "h": 110 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 102, "h": 110 },
+            "sourceSize": { "w": 102, "h": 110 }
+        },
+        "reelBackground.png": {
+            "frame": { "x": 1, "y": 113, "w": 1086, "h": 594 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 1086, "h": 594 },
+            "sourceSize": { "w": 1086, "h": 594 }
+        },
+        "reelBackground_Portrait.png": {
+            "frame": { "x": 1089, "y": 113, "w": 792, "h": 432 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 792, "h": 432 },
+            "sourceSize": { "w": 792, "h": 432 }
+        },
+        "reelBorder.png": {
+            "frame": { "x": 1, "y": 709, "w": 1100, "h": 608 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 1100, "h": 608 },
+            "sourceSize": { "w": 1100, "h": 608 }
+        },
+        "reelBorder_Portrait.png": {
+            "frame": { "x": 1103, "y": 709, "w": 800, "h": 440 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 800, "h": 440 },
+            "sourceSize": { "w": 800, "h": 440 }
+        }
+    },
+    "meta": {
+        "app": "https://www.codeandweb.com/texturepacker",
+        "version": "1.0",
+        "image": "mainResources.png",
+        "format": "RGBA8888",
+        "size": { "w": 2048, "h": 2048 },
+        "scale": "1",
+        "smartupdate": "$TexturePacker:SmartUpdate:6dedb1e173b270309c9942e8b26c0059:2505d3e528190d97e85180b37e984706:7d5d1343b619bb663b2898c3a4911c1c$"
+    }
+}
