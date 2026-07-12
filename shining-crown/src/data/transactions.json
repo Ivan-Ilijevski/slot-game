@@ -33284,8 +33284,1009 @@
       "balanceBefore": 690761,
       "balanceAfter": 690756,
       "timestamp": "2026-07-12T20:39:40.846Z"
+    },
+    {
+      "id": "79540eaf-1692-4d60-b817-c536d8945cde",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690756,
+      "balanceAfter": 690755,
+      "timestamp": "2026-07-12T22:44:44.945Z"
+    },
+    {
+      "id": "1fc095be-6272-4525-b049-61862b7c360a",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690755,
+      "balanceAfter": 690754,
+      "timestamp": "2026-07-12T22:44:45.085Z"
+    },
+    {
+      "id": "ee0d87bd-44f5-404d-ad0b-292461927443",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690754,
+      "balanceAfter": 690753,
+      "timestamp": "2026-07-12T22:44:45.223Z"
+    },
+    {
+      "id": "60d86c06-5480-4932-8435-2cfe7be24bbe",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690753,
+      "balanceAfter": 690752,
+      "timestamp": "2026-07-12T22:44:45.365Z"
+    },
+    {
+      "id": "490af7d2-7cfc-4565-a2d0-75bdda7eec5d",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690752,
+      "balanceAfter": 690751,
+      "timestamp": "2026-07-12T22:44:45.501Z"
+    },
+    {
+      "id": "eaf5ae9f-5b95-4783-b4ec-1b86af18a961",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690751,
+      "balanceAfter": 690750,
+      "timestamp": "2026-07-12T22:44:45.641Z"
+    },
+    {
+      "id": "a3a7d2a7-15a7-40c9-ace3-10f9fd6562c1",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690750,
+      "balanceAfter": 690749,
+      "timestamp": "2026-07-12T22:44:45.783Z"
+    },
+    {
+      "id": "c87023c0-7091-41c2-b191-4b6a64842a9c",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690749,
+      "balanceAfter": 690748,
+      "timestamp": "2026-07-12T22:44:45.923Z"
+    },
+    {
+      "id": "98b6aa08-e0c4-46a6-a784-73039d1e4b19",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690748,
+      "balanceAfter": 690747,
+      "timestamp": "2026-07-12T22:44:46.063Z"
+    },
+    {
+      "id": "df696528-2c1e-4e3f-9081-2e79ee0a59b5",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690747,
+      "balanceAfter": 690746,
+      "timestamp": "2026-07-12T22:44:46.204Z"
+    },
+    {
+      "id": "96c4546a-42be-4a4e-839c-b6c6e7b684f2",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690746,
+      "balanceAfter": 690745,
+      "timestamp": "2026-07-12T22:44:46.347Z"
+    },
+    {
+      "id": "7bb1c8e9-b751-41f0-9e3d-80a8f674502f",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690745,
+      "balanceAfter": 690744,
+      "timestamp": "2026-07-12T22:44:46.490Z"
+    },
+    {
+      "id": "8510f82c-7336-4966-87c9-be96000bf77c",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690744,
+      "balanceAfter": 690743,
+      "timestamp": "2026-07-12T22:44:46.634Z"
+    },
+    {
+      "id": "1535e94f-6b40-469d-8c4d-10a592584911",
+      "type": "credit_add",
+      "amount": 1,
+      "balanceBefore": 690743,
+      "balanceAfter": 690744,
+      "timestamp": "2026-07-12T22:44:46.637Z"
+    },
+    {
+      "id": "b0791ff1-ac27-40d3-bbc1-298f84a634ed",
+      "type": "gamble_win",
+      "amount": 1,
+      "balanceBefore": 690744,
+      "balanceAfter": 690745,
+      "timestamp": "2026-07-12T22:45:11.334Z",
+      "metadata": {
+        "initialAmount": 1,
+        "finalAmount": 2,
+        "netAmount": 1,
+        "rounds": 1,
+        "description": "Gamble win: gained 1 MKD"
+      }
+    },
+    {
+      "id": "251c448d-f77c-47f9-afdc-682746fb68d3",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690745,
+      "balanceAfter": 690744,
+      "timestamp": "2026-07-12T22:45:54.575Z"
+    },
+    {
+      "id": "c4bf5d18-295f-4d07-bb23-263fd678479a",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690744,
+      "balanceAfter": 690743,
+      "timestamp": "2026-07-12T22:45:54.718Z"
+    },
+    {
+      "id": "5fdb327e-f425-4091-9063-0f2bae132b6b",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690743,
+      "balanceAfter": 690742,
+      "timestamp": "2026-07-12T22:45:54.858Z"
+    },
+    {
+      "id": "1024bca6-940f-4a4d-ba88-2d94314b2c55",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690742,
+      "balanceAfter": 690741,
+      "timestamp": "2026-07-12T22:45:54.999Z"
+    },
+    {
+      "id": "866df60c-fe90-4acd-8f38-6b1da271a830",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690741,
+      "balanceAfter": 690740,
+      "timestamp": "2026-07-12T22:45:55.143Z"
+    },
+    {
+      "id": "4686e6bc-ee5b-41b6-a62e-21b30831cdca",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690740,
+      "balanceAfter": 690739,
+      "timestamp": "2026-07-12T22:45:55.285Z"
+    },
+    {
+      "id": "a5866602-66aa-486c-a568-5fe8b8a4a193",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690739,
+      "balanceAfter": 690738,
+      "timestamp": "2026-07-12T22:45:55.428Z"
+    },
+    {
+      "id": "52301f4d-29ca-4769-99e8-3ad61b954241",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690738,
+      "balanceAfter": 690737,
+      "timestamp": "2026-07-12T22:45:55.568Z"
+    },
+    {
+      "id": "fe9bd785-abb6-4ce9-86e4-802d57062f09",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690737,
+      "balanceAfter": 690736,
+      "timestamp": "2026-07-12T22:45:55.708Z"
+    },
+    {
+      "id": "b346a147-7b27-483d-a89a-75dbb9580170",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690736,
+      "balanceAfter": 690735,
+      "timestamp": "2026-07-12T22:45:55.851Z"
+    },
+    {
+      "id": "f153f1c0-d819-4920-8592-07bd440c73a8",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690735,
+      "balanceAfter": 690734,
+      "timestamp": "2026-07-12T22:45:55.994Z"
+    },
+    {
+      "id": "b0387a96-d6f9-485d-924d-03e627c055e4",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690734,
+      "balanceAfter": 690733,
+      "timestamp": "2026-07-12T22:45:56.140Z"
+    },
+    {
+      "id": "3e2ca237-bf11-4ff4-ae7e-bc5e555ea764",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690733,
+      "balanceAfter": 690732,
+      "timestamp": "2026-07-12T22:45:56.284Z"
+    },
+    {
+      "id": "81d1185e-0dd6-42f9-b77e-e9818375b2d6",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690732,
+      "balanceAfter": 690731,
+      "timestamp": "2026-07-12T22:45:56.427Z"
+    },
+    {
+      "id": "47e70ee2-d927-4fff-89b7-604e98206fa2",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690731,
+      "balanceAfter": 690730,
+      "timestamp": "2026-07-12T22:45:56.575Z"
+    },
+    {
+      "id": "eb53adc2-e414-4bcf-9fc5-c5242f9bcfe2",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690730,
+      "balanceAfter": 690729,
+      "timestamp": "2026-07-12T22:45:56.718Z"
+    },
+    {
+      "id": "10fa4c3d-391e-4001-a938-531c2c639832",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690729,
+      "balanceAfter": 690728,
+      "timestamp": "2026-07-12T22:45:56.861Z"
+    },
+    {
+      "id": "9cc4ce1c-9996-41b0-b86e-58178346aee7",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690728,
+      "balanceAfter": 690727,
+      "timestamp": "2026-07-12T22:45:57.004Z"
+    },
+    {
+      "id": "4f4cd086-b005-4ede-abbb-f825c7f14cdd",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690727,
+      "balanceAfter": 690726,
+      "timestamp": "2026-07-12T22:45:57.150Z"
+    },
+    {
+      "id": "dea22e84-ea89-4cf8-b7ca-43c3430cbc7d",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690726,
+      "balanceAfter": 690725,
+      "timestamp": "2026-07-12T22:45:57.293Z"
+    },
+    {
+      "id": "6925f2a7-18af-4905-bc00-bd57b93c4e73",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690725,
+      "balanceAfter": 690724,
+      "timestamp": "2026-07-12T22:45:57.437Z"
+    },
+    {
+      "id": "ca2d407d-c0d6-4b55-ab7a-ff9c5216beea",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690724,
+      "balanceAfter": 690723,
+      "timestamp": "2026-07-12T22:45:57.581Z"
+    },
+    {
+      "id": "0e543d55-278a-4a07-9bf8-032600ba4b1f",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690723,
+      "balanceAfter": 690722,
+      "timestamp": "2026-07-12T22:45:57.724Z"
+    },
+    {
+      "id": "4f444dc3-75c1-4f16-afe1-99679f8b4aa4",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690722,
+      "balanceAfter": 690721,
+      "timestamp": "2026-07-12T22:45:57.868Z"
+    },
+    {
+      "id": "97207ac4-0dad-4c47-b83e-49e2b5983360",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690721,
+      "balanceAfter": 690720,
+      "timestamp": "2026-07-12T22:45:58.010Z"
+    },
+    {
+      "id": "77a7a949-0d64-4724-a642-5b7a8f25582f",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690720,
+      "balanceAfter": 690719,
+      "timestamp": "2026-07-12T22:45:58.153Z"
+    },
+    {
+      "id": "657e0d82-05d7-4d1d-a9e4-cd6c40c6db67",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690719,
+      "balanceAfter": 690718,
+      "timestamp": "2026-07-12T22:45:58.295Z"
+    },
+    {
+      "id": "2e187fed-5087-4b6e-a7d4-a1607edb3b1f",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690718,
+      "balanceAfter": 690717,
+      "timestamp": "2026-07-12T22:45:58.439Z"
+    },
+    {
+      "id": "ca776242-8e77-4c5a-bad4-83d8f3e304fd",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690717,
+      "balanceAfter": 690716,
+      "timestamp": "2026-07-12T22:45:58.581Z"
+    },
+    {
+      "id": "efb4b01b-8cc8-4db8-b928-0ea97fd32db7",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690716,
+      "balanceAfter": 690715,
+      "timestamp": "2026-07-12T22:45:58.722Z"
+    },
+    {
+      "id": "ef224eed-3f28-4e46-9cac-b3933a04e89f",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690715,
+      "balanceAfter": 690714,
+      "timestamp": "2026-07-12T22:45:58.865Z"
+    },
+    {
+      "id": "09500667-c6ff-4ebc-8117-5bbcc6c571a3",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690714,
+      "balanceAfter": 690713,
+      "timestamp": "2026-07-12T22:45:59.008Z"
+    },
+    {
+      "id": "c3f50f5e-2596-4abe-a14a-7334f700636c",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690713,
+      "balanceAfter": 690712,
+      "timestamp": "2026-07-12T22:45:59.151Z"
+    },
+    {
+      "id": "644d1757-4c8b-4493-8145-247ae51b1d14",
+      "type": "adjustment",
+      "amount": -1,
+      "balanceBefore": 690712,
+      "balanceAfter": 690711,
+      "timestamp": "2026-07-12T22:45:59.294Z"
+    },
+    {
+      "id": "283d1f3f-41ca-4df3-a8a4-81194890ac4d",
+      "type": "credit_add",
+      "amount": 2,
+      "balanceBefore": 690711,
+      "balanceAfter": 690713,
+      "timestamp": "2026-07-12T22:45:59.298Z"
+    },
+    {
+      "id": "9b62fbb0-e1e0-4380-be4d-840e9d3e137f",
+      "type": "gamble_loss",
+      "amount": -2,
+      "balanceBefore": 690713,
+      "balanceAfter": 690711,
+      "timestamp": "2026-07-12T22:45:59.496Z",
+      "metadata": {
+        "initialAmount": 2,
+        "finalAmount": 0,
+        "netAmount": -2,
+        "rounds": 1,
+        "description": "Gamble loss: lost 2 MKD"
+      }
+    },
+    {
+      "id": "3e1da6d2-ec01-4f68-878f-ffb6bb9a2c6a",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690711,
+      "balanceAfter": 690706,
+      "timestamp": "2026-07-12T22:48:37.613Z"
+    },
+    {
+      "id": "501e18c3-d5f9-4282-ae2a-f932d074195a",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690706,
+      "balanceAfter": 690701,
+      "timestamp": "2026-07-12T22:49:30.294Z"
+    },
+    {
+      "id": "5a9ab8fd-df7a-4cb5-8a32-17f83e802ab1",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690701,
+      "balanceAfter": 690696,
+      "timestamp": "2026-07-12T22:49:33.498Z"
+    },
+    {
+      "id": "8caa3e95-d081-411a-89a6-9fdccb1d499f",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690696,
+      "balanceAfter": 690691,
+      "timestamp": "2026-07-12T22:49:36.712Z"
+    },
+    {
+      "id": "64cc17b0-5de5-465d-bbce-9439ebdbda20",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690691,
+      "balanceAfter": 690686,
+      "timestamp": "2026-07-12T22:49:39.935Z"
+    },
+    {
+      "id": "f11a93d8-5482-410c-8ee1-c862bfe6f363",
+      "type": "credit_add",
+      "amount": 140,
+      "balanceBefore": 690686,
+      "balanceAfter": 690826,
+      "timestamp": "2026-07-12T22:49:39.940Z"
+    },
+    {
+      "id": "bf1184b0-5c69-478d-be58-3036e5af9093",
+      "type": "gamble_loss",
+      "amount": -140,
+      "balanceBefore": 690826,
+      "balanceAfter": 690686,
+      "timestamp": "2026-07-12T22:50:34.120Z",
+      "metadata": {
+        "initialAmount": 140,
+        "finalAmount": 0,
+        "netAmount": -140,
+        "rounds": 0,
+        "description": "Gamble loss: lost 140 MKD"
+      }
+    },
+    {
+      "id": "1392d96c-b347-4a0a-830f-602be4b06cd6",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690686,
+      "balanceAfter": 690681,
+      "timestamp": "2026-07-12T22:54:01.309Z"
+    },
+    {
+      "id": "79165dae-2d98-4d20-951d-84ba4276c8dc",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690681,
+      "balanceAfter": 690676,
+      "timestamp": "2026-07-12T22:54:03.205Z"
+    },
+    {
+      "id": "77becfb0-96dc-4cdd-8363-0abde8c534e2",
+      "type": "credit_add",
+      "amount": 5,
+      "balanceBefore": 690676,
+      "balanceAfter": 690681,
+      "timestamp": "2026-07-12T22:54:03.212Z"
+    },
+    {
+      "id": "58d73956-e9a7-4be8-8c21-d5bb93fc8b93",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690681,
+      "balanceAfter": 690676,
+      "timestamp": "2026-07-12T22:54:04.121Z"
+    },
+    {
+      "id": "5a79d79f-2970-4386-8ec9-832073df59c0",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690676,
+      "balanceAfter": 690671,
+      "timestamp": "2026-07-12T22:54:05.009Z"
+    },
+    {
+      "id": "0ab5e702-80c3-4fb6-9483-e37fa555e3af",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690671,
+      "balanceAfter": 690666,
+      "timestamp": "2026-07-12T22:54:05.626Z"
+    },
+    {
+      "id": "2cc5708c-3479-44de-b648-50b7bcc12b73",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690666,
+      "balanceAfter": 690661,
+      "timestamp": "2026-07-12T22:54:06.373Z"
+    },
+    {
+      "id": "a19fe566-caaa-49de-85cd-9057b46e4640",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690661,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:07.025Z"
+    },
+    {
+      "id": "cbf0571c-6f9a-4f4c-bf2b-2b879c2c18c2",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690656,
+      "balanceAfter": 690651,
+      "timestamp": "2026-07-12T22:54:07.762Z"
+    },
+    {
+      "id": "c4ffbb1d-1d70-451b-87a2-46695f64f8fb",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690651,
+      "balanceAfter": 690646,
+      "timestamp": "2026-07-12T22:54:08.864Z"
+    },
+    {
+      "id": "9f8c2a64-4c3d-4b8a-8639-4ec8e6a031eb",
+      "type": "credit_add",
+      "amount": 5,
+      "balanceBefore": 690646,
+      "balanceAfter": 690651,
+      "timestamp": "2026-07-12T22:54:08.870Z"
+    },
+    {
+      "id": "54b0c1f2-665c-488a-bbfc-94d82d926cca",
+      "type": "gamble_win",
+      "amount": 5,
+      "balanceBefore": 690651,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:14.366Z",
+      "metadata": {
+        "initialAmount": 5,
+        "finalAmount": 10,
+        "netAmount": 5,
+        "rounds": 1,
+        "description": "Gamble win: gained 5 MKD"
+      }
+    },
+    {
+      "id": "df813953-ce3a-436e-b72c-8488ff2bc85c",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690656,
+      "balanceAfter": 690651,
+      "timestamp": "2026-07-12T22:54:15.337Z"
+    },
+    {
+      "id": "47b0515f-64d5-4fdb-80ac-c3fabbfa7cfa",
+      "type": "credit_add",
+      "amount": 10,
+      "balanceBefore": 690651,
+      "balanceAfter": 690661,
+      "timestamp": "2026-07-12T22:54:15.341Z"
+    },
+    {
+      "id": "a7984c0e-bf42-4d1f-ba10-685130a60487",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690661,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:16.132Z"
+    },
+    {
+      "id": "faea00b9-4692-4d10-a207-8f5fa4ba5ecf",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690656,
+      "balanceAfter": 690651,
+      "timestamp": "2026-07-12T22:54:17.120Z"
+    },
+    {
+      "id": "daa831f5-3b7b-4fe7-98a9-e049c77f16a5",
+      "type": "credit_add",
+      "amount": 5,
+      "balanceBefore": 690651,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:17.127Z"
+    },
+    {
+      "id": "79888c77-c40a-4b8d-8eac-be56f94090e0",
+      "type": "gamble_win",
+      "amount": 5,
+      "balanceBefore": 690656,
+      "balanceAfter": 690661,
+      "timestamp": "2026-07-12T22:54:23.960Z",
+      "metadata": {
+        "initialAmount": 5,
+        "finalAmount": 10,
+        "netAmount": 5,
+        "rounds": 1,
+        "description": "Gamble win: gained 5 MKD"
+      }
+    },
+    {
+      "id": "619a0640-3af7-447f-b1d9-b0a55b93b9eb",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690661,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:25.173Z"
+    },
+    {
+      "id": "bbddb432-b100-499f-8714-ace421a70479",
+      "type": "credit_add",
+      "amount": 75,
+      "balanceBefore": 690656,
+      "balanceAfter": 690731,
+      "timestamp": "2026-07-12T22:54:25.179Z"
+    },
+    {
+      "id": "b8508a5f-8e05-4303-9288-26f7a5250f2c",
+      "type": "gamble_loss",
+      "amount": -75,
+      "balanceBefore": 690731,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:33.878Z",
+      "metadata": {
+        "initialAmount": 75,
+        "finalAmount": 0,
+        "netAmount": -75,
+        "rounds": 3,
+        "description": "Gamble loss: lost 75 MKD"
+      }
+    },
+    {
+      "id": "a4b74aa5-0d1d-40ca-98a6-6936f5f6ed78",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690656,
+      "balanceAfter": 690651,
+      "timestamp": "2026-07-12T22:54:36.466Z"
+    },
+    {
+      "id": "0ebfc0b7-460f-4a25-a833-a373a74e3028",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690651,
+      "balanceAfter": 690646,
+      "timestamp": "2026-07-12T22:54:37.552Z"
+    },
+    {
+      "id": "d7a631f0-55fd-41c2-932a-2f4bce19acae",
+      "type": "credit_add",
+      "amount": 15,
+      "balanceBefore": 690646,
+      "balanceAfter": 690661,
+      "timestamp": "2026-07-12T22:54:37.557Z"
+    },
+    {
+      "id": "b09f2b71-90c7-44a7-9473-66d4fd7fbdf3",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690661,
+      "balanceAfter": 690656,
+      "timestamp": "2026-07-12T22:54:38.694Z"
+    },
+    {
+      "id": "7e786ce7-8b9e-4ade-9a70-a9fc3c9347cc",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690656,
+      "balanceAfter": 690651,
+      "timestamp": "2026-07-12T22:54:39.383Z"
+    },
+    {
+      "id": "bb90e6c5-c54e-4aa4-a9b2-7b4d2987492b",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690651,
+      "balanceAfter": 690646,
+      "timestamp": "2026-07-12T22:54:42.670Z"
+    },
+    {
+      "id": "b3bb3977-6c93-4e5e-93f3-3acdb36c7c94",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690646,
+      "balanceAfter": 690641,
+      "timestamp": "2026-07-12T22:54:43.422Z"
+    },
+    {
+      "id": "91f2be84-3cfa-473b-abf8-f466dae82bc8",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 690641,
+      "balanceAfter": 690636,
+      "timestamp": "2026-07-12T22:54:44.014Z"
+    },
+    {
+      "id": "b904128b-7f39-4a8c-8110-42dd2a3c5ad0",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 690636,
+      "balanceAfter": 689636,
+      "timestamp": "2026-07-12T22:54:50.225Z"
+    },
+    {
+      "id": "0270e8dc-c5c3-47f6-b2ef-6b21538295f1",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 689636,
+      "balanceAfter": 688636,
+      "timestamp": "2026-07-12T22:54:51.888Z"
+    },
+    {
+      "id": "8a090260-1235-4021-a285-a228f7701b92",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 688636,
+      "balanceAfter": 687636,
+      "timestamp": "2026-07-12T22:54:52.512Z"
+    },
+    {
+      "id": "3c142d61-1196-4ff8-bdaa-62c91794f2e4",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 687636,
+      "balanceAfter": 686636,
+      "timestamp": "2026-07-12T22:54:53.184Z"
+    },
+    {
+      "id": "ebb39d9f-f416-4360-b513-763bc0118149",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 686636,
+      "balanceAfter": 685636,
+      "timestamp": "2026-07-12T22:54:54.050Z"
+    },
+    {
+      "id": "3f50c8f6-c9a2-4324-b587-097788ed5035",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 685636,
+      "balanceAfter": 684636,
+      "timestamp": "2026-07-12T22:54:54.753Z"
+    },
+    {
+      "id": "9f6861cc-3ab8-40f2-bbfe-7704bd59c504",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 684636,
+      "balanceAfter": 683636,
+      "timestamp": "2026-07-12T22:54:55.499Z"
+    },
+    {
+      "id": "b4ed989d-ae01-4788-ba34-126fc3e3b569",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 683636,
+      "balanceAfter": 682636,
+      "timestamp": "2026-07-12T22:54:56.162Z"
+    },
+    {
+      "id": "c84f6227-60cd-42dd-97bb-77a90420ba08",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 682636,
+      "balanceAfter": 681636,
+      "timestamp": "2026-07-12T22:54:56.970Z"
+    },
+    {
+      "id": "c5cd6098-aff4-4ea1-94ed-ae8a1073d340",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 681636,
+      "balanceAfter": 680636,
+      "timestamp": "2026-07-12T22:54:57.577Z"
+    },
+    {
+      "id": "07c75f8d-4b14-4cc5-bea1-fa699a9c0780",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 680636,
+      "balanceAfter": 679636,
+      "timestamp": "2026-07-12T22:54:59.398Z"
+    },
+    {
+      "id": "a1a497e6-4dc4-42cc-8bf8-07d9c3f36357",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 679636,
+      "balanceAfter": 678636,
+      "timestamp": "2026-07-12T22:55:01.267Z"
+    },
+    {
+      "id": "e8fc8a42-0421-4533-9839-f53d22cd0922",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 678636,
+      "balanceAfter": 677636,
+      "timestamp": "2026-07-12T22:55:02.083Z"
+    },
+    {
+      "id": "e0d1ef59-9f30-4e0e-8fbe-a8325ef2acff",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 677636,
+      "balanceAfter": 676636,
+      "timestamp": "2026-07-12T22:55:06.738Z"
+    },
+    {
+      "id": "4cbb4a91-b9f3-4735-abd3-4efd5112fcd7",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 676636,
+      "balanceAfter": 675636,
+      "timestamp": "2026-07-12T22:55:07.586Z"
+    },
+    {
+      "id": "4ee0431c-0e40-44f5-b6a1-5f1e5ea9649c",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 675636,
+      "balanceAfter": 674636,
+      "timestamp": "2026-07-12T22:55:08.234Z"
+    },
+    {
+      "id": "9857f2bc-d3eb-47c6-be05-55290af96af1",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 674636,
+      "balanceAfter": 673636,
+      "timestamp": "2026-07-12T22:55:09.012Z"
+    },
+    {
+      "id": "537a3173-9969-46c4-be01-46ba685c5c9d",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 673636,
+      "balanceAfter": 672636,
+      "timestamp": "2026-07-12T22:55:10.043Z"
+    },
+    {
+      "id": "209cf10d-8c2a-447d-a3b4-8fd309b6e6ca",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 672636,
+      "balanceAfter": 671636,
+      "timestamp": "2026-07-12T22:55:10.772Z"
+    },
+    {
+      "id": "5876a4f1-1b4a-4582-b37d-241cb0c72316",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 671636,
+      "balanceAfter": 670636,
+      "timestamp": "2026-07-12T22:55:11.630Z"
+    },
+    {
+      "id": "4fe21ec7-7188-4632-939b-e2a5cf698407",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 670636,
+      "balanceAfter": 669636,
+      "timestamp": "2026-07-12T22:55:13.281Z"
+    },
+    {
+      "id": "d697c680-111e-4038-aabb-9a0aeef38c05",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 669636,
+      "balanceAfter": 668636,
+      "timestamp": "2026-07-12T22:55:13.987Z"
+    },
+    {
+      "id": "4c9ac0c2-7a2e-4513-8472-cf186da6e987",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 668636,
+      "balanceAfter": 667636,
+      "timestamp": "2026-07-12T22:55:14.646Z"
+    },
+    {
+      "id": "cfea60f9-cf95-4878-8293-61482569d5c6",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 667636,
+      "balanceAfter": 666636,
+      "timestamp": "2026-07-12T22:55:15.561Z"
+    },
+    {
+      "id": "ab132541-db93-4b90-9ba1-676591daa74f",
+      "type": "credit_add",
+      "amount": 1000,
+      "balanceBefore": 666636,
+      "balanceAfter": 667636,
+      "timestamp": "2026-07-12T22:55:15.567Z"
+    },
+    {
+      "id": "716f7980-7ec8-411f-887d-654101ff08d5",
+      "type": "gamble_loss",
+      "amount": -1000,
+      "balanceBefore": 667636,
+      "balanceAfter": 666636,
+      "timestamp": "2026-07-12T22:55:20.468Z",
+      "metadata": {
+        "initialAmount": 1000,
+        "finalAmount": 0,
+        "netAmount": -1000,
+        "rounds": 1,
+        "description": "Gamble loss: lost 1000 MKD"
+      }
+    },
+    {
+      "id": "496a6135-98b4-4a8e-9fa6-37b53cd74d74",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 666636,
+      "balanceAfter": 665636,
+      "timestamp": "2026-07-12T22:55:22.728Z"
+    },
+    {
+      "id": "5a9877cb-dcf1-4b85-9d93-5b66e299764a",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 665636,
+      "balanceAfter": 664636,
+      "timestamp": "2026-07-12T22:55:23.427Z"
+    },
+    {
+      "id": "772d2fe1-b43e-4677-9690-95ba90025a1b",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 664636,
+      "balanceAfter": 663636,
+      "timestamp": "2026-07-12T22:55:24.132Z"
+    },
+    {
+      "id": "8dd4f9cd-43de-4484-a2b4-5e98dc9c276e",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 663636,
+      "balanceAfter": 662636,
+      "timestamp": "2026-07-12T22:55:24.792Z"
+    },
+    {
+      "id": "e74194b5-93db-43c3-ae50-9213300b0ef8",
+      "type": "credit_add",
+      "amount": 1000,
+      "balanceBefore": 662636,
+      "balanceAfter": 663636,
+      "timestamp": "2026-07-12T22:55:24.796Z"
+    },
+    {
+      "id": "d2c3d653-2874-4f33-94fd-f3dc91b4dca0",
+      "type": "adjustment",
+      "amount": -1000,
+      "balanceBefore": 663636,
+      "balanceAfter": 662636,
+      "timestamp": "2026-07-12T22:55:25.864Z"
     }
   ],
-  "lastUpdated": "2026-07-12T20:39:40.849Z",
-  "totalTransactions": 4094
+  "lastUpdated": "2026-07-12T22:55:25.867Z",
+  "totalTransactions": 4213
 }
