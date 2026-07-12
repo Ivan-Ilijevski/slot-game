@@ -92,10 +92,6 @@ export default function Home() {
   const currentBet = betManager.currentBet
   const denomination = denomManager.denomination
 
-  // Display balance: subtract pending win to show balance before win was added
-  // (The server already added the win, but we display it as pending for animation)
-  const totalBalance = pendingWin > 0 ? wallet.balance - pendingWin : wallet.balance
-
   // ===== END: Integrated Hooks =====
 
   // Remaining state (not yet extracted to hooks)
@@ -110,6 +106,13 @@ export default function Home() {
   const [selectedColor, setSelectedColor] = useState<'red' | 'black' | null>(null) // Player's color choice
   const [cardColor, setCardColor] = useState<'red' | 'black' | null>(null) // Revealed card color
   const [gambleHistory, setGambleHistory] = useState<GambleHistoryEntry[]>([]) // History of gamble results
+
+  // Display balance: subtract pending win to show balance before win was added
+  // (The server already added the win, but we display it as pending for animation)
+  // During gamble mode, use gambleAmount (constant) instead of pendingWin (which doubles)
+  const totalBalance = isGambleMode
+    ? wallet.balance - gambleAmount  // Use constant gambleAmount during gamble
+    : (pendingWin > 0 ? wallet.balance - pendingWin : wallet.balance)
 
   // Mobile controller state tracking
   const [stopRequested, setStopRequested] = useState(false)
@@ -624,8 +627,8 @@ export default function Home() {
     }
   }, [pendingWin, startCardFlashing, completeAllAnimations, stopAllSounds])
 
-  const exitGambleMode = useCallback(() => {
-    
+  const exitGambleMode = useCallback(async () => {
+
     // Clear any pending gamble timeouts first
     if (gambleWinTimeoutRef.current) {
       clearTimeout(gambleWinTimeoutRef.current)
@@ -635,43 +638,83 @@ export default function Home() {
       clearTimeout(gambleLoseTimeoutRef.current)
       gambleLoseTimeoutRef.current = null
     }
-    
+
+    // Calculate net gamble result: pendingWin - gambleAmount
+    const netAmount = pendingWinRef.current - gambleAmount
+
+    // Only process transaction if netAmount is not zero
+    if (netAmount !== 0) {
+      try {
+        const transactionType = netAmount > 0 ? 'win' : 'loss'
+        const transactionAmount = Math.abs(netAmount)
+
+        const response = await fetch('/api/gamble', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: transactionType,
+            amount: transactionAmount,
+            metadata: {
+              initialAmount: gambleAmount,
+              finalAmount: pendingWinRef.current,
+              netAmount: netAmount,
+              description: `Gamble ${transactionType}: ${netAmount > 0 ? 'gained' : 'lost'} ${transactionAmount} MKD`
+            }
+          }),
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          console.log(`Gamble transaction completed: ${netAmount > 0 ? '+' : ''}${netAmount} MKD`)
+          // Refresh balance to show updated amount
+          await wallet.refreshBalance()
+        } else {
+          console.error('Failed to process gamble transaction:', data.error)
+        }
+      } catch (error) {
+        console.error('Error processing gamble transaction:', error)
+      }
+    }
+
     setIsGambleMode(false)
     setGambleAmount(0)
+    setPendingWin(0)
+    setLastWin(0)
+    setAnimatedWinAmount(0)
     setGambleStage('choice')
     setSelectedColor(null)
     setCardColor(null)
     // Keep gamble history - don't clear when exiting gamble mode
     isGambleModeRef.current = false
-    
+
     // Reset gamble mode state for win sounds
     updateGambleModeState(false)
-    
+
     // Clear any pending win lines to prevent win animations after gamble
     pendingWinLinesRef.current = null
-    
+
     // Stop card flashing
     stopCardFlashing()
-    
+
     // Hide gamble UI if it exists
     if (gambleContainerRef.current) {
       gambleContainerRef.current.visible = false
-      
+
       // Keep visual history - don't clear when hiding gamble UI
     }
-  }, [stopCardFlashing])
+  }, [stopCardFlashing, gambleAmount, wallet])
+
+
+  // Ova treba da bide server side, ama i toa kje bide ahahahaahah
 
   const collectGambleWin = useCallback(() => {
-
-    // Refresh balance from server (server handles the update)
-    wallet.refreshBalance()
-
-    // Clear pending win and exit gamble mode
-    setPendingWin(0)
-    setLastWin(0)
-    setAnimatedWinAmount(0)
+    // Transaction is now handled in exitGambleMode
+    // Just exit gamble mode (which will trigger the transaction)
     exitGambleMode()
-  }, [gambleAmount, exitGambleMode, wallet])
+  }, [exitGambleMode])
 
   const updateGambleHistory = useCallback((cardTexture: string, won: boolean) => {
     if (gambleContainerRef.current) {
@@ -770,10 +813,9 @@ export default function Home() {
         
         if (elements) {
           if (won) {
-            // Double the gamble amount
-            const newAmount = gambleAmount * 2
-            setGambleAmount(newAmount)
-            setPendingWin(newAmount)
+            // Double the pending win amount (gambleAmount stays constant)
+            const newPendingWin = pendingWinRef.current * 2
+            setPendingWin(newPendingWin)
             if (sound) {
           sound.play('reelSound', {
             start: 10,
@@ -781,8 +823,8 @@ export default function Home() {
             volume: 0.9
           })
         }
-            elements.gambleAmountText.text = `GAMBLE AMOUNT\n${formatCurrency(newAmount)}`
-            elements.gambleToWinText.text = `GAMBLE TO WIN\n${formatCurrency(newAmount * 2)}`
+            elements.gambleAmountText.text = `GAMBLE AMOUNT\n${formatCurrency(newPendingWin)}`
+            elements.gambleToWinText.text = `GAMBLE TO WIN\n${formatCurrency(newPendingWin * 2)}`
             elements.instructionsText.text = 'You won!'
             
             // Auto-continue to next gamble round after showing win
@@ -804,11 +846,12 @@ export default function Home() {
               gambleWinTimeoutRef.current = null // Clear ref after execution
             }, 2000) // Show win message for 2 seconds before continuing
           } else {
-            // Lost - clear everything
-            setGambleAmount(0)
+            // Lost - set pendingWin to 0
+            // Transaction will be handled in exitGambleMode: pendingWin (0) - gambleAmount = negative
             setPendingWin(0)
             setLastWin(0)
             setAnimatedWinAmount(0)
+            // gambleAmount stays intact for the exit transaction
             if (sound) {
               sound.play('reelSound', {
                 start: 9,
@@ -819,7 +862,7 @@ export default function Home() {
             elements.gambleAmountText.text = 'GAMBLE AMOUNT\n' + formatCurrency(0)
             elements.gambleToWinText.text = 'GAMBLE TO WIN\n' + formatCurrency(0)
             elements.instructionsText.text = 'You lost! Better luck next time.'
-            
+
             // Exit gamble mode after a short delay
             gambleLoseTimeoutRef.current = setTimeout(() => {
               exitGambleMode()
@@ -829,7 +872,7 @@ export default function Home() {
         }
       }, 10) // Show reveal for 50 milliseconds
     }
-  }, [gambleStage, gambleAmount, exitGambleMode, stopCardFlashing, startCardFlashing])
+  }, [gambleStage, gambleAmount, exitGambleMode, stopCardFlashing, startCardFlashing, wallet])
 
   // Update gamble mode ref when state changes
   useEffect(() => {

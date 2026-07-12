@@ -20,7 +20,15 @@ export async function POST(request: NextRequest) {
     }
     
     // Forward request to voucher server
-    const voucherServerResponse = await fetch('http://localhost:8080/validate', {
+    const voucherServerUrl = process.env.VOUCHER_SERVER_URL
+    if (!voucherServerUrl) {
+      return NextResponse.json(
+        { valid: false, reason: 'Voucher server URL not configured. Please set VOUCHER_SERVER_URL environment variable.' },
+        { status: 500 }
+      )
+    }
+
+    const voucherServerResponse = await fetch(`${voucherServerUrl}/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

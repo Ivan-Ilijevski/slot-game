@@ -32,9 +32,17 @@ export async function generateVoucher(credit: number): Promise<VoucherGeneration
         message: 'Voucher API key not configured. Please set VOUCHER_API_KEY environment variable.'
       }
     }
+
+    const voucherServerUrl = process.env.VOUCHER_SERVER_URL
+    if (!voucherServerUrl) {
+      return {
+        success: false,
+        message: 'Voucher server URL not configured. Please set VOUCHER_SERVER_URL environment variable.'
+      }
+    }
     
     // Make request to voucher server
-    const response = await fetch('http://localhost:8080/generate', {
+    const response = await fetch(`${voucherServerUrl}/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

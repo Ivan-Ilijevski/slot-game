@@ -37,20 +37,12 @@ export async function POST(request: NextRequest) {
         description: `Gamble win: ${amount} MKD`
       })
     } else {
-      // Deduct gamble loss from wallet (the amount was already in pending win, not in wallet)
-      // So we don't actually deduct here - the loss is that we don't add the pending win
-      // But we log it as a loss transaction with 0 wallet impact
-      const { readWallet } = await import('../../../utils/wallet')
-      const wallet = readWallet()
-
-      // Log the gamble loss without changing balance (since pending win was never added)
-      const { logTransaction } = await import('../../../utils/transactionLogger')
-      logTransaction('gamble_loss', -amount, wallet.balance, wallet.balance, {
+      // Deduct gamble loss from wallet
+      // The initial win was already added to the wallet, so we need to deduct it when losing
+      updatedWallet = deductBalance(amount, 'gamble_loss', {
         ...metadata,
         description: `Gamble loss: ${amount} MKD`
       })
-
-      updatedWallet = wallet
     }
 
     return NextResponse.json({
