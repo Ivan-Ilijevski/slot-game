@@ -3,10 +3,15 @@ import { readWallet, updateBalance } from '../../../utils/wallet'
 import { printCashoutTicket, generateTicketId, CashoutTicket } from '../../../utils/thermalPrinter'
 import { printCashoutTicketRaw } from '../../../utils/rawPrinter'
 import { generateVoucher } from '../../../utils/voucherGenerator'
+import { isSessionActive } from '../../../lib/gambleSession'
 
 // POST /api/cashout - Process cashout and print ticket
 export async function POST(request: NextRequest) {
   try {
+    if (isSessionActive()) {
+      return NextResponse.json({ success: false, error: 'Gamble in progress' }, { status: 409 })
+    }
+
     const body = await request.json()
     const { amount, useUSB = false, machineId = 'SHINING-CROWN-001' } = body
     

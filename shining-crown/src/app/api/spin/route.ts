@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomBytes } from 'crypto'
+import { randomUUID } from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { deductBalance, addBalance, validateBalance, readWallet } from '../../../utils/wallet'
 import { formatCurrency } from '../../../config/currency'
+import { secureRandom } from '../../../utils/secureRandom'
+import { clearEligibleWin, isSessionActive, setEligibleWin } from '../../../lib/gambleSession'
 
 // Types
 interface VirtualReels {
@@ -95,25 +97,6 @@ function loadGameData() {
   
   gameDataLoaded = true
   console.log('Loaded symbol mapping:', symbolMapping)
-}
-
-// Cryptographically secure random number generator
-function secureRandom(min: number, max: number): number {
-  const range = max - min + 1
-  const bytesNeeded = Math.ceil(Math.log2(range) / 8)
-  const maxValue = Math.pow(256, bytesNeeded)
-  const threshold = maxValue - (maxValue % range)
-  
-  let randomValue: number
-  do {
-    const randomBytes_result = randomBytes(bytesNeeded)
-    randomValue = 0
-    for (let i = 0; i < bytesNeeded; i++) {
-      randomValue = (randomValue << 8) + randomBytes_result[i]
-    }
-  } while (randomValue >= threshold)
-  
-  return min + (randomValue % range)
 }
 
 function expandWildsOnReels(reelResults: string[][]): { expandedResults: string[][], expandedReels: number[] } {
@@ -256,6 +239,10 @@ function calculatePaylineWin(symbols: string[], paylineNumber: number, betMultip
 
 export async function POST(request: NextRequest) {
   try {
+    if (isSessionActive()) {
+      return NextResponse.json({ error: 'Gamble in progress' }, { status: 409 })
+    }
+
     loadGameData()
     
     // Parse request body to get bet amount
@@ -325,7 +312,10 @@ export async function POST(request: NextRequest) {
     let finalWallet = walletAfterBet
     if (totalWin > 0) {
       finalWallet = addBalance(totalWin)
+      await setEligibleWin(totalWin, randomUUID())
       console.log(`Win added: ${formatCurrency(totalWin)}, new balance: ${formatCurrency(finalWallet.balance)}`)
+    } else {
+      await clearEligibleWin()
     }
 
     // Add small delay to simulate server processing

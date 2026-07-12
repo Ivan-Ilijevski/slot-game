@@ -91,6 +91,7 @@ export default function Home() {
   // Access hook values with shorter aliases for backward compatibility
   const currentBet = betManager.currentBet
   const denomination = denomManager.denomination
+  const refreshWalletBalance = wallet.refreshBalance
 
   // ===== END: Integrated Hooks =====
 
@@ -554,7 +555,7 @@ export default function Home() {
   }, [])
 
   // Gamble feature functions
-  const enterGambleMode = useCallback(() => {
+  const enterGambleMode = useCallback(async () => {
     console.log('🎰 [DEBUG] enterGambleMode() function called')
     console.log('🎰 [DEBUG] pendingWin (state):', pendingWin)
     console.log('🎰 [DEBUG] pendingWinRef.current:', pendingWinRef.current)
@@ -563,6 +564,24 @@ export default function Home() {
     
     if (pendingWinRef.current > 0 && !isSpinningRef.current) {
       console.log('🎰 [DEBUG] Condition passed - executing gamble mode setup')
+
+      try {
+        const response = await fetch('/api/gamble', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start' })
+        })
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          console.error('Failed to start gamble:', data.error)
+          return
+        }
+        pendingWinRef.current = data.amount
+        setPendingWin(data.amount)
+      } catch (error) {
+        console.error('Error starting gamble:', error)
+        return
+      }
       
       // Complete animations to final state (don't stop them entirely)
       completeAllAnimations()
@@ -639,44 +658,17 @@ export default function Home() {
       gambleLoseTimeoutRef.current = null
     }
 
-    // Calculate net gamble result: pendingWin - gambleAmount
-    const netAmount = pendingWinRef.current - gambleAmount
-
-    // Only process transaction if netAmount is not zero
-    if (netAmount !== 0) {
-      try {
-        const transactionType = netAmount > 0 ? 'win' : 'loss'
-        const transactionAmount = Math.abs(netAmount)
-
-        const response = await fetch('/api/gamble', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type: transactionType,
-            amount: transactionAmount,
-            metadata: {
-              initialAmount: gambleAmount,
-              finalAmount: pendingWinRef.current,
-              netAmount: netAmount,
-              description: `Gamble ${transactionType}: ${netAmount > 0 ? 'gained' : 'lost'} ${transactionAmount} MKD`
-            }
-          }),
-        })
-
-        const data = await response.json()
-
-        if (data.success) {
-          console.log(`Gamble transaction completed: ${netAmount > 0 ? '+' : ''}${netAmount} MKD`)
-          // Refresh balance to show updated amount
-          await wallet.refreshBalance()
-        } else {
-          console.error('Failed to process gamble transaction:', data.error)
-        }
-      } catch (error) {
-        console.error('Error processing gamble transaction:', error)
-      }
+    try {
+      const response = await fetch('/api/gamble', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'collect' })
+      })
+      const data = await response.json()
+      if (data.success) await refreshWalletBalance()
+      else console.error('Failed to collect gamble:', data.error)
+    } catch (error) {
+      console.error('Error collecting gamble:', error)
     }
 
     setIsGambleMode(false)
@@ -705,10 +697,8 @@ export default function Home() {
 
       // Keep visual history - don't clear when hiding gamble UI
     }
-  }, [stopCardFlashing, gambleAmount, wallet])
+  }, [stopCardFlashing, refreshWalletBalance])
 
-
-  // Ova treba da bide server side, ama i toa kje bide ahahahaahah
 
   const collectGambleWin = useCallback(() => {
     // Transaction is now handled in exitGambleMode
@@ -759,7 +749,7 @@ export default function Home() {
     }
   }, [gambleHistory])
 
-  const chooseGambleColor = useCallback((color: 'red' | 'black') => {
+  const chooseGambleColor = useCallback(async (color: 'red' | 'black') => {
     if (gambleStage === 'choice' && gambleContainerRef.current) {
       setSelectedColor(color)
       setGambleStage('reveal')
@@ -767,8 +757,24 @@ export default function Home() {
       // Stop card flashing when player makes choice
       stopCardFlashing()
       
-      // Generate random card color (50/50 chance)
-      const randomColor = Math.random() < 0.5 ? 'red' : 'black'
+      let result
+      try {
+        const response = await fetch('/api/gamble', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'choose', color })
+        })
+        result = await response.json()
+        if (!response.ok || !result.success) throw new Error(result.error || 'Gamble choice failed')
+      } catch (error) {
+        console.error('Error choosing gamble color:', error)
+        setGambleStage('choice')
+        setSelectedColor(null)
+        startCardFlashing()
+        return
+      }
+
+      const randomColor = result.card.color as 'red' | 'black'
       setCardColor(randomColor)
       
       const elements = (gambleContainerRef.current as Container & { gambleElements?: GambleElements }).gambleElements
@@ -786,13 +792,12 @@ export default function Home() {
           black: ['cardFront0.png', 'cardFront3.png'] // Black cards
         }
         
-        // Pick random card texture for the chosen color
+        // The server selects the card variant as well as its color.
         const availableCards = cardTextures[randomColor] || cardTextures.red
-        const randomCardTexture = availableCards[Math.floor(Math.random() * availableCards.length)]
+        const randomCardTexture = availableCards[result.card.cardIndex]
         
         
-        // Determine win/lose
-        const won = color === randomColor
+        const won = result.won
         
         setTimeout(() => {
           // Hide face-down card, show face-up card
@@ -806,7 +811,7 @@ export default function Home() {
       }
       
       // Access won variable for timeout logic
-      const won = color === randomColor
+      const won = result.won
       
       setTimeout(() => {
         setGambleStage('result')
@@ -814,7 +819,8 @@ export default function Home() {
         if (elements) {
           if (won) {
             // Double the pending win amount (gambleAmount stays constant)
-            const newPendingWin = pendingWinRef.current * 2
+            const newPendingWin = result.currentAmount
+            pendingWinRef.current = newPendingWin
             setPendingWin(newPendingWin)
             if (sound) {
           sound.play('reelSound', {
@@ -829,6 +835,11 @@ export default function Home() {
             
             // Auto-continue to next gamble round after showing win
             gambleWinTimeoutRef.current = setTimeout(() => {
+              if (result.forceCollected) {
+                exitGambleMode()
+                gambleWinTimeoutRef.current = null
+                return
+              }
               // Reset to choice stage for another gamble
               setGambleStage('choice')
               setSelectedColor(null)
@@ -846,8 +857,8 @@ export default function Home() {
               gambleWinTimeoutRef.current = null // Clear ref after execution
             }, 2000) // Show win message for 2 seconds before continuing
           } else {
-            // Lost - set pendingWin to 0
-            // Transaction will be handled in exitGambleMode: pendingWin (0) - gambleAmount = negative
+            // The server has already settled the loss.
+            pendingWinRef.current = 0
             setPendingWin(0)
             setLastWin(0)
             setAnimatedWinAmount(0)
@@ -872,12 +883,35 @@ export default function Home() {
         }
       }, 10) // Show reveal for 50 milliseconds
     }
-  }, [gambleStage, gambleAmount, exitGambleMode, stopCardFlashing, startCardFlashing, wallet])
+  }, [gambleStage, exitGambleMode, stopCardFlashing, startCardFlashing, updateGambleHistory])
 
   // Update gamble mode ref when state changes
   useEffect(() => {
     isGambleModeRef.current = isGambleMode
   }, [isGambleMode])
+
+  // A reload during gamble safely collects the server-held amount so spins
+  // and cashout cannot remain blocked by an abandoned session.
+  useEffect(() => {
+    const recoverGambleSession = async () => {
+      try {
+        const response = await fetch('/api/gamble')
+        const state = await response.json()
+        if (!state.sessionActive) return
+
+        await fetch('/api/gamble', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'collect' })
+        })
+        await refreshWalletBalance()
+      } catch (error) {
+        console.error('Failed to recover gamble session:', error)
+      }
+    }
+
+    recoverGambleSession()
+  }, [refreshWalletBalance])
 
   // Function to flash credit display to indicate insufficient funds
   const flashInsufficientFunds = useCallback(() => {
@@ -3100,23 +3134,17 @@ export default function Home() {
           },
           enterGambleMode: () => {
             if (pendingWin > 0 && !isSpinningRef.current && !isGambleModeRef.current) {
-              setIsGambleMode(true)
-              setGambleAmount(pendingWin)
-              setPendingWin(0)
-              isGambleModeRef.current = true
+              void enterGambleMode()
             }
           },
           chooseGambleColor: (color: 'red' | 'black') => {
             if (isGambleModeRef.current) {
-              setSelectedColor(color)
+              void chooseGambleColor(color)
             }
           },
           collectGambleWin: () => {
             if (isGambleModeRef.current) {
-              setIsGambleMode(false)
-              isGambleModeRef.current = false
-              setPendingWin(gambleAmountRef.current)
-              setGambleAmount(0)
+              collectGambleWin()
             }
           },
           toggleAutoStart: () => {
