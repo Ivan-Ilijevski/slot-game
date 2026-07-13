@@ -34285,8 +34285,230 @@
       "balanceBefore": 663636,
       "balanceAfter": 662636,
       "timestamp": "2026-07-12T22:55:25.864Z"
+    },
+    {
+      "id": "ea147cdf-c675-4e7d-b525-7212180bcd1c",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662636,
+      "balanceAfter": 662631,
+      "timestamp": "2026-07-13T08:44:06.306Z"
+    },
+    {
+      "id": "da2986e6-c593-4e49-90f2-408fb61885f6",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662631,
+      "balanceAfter": 662626,
+      "timestamp": "2026-07-13T08:44:08.497Z"
+    },
+    {
+      "id": "ba8e9e9b-5ddb-4a57-bdb9-ee52419661ba",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662626,
+      "balanceAfter": 662621,
+      "timestamp": "2026-07-13T08:44:09.187Z"
+    },
+    {
+      "id": "66175f69-95e5-452f-adf8-404d9e45ffd1",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662621,
+      "balanceAfter": 662616,
+      "timestamp": "2026-07-13T08:44:24.005Z"
+    },
+    {
+      "id": "6e5e59b8-21aa-4089-bd31-e02bb1fbc0d0",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662616,
+      "balanceAfter": 662611,
+      "timestamp": "2026-07-13T08:44:25.933Z"
+    },
+    {
+      "id": "a49f1e33-2e69-43f1-b687-39ed7a348b31",
+      "type": "credit_add",
+      "amount": 5,
+      "balanceBefore": 662611,
+      "balanceAfter": 662616,
+      "timestamp": "2026-07-13T08:44:25.938Z"
+    },
+    {
+      "id": "6863059f-3ceb-4a58-b29b-43e95447a3b2",
+      "type": "gamble_loss",
+      "amount": -5,
+      "balanceBefore": 662616,
+      "balanceAfter": 662611,
+      "timestamp": "2026-07-13T08:44:28.551Z",
+      "metadata": {
+        "initialAmount": 5,
+        "finalAmount": 0,
+        "netAmount": -5,
+        "rounds": 0,
+        "description": "Gamble loss: lost 5 MKD"
+      }
+    },
+    {
+      "id": "36ad81da-2180-48a2-a774-5d59db13c3a1",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662611,
+      "balanceAfter": 662606,
+      "timestamp": "2026-07-13T08:49:04.785Z"
+    },
+    {
+      "id": "a5518763-8688-4686-81a2-f4264135cd83",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662606,
+      "balanceAfter": 662601,
+      "timestamp": "2026-07-13T08:49:08.198Z"
+    },
+    {
+      "id": "b126d4ee-6384-4a13-adb3-b3e00a70f940",
+      "type": "credit_add",
+      "amount": 20,
+      "balanceBefore": 662601,
+      "balanceAfter": 662621,
+      "timestamp": "2026-07-13T08:49:08.201Z"
+    },
+    {
+      "id": "f4cc8488-c805-4548-b9ab-ca36dbac89bc",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662621,
+      "balanceAfter": 662616,
+      "timestamp": "2026-07-13T08:50:32.763Z"
+    },
+    {
+      "id": "83841775-b26d-40af-b793-aa205b024ad0",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662616,
+      "balanceAfter": 662611,
+      "timestamp": "2026-07-13T08:50:36.171Z"
+    },
+    {
+      "id": "2413b382-2d1c-4c31-9289-68e0a7a05aac",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662611,
+      "balanceAfter": 662606,
+      "timestamp": "2026-07-13T08:50:39.587Z"
+    },
+    {
+      "id": "40b0e2ef-10ee-40e5-84ca-916c9f89627f",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662606,
+      "balanceAfter": 662601,
+      "timestamp": "2026-07-13T08:50:42.998Z"
+    },
+    {
+      "id": "67e1a275-a496-4955-a503-cf11e1f05f62",
+      "type": "credit_add",
+      "amount": 20,
+      "balanceBefore": 662601,
+      "balanceAfter": 662621,
+      "timestamp": "2026-07-13T08:50:43.013Z"
+    },
+    {
+      "id": "69d8fb88-8fd8-4151-8b5a-e10fe7b892d9",
+      "type": "gamble_loss",
+      "amount": -20,
+      "balanceBefore": 662621,
+      "balanceAfter": 662601,
+      "timestamp": "2026-07-13T08:51:00.216Z",
+      "metadata": {
+        "initialAmount": 20,
+        "finalAmount": 0,
+        "netAmount": -20,
+        "rounds": 0,
+        "description": "Gamble loss: lost 20 MKD"
+      }
+    },
+    {
+      "id": "fec158a7-dce5-40a6-80c4-c7b6a23ad79b",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662601,
+      "balanceAfter": 662596,
+      "timestamp": "2026-07-13T08:51:24.520Z"
+    },
+    {
+      "id": "4bd2b5a0-e273-4111-bb55-76f9ec8b4d61",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662596,
+      "balanceAfter": 662591,
+      "timestamp": "2026-07-13T08:52:25.084Z"
+    },
+    {
+      "id": "febb493e-7411-4d34-be90-b5a049431769",
+      "type": "credit_add",
+      "amount": 10,
+      "balanceBefore": 662591,
+      "balanceAfter": 662601,
+      "timestamp": "2026-07-13T08:52:25.090Z"
+    },
+    {
+      "id": "2b67fc64-6bf0-4fa2-a01d-38a09ce5f23c",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662601,
+      "balanceAfter": 662596,
+      "timestamp": "2026-07-13T08:52:32.518Z"
+    },
+    {
+      "id": "ab727f9e-3f41-4005-adb5-474ed3983700",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662596,
+      "balanceAfter": 662591,
+      "timestamp": "2026-07-13T08:53:23.041Z"
+    },
+    {
+      "id": "14cf4c6f-f5a5-4b7d-9561-0cdf9a5d5c80",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662591,
+      "balanceAfter": 662586,
+      "timestamp": "2026-07-13T08:53:26.458Z"
+    },
+    {
+      "id": "de2cefa5-b0a9-4f37-b1e0-2c235386e976",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662586,
+      "balanceAfter": 662581,
+      "timestamp": "2026-07-13T08:53:29.874Z"
+    },
+    {
+      "id": "624d3b5d-af2f-4ed4-9fea-a52c66a67b1e",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662581,
+      "balanceAfter": 662576,
+      "timestamp": "2026-07-13T08:53:33.288Z"
+    },
+    {
+      "id": "2b68100b-c34e-4b62-b615-1fd8bdc9f8a7",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 662576,
+      "balanceAfter": 662571,
+      "timestamp": "2026-07-13T08:53:36.697Z"
+    },
+    {
+      "id": "00764788-6008-4ef5-ad60-9a8df9f3aaba",
+      "type": "credit_add",
+      "amount": 20,
+      "balanceBefore": 662571,
+      "balanceAfter": 662591,
+      "timestamp": "2026-07-13T08:53:36.703Z"
     }
   ],
-  "lastUpdated": "2026-07-12T22:55:25.867Z",
-  "totalTransactions": 4213
+  "lastUpdated": "2026-07-13T08:53:36.704Z",
+  "totalTransactions": 4239
 }

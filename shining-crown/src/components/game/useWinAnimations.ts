@@ -1,8 +1,9 @@
 import { useCallback, useRef } from 'react'
 import { Application, Container, Sprite, Graphics, Text, Assets } from 'pixi.js'
-import { SYMBOL_WIDTH, SYMBOL_HEIGHT, REEL_COUNT, PAYLINE_COLORS, PAYLINES_VISUAL, SYMBOL_NAME_TO_NUMBER, REEL_GAP } from './usePixiSetup'
+import { SYMBOL_WIDTH, SYMBOL_HEIGHT, PAYLINE_COLORS, PAYLINES_VISUAL, SYMBOL_NAME_TO_NUMBER, REEL_GAP, REEL_OFFSET_X, REEL_OFFSET_Y } from '../../config/pixiConstants'
 import { formatCurrency } from '../../utils/currency'
-import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence } from '../../utils/winSystem'
+import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence } from '../../utils/winSystem'
+import { getSound, playWildExpandSound } from '../../utils/gameSounds'
 
 // Define the interface for props this hook needs
 export interface UseWinAnimationsProps {
@@ -13,20 +14,20 @@ export interface UseWinAnimationsProps {
   // State refs
   animationsRunningRef: React.RefObject<Set<number>>
   pendingWinRef: React.RefObject<number>
+  pendingWinLinesRef: React.RefObject<WinLine[] | null>
   currentBetRef: React.RefObject<number>
   isGambleModeRef: React.RefObject<boolean>
+  isWinAnimatingRef: React.RefObject<boolean>
+  takeWinActiveRef: React.RefObject<boolean>
   winHighlightsRef: React.RefObject<Container[]>
   winCycleIntervalRef: React.RefObject<NodeJS.Timeout | null>
-  winInfoDisplayRef: React.RefObject<HTMLDivElement | null>
+  winInfoDisplayRef?: React.RefObject<HTMLDivElement | null>
 
   // Function refs
   animateWinRef: React.RefObject<((amount: number) => void) | null>
 
   // Current state values
   isGambleMode: boolean
-
-  // Sound system
-  sound: any
 }
 
 export interface WinAnimationsReturn {
@@ -70,18 +71,40 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
     reelsRef,
     animationsRunningRef,
     pendingWinRef,
+    pendingWinLinesRef,
     currentBetRef,
     isGambleModeRef,
+    isWinAnimatingRef,
+    takeWinActiveRef,
     winHighlightsRef,
     winCycleIntervalRef,
     winInfoDisplayRef,
     animateWinRef,
-    isGambleMode,
-    sound
+    isGambleMode
   } = props
 
   // Track running win animations to stop them on new spins
   const runningWinAnimations = useRef<{ [key: string]: boolean }>({})
+
+  /**
+   * Find the scene-owned win line display container (labeled 'winLineDisplay'),
+   * creating it at the live position below the reels if the scene lacks one.
+   */
+  const getWinLineDisplayContainer = useCallback((app: Application): Container => {
+    let container = app.stage.children.find(
+      child => (child as Container).label === 'winLineDisplay'
+    ) as Container | undefined
+
+    if (!container) {
+      container = new Container()
+      container.label = 'winLineDisplay'
+      container.x = 1920 / 2
+      container.y = REEL_OFFSET_Y + (3 * SYMBOL_HEIGHT) + 20
+      container.visible = false
+      app.stage.addChild(container)
+    }
+    return container
+  }, [])
 
   /**
    * Clear all win highlights and animations
@@ -104,8 +127,18 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
     })
     winHighlightsRef.current = []
 
+    // Hide win line display
+    if (appRef.current) {
+      const winLineDisplayContainer = appRef.current.stage.children.find(
+        child => (child as Container).label === 'winLineDisplay'
+      ) as Container | undefined
+      if (winLineDisplayContainer) {
+        winLineDisplayContainer.visible = false
+      }
+    }
+
     // Hide win info display
-    if (winInfoDisplayRef.current) {
+    if (winInfoDisplayRef?.current) {
       winInfoDisplayRef.current.style.display = 'none'
     }
 
@@ -349,50 +382,93 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
     })
 
     // If no symbols need expansion, exit early
+    // (matches live behavior: the reel index stays in animationsRunningRef)
     if (expandSprites.length === 0) {
-      animationsRunningRef.current.delete(reelIndex)
       return
     }
 
-    // Animate through frames at half speed (30fps -> 15fps = ~66ms per frame)
+    // Animate through frames at half speed
     let currentFrame = 0
-    const animationSpeed = 66
+    const frameRate = 30 // 30 FPS (half of 60 FPS)
+    const animationSpeed = 1000 / frameRate // ~33.33ms per frame
 
     const animateFrames = () => {
-      if (currentFrame < expandFrames.length) {
-        const frameTexture = expandFrames[currentFrame]
+      // Check if animation should continue (not interrupted by new spin or take win)
+      if (!animationsRunningRef.current.has(reelIndex)) {
+        // Animation was cancelled - clean up expansion sprites
         expandSprites.forEach(sprite => {
-          if (!sprite.destroyed && frameTexture) {
-            sprite.texture = frameTexture
+          if (sprite && !sprite.destroyed) {
+            sprite.destroy()
+          }
+        })
+
+        // Only restore original symbols if this is NOT a take win cancellation
+        // (take win should have already converted symbols to wilds)
+        if (!takeWinActiveRef.current) {
+          // Restore visibility of original symbols that were hidden (for new spin cancellation)
+          symbolsToHide.forEach(symbol => {
+            if (symbol && !symbol.destroyed) {
+              symbol.visible = true
+            }
+          })
+        }
+        return
+      }
+
+      if (currentFrame < expandFrames.length) {
+        // Update all expand sprites with current frame (with null checks)
+        expandSprites.forEach(sprite => {
+          if (sprite && !sprite.destroyed && sprite.texture) {
+            sprite.texture = expandFrames[currentFrame]
           }
         })
         currentFrame++
         setTimeout(animateFrames, animationSpeed)
       } else {
-        // Animation complete - convert symbols to wilds and clean up
+        // Animation complete - clean up
         expandSprites.forEach(sprite => {
-          if (!sprite.destroyed) {
-            reel.removeChild(sprite)
+          if (sprite && !sprite.destroyed) {
             sprite.destroy()
           }
         })
 
-        // Convert hidden symbols to wilds and make visible
+        // Show symbols again but replace expanded ones with wilds (with null checks)
         symbolsToHide.forEach(symbol => {
-          if (!symbol.destroyed) {
-            symbol.texture = reelAtlas.textures['08.png']
+          if (symbol && !symbol.destroyed && reelAtlas.textures['08.png']) {
+            symbol.texture = reelAtlas.textures['08.png'] // Convert to wild
             symbol.visible = true
           }
         })
 
         // Mark animation as complete
         animationsRunningRef.current.delete(reelIndex)
+
+        // Check if all expanding wild animations are complete
+        if (animationsRunningRef.current.size === 0) {
+          // Note: Don't reset isWinAnimatingRef here as win counting might still be running
+
+          // Trigger win sound sequence now that wild expansions are complete
+          // But only if not in gamble mode
+          const sound = getSound()
+          if (pendingWinRef.current > 0 && sound && !isGambleModeRef.current) {
+            const totalWinAmount = pendingWinRef.current
+            const winLines = pendingWinLinesRef.current || []
+            startWinSoundSequence(
+              totalWinAmount,
+              currentBetRef.current,
+              winLines,
+              sound,
+              true, // hasWildExpansion = true
+              isGambleMode
+            )
+          }
+        }
       }
     }
 
     // Start the animation
     animateFrames()
-  }, [animationsRunningRef])
+  }, [animationsRunningRef, takeWinActiveRef, pendingWinRef, pendingWinLinesRef, currentBetRef, isGambleModeRef, isGambleMode])
 
   /**
    * Instantly complete wild expansions (for take win feature)
@@ -457,13 +533,12 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
       return
     }
 
+    // Mark that win animations are active (expanding wilds are slow animations)
+    isWinAnimatingRef.current = true
+
     // Play wild expansion sound once for all expanding reels
-    if (winResults.expandedReels.length > 0 && sound) {
-      sound.play('winSound', {
-        start: 6.0,
-        end: 10.3, // 4.6 seconds duration
-        volume: 0.9
-      })
+    if (winResults.expandedReels.length > 0) {
+      playWildExpandSound()
     }
 
     // Animate expanding wilds for all reels that the server determined should expand
@@ -473,7 +548,7 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
         animateExpandingWild(reel.children[2] as Sprite, reelIndex)
       }
     })
-  }, [reelsRef, animateExpandingWild, sound])
+  }, [reelsRef, animateExpandingWild, isWinAnimatingRef])
 
   /**
    * Show win line display (e.g., "Line 3 3x [cherry icon] = 1.00 MKD")
@@ -583,25 +658,14 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
       return
     }
 
-    // Create win line display container if it doesn't exist
-    let winLineDisplayContainer = app.stage.children.find(
-      child => (child as any).name === 'winLineDisplay'
-    ) as Container
-
-    if (!winLineDisplayContainer) {
-      winLineDisplayContainer = new Container()
-      ;(winLineDisplayContainer as any).name = 'winLineDisplay'
-      winLineDisplayContainer.x = 1920 / 2
-      winLineDisplayContainer.y = 50
-      winLineDisplayContainer.visible = false
-      app.stage.addChild(winLineDisplayContainer)
-    }
+    const winLineDisplayContainer = getWinLineDisplayContainer(app)
 
     // Classify the win and get appropriate configuration
     const totalWinAmount = pendingWinRef.current
     const winConfig = getWinConfig(totalWinAmount, currentBetRef.current, winLines)
 
-    // Trigger win sound sequence
+    // Trigger win sound sequence immediately if no wild expansions are happening
+    const sound = getSound()
     const hasWildExpansions = animationsRunningRef.current.size > 0
     if (!hasWildExpansions && sound) {
       startWinSoundSequence(
@@ -614,7 +678,8 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
       )
     }
 
-    // Start win count-up animation
+    // Start win count-up animation synchronized with payline animations
+    // But only if gamble mode is not active
     if (pendingWinRef.current > 0 && animateWinRef.current && !isGambleMode) {
       animateWinRef.current(pendingWinRef.current)
     }
@@ -775,62 +840,92 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
             paylinePath.lineTo(endPoint.x, endPoint.y)
           }
         }
+
+        // Add final segment from last symbol center to its right edge
+        // Only if the last symbol doesn't have a highlight box (isn't a winning symbol)
+        if (pathPoints.length > 0) {
+          const lastPoint = pathPoints[pathPoints.length - 1]
+          const lastSymbolIsWinning = pathPoints.length <= winLine.count
+
+          // Only draw the final segment if the last symbol is NOT winning (no highlight box)
+          if (!lastSymbolIsWinning) {
+            // Calculate right edge of the last symbol
+            const rightEdgeX = lastPoint.x + SYMBOL_WIDTH / 2
+
+            // Draw from center to right edge of last symbol
+            paylinePath.moveTo(lastPoint.x, lastPoint.y)
+            paylinePath.lineTo(rightEdgeX, lastPoint.y)
+          }
+        }
       }
 
       // Apply styling to payline path
-      paylinePath.stroke({ width: lineWidth, color: color })
+      paylinePath.stroke({ width: lineWidth, color: color, alpha: 1.0 })
       highlightContainer.addChild(paylinePath)
 
-      // Create highlight boxes for winning symbols only
+      // Create highlight boxes for winning symbols only (drawn on top)
       for (let i = 0; i < Math.min(winLine.count, positions.length); i++) {
         const [reelIndex, rowIndex] = positions[i]
 
         const highlight = new Graphics()
-        const x = reelIndex * (SYMBOL_WIDTH + REEL_GAP)
-        const y = rowIndex * SYMBOL_HEIGHT
-
-        // Draw rounded rectangle border
-        highlight.roundRect(x, y, SYMBOL_WIDTH, SYMBOL_HEIGHT, borderRadius)
+        highlight.roundRect(0, 0, SYMBOL_WIDTH, SYMBOL_HEIGHT, borderRadius)
         highlight.stroke({ width: lineWidth, color: color })
+
+        // Position relative to reel container
+        highlight.x = reelIndex * (SYMBOL_WIDTH + REEL_GAP)
+        highlight.y = rowIndex * SYMBOL_HEIGHT
 
         highlightContainer.addChild(highlight)
       }
 
-      // Position the highlight container
-      const reelOffsetX = (1920 - (REEL_COUNT * SYMBOL_WIDTH + (REEL_COUNT - 1) * REEL_GAP)) / 2
-      const reelOffsetY = (1080 - (3 * SYMBOL_HEIGHT)) / 2
-      highlightContainer.x = reelOffsetX
-      highlightContainer.y = reelOffsetY
+      // Add to stage at correct z-index position (above border, below overlays)
+      const borderChild = app.stage.children.find(child =>
+        child instanceof Sprite && child.texture?.label?.includes('reelBorder')
+      )
+      const borderIndex = borderChild ? app.stage.children.indexOf(borderChild) : -1
+      const insertIndex = borderIndex !== -1 ? borderIndex + 1 : app.stage.children.length - 1
 
-      app.stage.addChild(highlightContainer)
+      app.stage.addChildAt(highlightContainer, insertIndex)
+
+      // Position the highlight container over the reels
+      highlightContainer.x = REEL_OFFSET_X
+      highlightContainer.y = REEL_OFFSET_Y
+
       winHighlightsRef.current.push(highlightContainer)
 
-      // Move to next win
-      currentWinIndex = (currentWinIndex + 1) % winLines.length
+      // Update win info display
+      if (winInfoDisplayRef?.current) {
+        winInfoDisplayRef.current.innerHTML = `Line ${winLine.payline} ${winLine.count}x - ${winLine.payout} credits`
+        winInfoDisplayRef.current.style.display = 'block'
+      }
     }
 
     // Show first win immediately
     showCurrentWin()
 
-    // Cycle through wins if more than one
+    // If multiple wins, cycle through them continuously
     if (winLines.length > 1) {
-      winCycleIntervalRef.current = setInterval(showCurrentWin, 2000)
+      winCycleIntervalRef.current = setInterval(() => {
+        currentWinIndex = (currentWinIndex + 1) % winLines.length
+        showCurrentWin()
+      }, 1500) // Change every 1.5 seconds, cycle forever
     }
+    // Single win stays visible (no timeout)
   }, [
     appRef,
     reelsRef,
     pendingWinRef,
     currentBetRef,
-    isGambleModeRef,
     winHighlightsRef,
     winCycleIntervalRef,
+    winInfoDisplayRef,
     animateWinRef,
     animationsRunningRef,
     isGambleMode,
-    sound,
     clearWinHighlights,
     animateWinningSymbols,
-    showWinLineDisplay
+    showWinLineDisplay,
+    getWinLineDisplayContainer
   ])
 
   return {

@@ -3,7 +3,7 @@
 import { Application, extend, useApplication } from '@pixi/react'
 import { Container, Sprite, Graphics, Text, Assets, TextStyle } from 'pixi.js'
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { DESIGN_WIDTH, DESIGN_HEIGHT } from './usePixiSetup'
+import { DESIGN_WIDTH, DESIGN_HEIGHT } from '../../config/pixiConstants'
 import { formatCurrency, formatNumberWithSpaces, currencyToCredits } from '@/utils/currency'
 
 // Register Pixi components for use with @pixi/react

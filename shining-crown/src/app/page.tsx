@@ -13,6 +13,9 @@ import { useDenominationManager } from '../components/game/useDenominationManage
 import { useWallet } from '../components/game/useWallet'
 import { useKeyboardHandler } from '../components/game/useKeyboardHandler'
 import { useTouchKeyboardConnection } from '../components/game/useTouchKeyboardConnection'
+import { useSpinLogic } from '../components/game/useSpinLogic'
+import { useWinAnimations, WinResults } from '../components/game/useWinAnimations'
+import { playReelStopSound as playReelStopSoundEffect, playWildReelSound as playWildReelSoundEffect } from '../utils/gameSounds'
 import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence, updateGambleModeState, startWinCountingSound, stopWinCountingSound } from '../utils/winSystem'
 import walletData from '../data/wallet.json'
 
@@ -200,7 +203,6 @@ export default function Home() {
   const winInfoDisplayRef = useRef<HTMLDivElement | null>(null)
   const wildExpansionSoundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const uiUpdateRef = useRef<((balance: number, bet: number, win: number) => void) | null>(null)
   const denomTextRef = useRef<Text | null>(null)
   const denomLabelTextRef = useRef<Text | null>(null)
   const creditDollarTextRef = useRef<Text | null>(null)
@@ -223,7 +225,10 @@ export default function Home() {
   const completeWildExpansionsRef = useRef<(() => void) | null>(null)
   const takeWinActiveRef = useRef(false)
   const spinReelsRef = useRef<(() => void) | null>(null)
-  const playReelStopSoundRef = useRef<(() => void) | null>(null)
+  const playReelStopSoundRef = useRef<(() => void) | null>(playReelStopSoundEffect)
+  const playWildReelSoundRef = useRef<(() => void) | null>(playWildReelSoundEffect)
+  const checkAndAnimateWildsRef = useRef<((winResults: WinResults) => void) | null>(null)
+  const reelHasWildRef = useRef<((reelIndex: number) => boolean) | null>(null)
   const wildExpansionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingWinLinesRef = useRef<{ payline: number, symbols: string[], count: number, symbol: string, payout: number }[] | null>(null)
   const showWinHighlightsRef = useRef<((winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => void) | null>(null)
@@ -947,6 +952,81 @@ export default function Home() {
     }
   }, [])
 
+  // Check if a reel currently shows any wild symbols (reads the atlas at call time)
+  const reelHasWild = useCallback((reelIndex: number): boolean => {
+    const reel = reelsRef.current[reelIndex]
+    const reelAtlas = Assets.cache.get('/assets/reelImages.json')
+    if (!reel || !reelAtlas) return false
+
+    // Check all symbol positions in this reel (skip mask at 0 and overshoot at 1)
+    for (let i = 2; i < reel.children.length; i++) {
+      const symbolSprite = reel.children[i] as Sprite
+      if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
+        return true
+      }
+    }
+    return false
+  }, [])
+
+  // ===== Win animation + spin logic hooks (replace the old inline monolith logic) =====
+  const winAnimations = useWinAnimations({
+    appRef,
+    reelsRef,
+    animationsRunningRef,
+    pendingWinRef,
+    pendingWinLinesRef,
+    currentBetRef,
+    isGambleModeRef,
+    isWinAnimatingRef,
+    takeWinActiveRef,
+    winHighlightsRef,
+    winCycleIntervalRef,
+    winInfoDisplayRef,
+    animateWinRef,
+    isGambleMode
+  })
+
+  const spinLogic = useSpinLogic({
+    appRef,
+    reelsRef,
+    isSpinningRef,
+    stopRequestedRef,
+    reelsStoppedRef,
+    reelsStoppedCountRef,
+    simultaneousStopRef,
+    pendingWinRef,
+    pendingWinLinesRef,
+    currentBetRef,
+    lastWinRef,
+    autoStartTimeoutRef,
+    animationsRunningRef,
+    isAutoStartRef,
+    isGambleModeRef,
+    wildExpansionTimeoutRef,
+    setLastWin,
+    setPendingWin,
+    setAnimatedWinAmount,
+    refreshBalance: refreshWalletBalance,
+    flashInsufficientFunds,
+    clearWinHighlights: winAnimations.clearWinHighlights,
+    collectWinRef,
+    playReelStopSoundRef,
+    playWildReelSoundRef,
+    showWinHighlightsRef,
+    checkAndAnimateWildsRef,
+    reelHasWildRef
+  })
+
+  // Keep the legacy function refs (consumed by the keyboard handler, touch
+  // controller, and gamble flows) pointing at the current hook callbacks
+  useEffect(() => {
+    spinReelsRef.current = spinLogic.spinReels
+    showWinHighlightsRef.current = winAnimations.showWinHighlights
+    checkAndAnimateWildsRef.current = winAnimations.checkAndAnimateWilds
+    completeWildExpansionsRef.current = winAnimations.completeWildExpansions
+    reelHasWildRef.current = reelHasWild
+  }, [spinLogic.spinReels, winAnimations.showWinHighlights, winAnimations.checkAndAnimateWilds, winAnimations.completeWildExpansions, reelHasWild])
+
   // Language toggle function - used by both L key and WebSocket commands
   const toggleLanguage = useCallback(() => {
     setCurrentLanguage(prev => {
@@ -1148,99 +1228,13 @@ export default function Home() {
         // Load sounds via PIXI Sound - they are already loaded with Assets.load above
         // No need for separate HTML Audio objects - PIXI sound handles everything
         
-        // Set up sound to play only a small portion using PIXI sound
-        const playReelStopSound = () => {
-          // Play reel stop sound from 1 second for 0.3 seconds duration
-          if (sound) {
-            sound.play('reelSound', {
-              start: 1,
-              end: 1.3, // 0.3 seconds duration
-              volume: 0.7
-            })
-          }
-        }
-        playReelStopSoundRef.current = playReelStopSound
-        
-        // Function to play wild reel sound (1 second from shortSounds.mp3)
-        const playWildReelSound = () => {
-          // Play wild reel sound from beginning for 1 second
-          if (sound) {
-            sound.play('shortSound', {
-              start: 0,
-              end: 1, // 1 second duration
-              volume: 0.8
-            })
-          }
-        }
-        
-        // Function to check if a reel contains wild symbols
-        const reelHasWild = (reelIndex: number): boolean => {
-          const reel = reelsRef.current[reelIndex]
-          if (!reel) return false
-          
-          // Check all symbol positions in this reel (skip mask at 0 and overshoot at 1)
-          for (let i = 2; i < reel.children.length; i++) {
-            const symbolSprite = reel.children[i] as Sprite
-            if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
-              return true
-            }
-          }
-          return false
-        }
-        
-        // Function to play wild expansion sound
-        const playWildExpandSound = () => {
-          // Play wild expansion sound from 4.7 seconds for 4.6 seconds
-          if (sound) {
-            sound.play('winSound', {
-              start: 6.0,
-              end: 10.3, // 4.6 seconds duration
-              volume: 0.9
-            })
-          }
-        }
 
         const mainAtlas = Assets.cache.get('/assets/mainResources.json')
         const reelAtlas = Assets.cache.get('/assets/reelImages.json')
         const backgroundAtlas = Assets.cache.get('/assets/background.json')
-        const expandAtlas = Assets.cache.get('/assets/expand-0.json')
-        const wildAtlas = Assets.cache.get('/assets/08-0.json')
-        
-        // Win animation atlases (all symbols)
-        const winAtlases: { [key: string]: { textures: { [key: string]: import('pixi.js').Texture } } } = {
-          '00': Assets.cache.get('/assets/00-0.json'),
-          '01': Assets.cache.get('/assets/01-0.json'),
-          '02': Assets.cache.get('/assets/02-0.json'),
-          '03': Assets.cache.get('/assets/03-0.json'),
-          '04': Assets.cache.get('/assets/04-0.json'),
-          '05': Assets.cache.get('/assets/05-0.json'),
-          '06': Assets.cache.get('/assets/06-0.json'),
-          '07': Assets.cache.get('/assets/07-0.json'),
-          '08': Assets.cache.get('/assets/08-0.json'), // Wild win animation (not expand)
-          '09': Assets.cache.get('/assets/09-0.json'),
-          '10': Assets.cache.get('/assets/10-0.json')
-        }
-        
-        if (!mainAtlas?.textures || !reelAtlas?.textures || !backgroundAtlas?.textures || !expandAtlas?.textures || !wildAtlas?.textures) {
-          console.error('❌ Missing textures')
-          return
-        }
         
         
-        // Symbol name to number mapping
-        const symbolNameToNumber: { [key: string]: string } = {
-          'Cherry': '00',
-          'Lemon': '01', 
-          'Orange': '02',
-          'Plum': '03',
-          'Bell': '04',
-          'Grape': '05',
-          'Watermelon': '06',
-          'Seven': '07',
-          'Wild': '08',
-          'Star': '09',
-          'Crown': '10'
-        }
+        
         
 
         // Main background - use full screen
@@ -1357,7 +1351,9 @@ export default function Home() {
         // All UI will be created within PIXI canvas - remove HTML overlay
         
         // Create win line display container - positioned below reels
+        // (labeled so useWinAnimations can find the scene-owned container)
         const winLineDisplayContainer = new Container()
+        winLineDisplayContainer.label = 'winLineDisplay'
         const winLineDisplayY = REEL_OFFSET_Y + totalReelHeight + 20 // 20px below reels
         winLineDisplayContainer.x = 1920 / 2 // Center horizontally
         winLineDisplayContainer.y = winLineDisplayY
@@ -1598,14 +1594,14 @@ export default function Home() {
                 takeWinRef.current()
               }
             } else if (!isSpinningRef.current) {
-              spinReels()
+              spinReelsRef.current?.()
             } else if (!stopRequestedRef.current) {
               // Request stop during spinning (only if not already requested)
               stopRequestedRef.current = true
-              
+
               // Play single sound immediately if all reels will stop together
               if (reelsStoppedCountRef.current === 0) {
-                playReelStopSound()
+                playReelStopSoundRef.current?.()
               }
             }
           } else if (event.code === 'KeyP') {
@@ -1624,7 +1620,7 @@ export default function Home() {
                     volume: 0.9
                   })
                 }
-                spinReels()
+                spinReelsRef.current?.()
               } else if (!newAutoStart && autoStartTimeoutRef.current) {
                 // Stop autostart
                 if (sound) {
@@ -1756,487 +1752,8 @@ export default function Home() {
 
         setupGambleUI()
 
-        const spinReels = async () => {
-          if (isSpinningRef.current) return
-          
-          // Clear any pending autostart timeout
-          if (autoStartTimeoutRef.current) {
-            clearTimeout(autoStartTimeoutRef.current)
-            autoStartTimeoutRef.current = null
-          }
-          
-          // Check for pending wins and collect them before starting new spin
-          if (pendingWinRef.current > 0 && collectWinRef.current) {
-            collectWinRef.current()
-          }
-          
-          // Balance validation will be handled by the server
-          
-          isSpinningRef.current = true
-          stopRequestedRef.current = false
-          reelsStoppedRef.current = [false, false, false, false, false]
-          reelsStoppedCountRef.current = 0
-          simultaneousStopRef.current = false
-          
-          // Clear previous win states for new spin
-          pendingWinLinesRef.current = null
-          
-          // Clear any running animations and restore symbol visibility
-          animationsRunningRef.current.clear()
-          
-          // Clear win highlights when starting new spin
-          clearWinHighlights()
-          
-          // Stop all running win animations
-          Object.keys(runningWinAnimations).forEach(key => {
-            delete runningWinAnimations[key]
-          })
-          
-          // Clear any pending win animation timeouts
-          reelsRef.current.forEach((reel) => {
-            if (reel) {
-              // Clean up any leftover win animation sprites
-              for (let i = reel.children.length - 1; i >= 0; i--) {
-                const child = reel.children[i]
-                if (child && child !== reel.children[0] && child !== reel.children[1] && // Don't remove mask and overshoot
-                    i >= 5) { // Only remove extra children beyond base 5 (mask + overshoot + 3 symbols)
-                  reel.removeChild(child)
-                  if (child.destroy) {
-                    child.destroy()
-                  }
-                }
-              }
-            }
-          })
-          
-          // Ensure all reel symbols are visible when starting a new spin
-          reelsRef.current.forEach((reel) => {
-            if (reel) {
-              // Make sure all symbols are visible (skip mask at 0 and overshoot at 1)
-              for (let i = 2; i < reel.children.length; i++) {
-                const symbol = reel.children[i] as Sprite
-                if (symbol && !symbol.destroyed) {
-                  symbol.visible = true
-                }
-              }
-            }
-          })
-          
-          // Get server results for this spin
-          let serverResults: { results: { reel: number, position: number, symbols: string[] }[], totalWin: number, winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[], expandedReels: number[], balance: number } | null = null
-          try {
-            const requestBody = { bet: currentBetRef.current }
-            const response = await fetch('/api/spin', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(requestBody),
-            })
-            const data = await response.json()
-            
-            if (!response.ok) {
-              // Handle server errors (like insufficient funds)
-              if (data.error === 'Insufficient funds') {
-                console.error('Insufficient funds for spin')
-                flashInsufficientFunds()
-                isSpinningRef.current = false
-                return
-              } else {
-                console.error('Spin API error:', data.error)
-                isSpinningRef.current = false
-                return
-              }
-            }
-            
-            if (data.success) {
-              serverResults = data
 
-              // Refresh balance from server after spin (bet has been deducted)
-              refreshBalance()
 
-              // Update win amounts and start collection system
-              const winAmount = data.totalWin || 0 // Server already returns MKD
-              lastWinRef.current = winAmount
-              setLastWin(winAmount)
-              
-              // Use the new win collection system instead of immediately adding to balance
-              if (winAmount > 0) {
-                setPendingWin(winAmount)
-                // Win animation will start with payline animations in showWinHighlights
-              } else {
-                // Reset win states for non-winning spins
-                setPendingWin(0)
-                setAnimatedWinAmount(0)
-              }
-            }
-          } catch (error) {
-            console.error('Failed to get server results:', error)
-            isSpinningRef.current = false
-            return
-          }
-          
-          // Available symbols for random spinning animation
-          const availableSymbols = ['00.png', '01.png', '02.png', '03.png', '04.png', '05.png', '06.png', '07.png', '08.png', '09.png', '10.png']
-          
-          reelsRef.current.forEach((reel, index) => {
-            if (reel) {
-              // Frame-perfect timing based on 60fps reference
-              const bounceStartTimes = [533, 883, 1233, 1583, 1933] // Frame 32, 53, 74, 95, 116
-              const bounceEndTimes = [867, 1217, 1567, 1917, 2267] // Frame 52, 73, 94, 115, 136
-              
-              const originalSpinDuration = bounceStartTimes[index]
-              const originalBounceEndTime = bounceEndTimes[index]
-              let spinDuration = originalSpinDuration
-              let bounceEndTime = originalBounceEndTime
-              const spinSpeed = 4200 // PIXI pixels per second (equivalent to ~70px/frame at 60fps)
-              let soundPlayed = false
-              let acceleratedMode = false
-              let tickerFunction: ((ticker: any) => void) | null = null
-              
-              // Add fewer extra symbols for spinning effect (reduced from 5+5 to 2+2)
-              const originalSymbolCount = reel.children.length - 2 // -2 for mask and overshoot symbol
-              
-              // Add symbols above the visible area (reduced count)
-              for (let i = 0; i < 2; i++) {
-                const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-                const texture = reelAtlas.textures[randomSymbolName]
-                if (texture) {
-                  const symbol = new Sprite(texture)
-                  symbol.width = SYMBOL_WIDTH
-                  symbol.height = SYMBOL_HEIGHT
-                  symbol.x = 0
-                  symbol.y = (-2 + i) * SYMBOL_HEIGHT // Position above visible area
-                  reel.addChild(symbol)
-                }
-              }
-              
-              // Add symbols below the visible area (reduced count)
-              for (let i = 0; i < 2; i++) {
-                const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-                const texture = reelAtlas.textures[randomSymbolName]
-                if (texture) {
-                  const symbol = new Sprite(texture)
-                  symbol.width = SYMBOL_WIDTH
-                  symbol.height = SYMBOL_HEIGHT
-                  symbol.x = 0
-                  symbol.y = (originalSymbolCount + i) * SYMBOL_HEIGHT
-                  reel.addChild(symbol)
-                }
-              }
-              
-              let elapsed = 0
-              const startTime = Date.now()
-              
-              // PIXI Ticker-based animation function
-              const animate = (ticker: any) => {
-                elapsed = Date.now() - startTime
-                
-                // Check for stop request during spinning (only allow stops during spin phase, not bounce)
-                if (stopRequestedRef.current && !acceleratedMode && !reelsStoppedRef.current[index] && elapsed < originalSpinDuration) {
-                  acceleratedMode = true
-                  
-                  // Handle stop request based on current state
-                  if (reelsStoppedCountRef.current === 0) {
-                    // Case 1: No reels stopped - immediate synchronized stop for all reels
-                    simultaneousStopRef.current = true
-                    spinDuration = elapsed + 50 // Very short transition to bounce
-                    bounceEndTime = spinDuration + (originalBounceEndTime - originalSpinDuration) // Keep normal bounce duration
-                  } else {
-                    // Case 2: Some reels stopped - quick stop with minimal staggering (keep individual sounds)
-                    // Calculate which remaining reel this is (0-based among remaining reels)  
-                    let remainingReelIndex = 0
-                    for (let i = 0; i < index; i++) {
-                      if (!reelsStoppedRef.current[i]) remainingReelIndex++
-                    }
-                    const quickStopDelay = remainingReelIndex * 20 // 20ms stagger between remaining reels (reduced from 50ms)
-                    spinDuration = elapsed + quickStopDelay + 50 // Short transition
-                    bounceEndTime = spinDuration + (originalBounceEndTime - originalSpinDuration) // Keep normal bounce duration
-                  }
-                }
-                
-                if (elapsed < bounceEndTime) {
-                  if (elapsed < spinDuration) {
-                    // Spin the reel using PIXI ticker delta time for smooth animation
-                    // Skip mask (index 0) and overshoot symbol (index 1)
-                    const deltaMovement = spinSpeed * ticker.deltaMS / 1000 // Convert to pixels per second
-                    
-                    for (let i = 2; i < reel.children.length; i++) {
-                      const symbol = reel.children[i]
-                      symbol.y += deltaMovement
-                      // When symbol goes below visible area, wrap it to the top seamlessly
-                      if (symbol.y >= (SYMBOLS_PER_REEL + 2) * SYMBOL_HEIGHT) {
-                        symbol.y -= (SYMBOLS_PER_REEL + 4) * SYMBOL_HEIGHT
-                      }
-                    }
-                    // Continue animation (ticker will call this function again)
-                  } else {
-                    // Continuous bounce phase - from overshoot back to final position
-                    
-                    // Setup final symbols if not done yet
-                    if (reel.children.length > 5) { // Keep only mask + overshoot + 3 final symbols (total 5)
-                      // Remove extra spinning symbols
-                      while (reel.children.length > 5) {
-                        const childToRemove = reel.children[reel.children.length - 1]
-                        reel.removeChild(childToRemove)
-                        if (childToRemove && childToRemove.destroy) {
-                          childToRemove.destroy()
-                        }
-                      }
-                      
-                      // Replace with server-determined final symbols (skip mask at index 0 and overshoot at index 1)
-                      if (serverResults && serverResults.results[index]) {
-                        const reelResult = serverResults.results[index]
-                        const finalSymbols = reelResult.symbols
-                        
-                        for (let i = 2; i < reel.children.length && i - 2 < finalSymbols.length; i++) {
-                          const symbol = reel.children[i] as Sprite
-                          const symbolName = finalSymbols[i - 2]
-                          const newTexture = reelAtlas.textures[symbolName]
-                          if (newTexture) {
-                            symbol.texture = newTexture
-                          }
-                        }
-                      } else {
-                        // Fallback to random symbols if server results not available
-                        for (let i = 2; i < reel.children.length; i++) {
-                          const symbol = reel.children[i] as Sprite
-                          const randomSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-                          const newTexture = reelAtlas.textures[randomSymbolName]
-                          if (newTexture) {
-                            symbol.texture = newTexture
-                          }
-                        }
-                      }
-                      
-                      // Set up the overshoot symbol (random symbol from available pool)
-                      const overshootSymbol = reel.children[1] as Sprite
-                      const overshootSymbolName = availableSymbols[Math.floor(Math.random() * availableSymbols.length)]
-                      const overshootTexture = reelAtlas.textures[overshootSymbolName]
-                      if (overshootTexture) {
-                        overshootSymbol.texture = overshootTexture
-                      }
-                    }
-                    
-                    // Calculate bounce progress (0 to 1 over 333ms)
-                    const bounceDuration = bounceEndTime - spinDuration // 333ms
-                    const bounceProgress = (elapsed - spinDuration) / bounceDuration
-                    
-                    // Smooth bounce curve - starts at overshoot, ends at target
-                    const overshootAmount = 69 // 100px overshoot
-                    const targetPositions = [0, SYMBOL_HEIGHT, 2 * SYMBOL_HEIGHT]
-                    
-                    // Use sine wave for natural bounce motion
-                    const bounceOffset = Math.sin(Math.PI * bounceProgress) * overshootAmount * (1 - bounceProgress)
-                    
-                    // Play sound when bounce reaches its peak (around 50% progress)
-                    if (!soundPlayed && bounceProgress >= 0.25) {
-                      // Only play individual sounds if not a simultaneous stop
-                      if (!simultaneousStopRef.current) {
-                        // Check if this reel has wild symbols and play appropriate sound
-                        if (reelHasWild(index)) {
-                          playWildReelSound()
-                        } else {
-                          playReelStopSound()
-                        }
-                      }
-                      soundPlayed = true
-                    }
-                    
-                    // Get the overshoot symbol (index 1, after mask at index 0)
-                    const overshootSymbol = reel.children[1] as Sprite
-                    
-                    // Show overshoot symbol when reel moves down (positive bounceOffset)
-                    // It should be visible when the bounce offset pushes symbols down
-                    if (bounceOffset > 0) {
-                      overshootSymbol.visible = true
-                      overshootSymbol.y = -SYMBOL_HEIGHT + bounceOffset
-                    } else {
-                      overshootSymbol.visible = false
-                    }
-                    
-                    // Apply bounce to main symbols (skip mask at 0 and overshoot at 1)
-                    for (let i = 2; i < reel.children.length; i++) {
-                      const targetY = targetPositions[i - 2] // -2 because we skip mask and overshoot
-                      reel.children[i].y = targetY + bounceOffset
-                    }
-                    
-                    // Continue animation (ticker will call this function again)
-                  }
-                } else {
-                  // Bounce complete - ensure final positions are exact
-                  const targetPositions = [0, SYMBOL_HEIGHT, 2 * SYMBOL_HEIGHT]
-                  
-                  // Hide overshoot symbol
-                  const overshootSymbol = reel.children[1] as Sprite
-                  overshootSymbol.visible = false
-                  
-                  // Set final positions for main symbols (skip mask at 0 and overshoot at 1)
-                  for (let i = 2; i < reel.children.length; i++) {
-                    reel.children[i].y = targetPositions[i - 2]
-                  }
-                  
-                  // Mark this reel as stopped
-                  if (!reelsStoppedRef.current[index]) {
-                    reelsStoppedRef.current[index] = true
-                    reelsStoppedCountRef.current++
-                  }
-                  
-                  // Remove ticker function when animation is complete
-                  if (tickerFunction && appRef.current) {
-                    appRef.current.ticker.remove(tickerFunction)
-                    tickerFunction = null
-                  }
-                  
-                  // Check if all reels have finished bouncing
-                  if (reelsStoppedCountRef.current === REEL_COUNT) {
-                    isSpinningRef.current = false
-                    
-                    // Update UI displays with current values  
-                    if (uiUpdateRef.current) {
-                      // Note: We'll need to get current state values externally
-                    }
-                    
-                    // Check for autostart - trigger next spin after delay
-                    if (isAutoStartRef.current) {
-                      const delay = serverResults?.winLines && serverResults.winLines.length > 0 ? 5000 : 300 // Longer delay for wins
-                      
-                      autoStartTimeoutRef.current = setTimeout(() => {
-                        if (isAutoStartRef.current && !isSpinningRef.current) {
-                          spinReels()
-                        } else {
-                        }
-                      }, delay)
-                    }
-                    
-                    // Check for wild animations based on server results (only if there are actual wins)
-                    if (serverResults && serverResults.expandedReels && serverResults.expandedReels.length > 0 && 
-                        serverResults.winLines && serverResults.winLines.length > 0) {
-                      // Animate wild expansions only when there are actual wins
-                      checkAndAnimateWilds(serverResults)
-                    }
-                    
-                    // Show win highlights if there are wins
-                    if (serverResults && serverResults.winLines && serverResults.winLines.length > 0) {
-                      // Check if there are wild expansions happening
-                      const hasWildExpansions = serverResults.expandedReels && serverResults.expandedReels.length > 0
-                      
-                      if (hasWildExpansions) {
-                        // Delay highlighting to let wild expansion animations complete first
-                        // Wild animations take ~2300ms (69 frames at 30fps), so wait 2500ms
-                        
-                        // Store win lines for potential take win use
-                        pendingWinLinesRef.current = serverResults.winLines
-                        
-                        wildExpansionTimeoutRef.current = setTimeout(() => {
-                          // Only show win highlights if not in gamble mode
-                          if (!isGambleModeRef.current) {
-                            showWinHighlights(serverResults.winLines)
-                          } else {
-                          }
-                          wildExpansionTimeoutRef.current = null
-                          pendingWinLinesRef.current = null
-                        }, 2500)
-                      } else {
-                        // No wild expansions, start win animations immediately
-                        // But only if not in gamble mode
-                        if (!isGambleModeRef.current) {
-                          showWinHighlights(serverResults.winLines)
-                        } else {
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-              
-              // Set up PIXI ticker for smooth animation
-              tickerFunction = animate
-              if (appRef.current) {
-                appRef.current.ticker.add(tickerFunction)
-              }
-            }
-          })
-        }
-        spinReelsRef.current = spinReels
-
-        // Function to check for wild symbols and animate them based on server results
-        const checkAndAnimateWilds = (winResults: { results: { reel: number, position: number, symbols: string[] }[], totalWin: number, winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[], expandedReels: number[] }) => {
-          if (!winResults || !winResults.expandedReels || winResults.expandedReels.length === 0) {
-            return
-          }
-
-          
-          // Mark that win animations are active (expanding wilds are slow animations)
-          isWinAnimatingRef.current = true
-          
-          // Play wild expansion sound once for all expanding reels
-          if (winResults.expandedReels.length > 0) {
-            playWildExpandSound()
-          }
-          
-          // Animate expanding wilds for all reels that the server determined should expand
-          winResults.expandedReels.forEach(reelIndex => {
-            const reel = reelsRef.current[reelIndex]
-            if (reel && reel.children[2]) { // Get first symbol (skip mask and overshoot)
-              animateExpandingWild(reel.children[2] as Sprite, reelIndex)
-            }
-          })
-        }
-
-        // Function to instantly complete wild expansions (for take win feature)
-        const completeWildExpansions = () => {
-          
-          // Get all reels that have running wild animations
-          const expandingReels = Array.from(animationsRunningRef.current)
-          
-          expandingReels.forEach(reelIndex => {
-            const reel = reelsRef.current[reelIndex]
-            if (!reel) return
-            
-            
-            // Get all symbols in this reel (skip mask at 0 and overshoot at 1)
-            const reelSymbols: Sprite[] = []
-            for (let i = 2; i < reel.children.length; i++) {
-              reelSymbols.push(reel.children[i] as Sprite)
-            }
-            
-            // Find and clean up any existing expand animation sprites
-            const spritesToRemove: Sprite[] = []
-            for (let i = reel.children.length - 1; i >= 5; i--) { // Beyond base 5 (mask + overshoot + 3 symbols)
-              const child = reel.children[i] as Sprite
-              if (child) {
-                spritesToRemove.push(child)
-              }
-            }
-            
-            // Remove animation sprites
-            spritesToRemove.forEach(sprite => {
-              if (sprite && !sprite.destroyed) {
-                reel.removeChild(sprite)
-                sprite.destroy()
-              }
-            })
-            
-            // Convert non-wild symbols to wilds and make them visible
-            reelSymbols.forEach(symbol => {
-              if (symbol && !symbol.destroyed) {
-                if (symbol.texture !== reelAtlas.textures['08.png']) {
-                  // Convert to wild
-                  symbol.texture = reelAtlas.textures['08.png']
-                }
-                symbol.visible = true // Ensure symbol is visible
-              }
-            })
-            
-          })
-          
-          // Clear all expanding animations after completion
-          animationsRunningRef.current.clear()
-        }
-        
-        // Set the ref for external access
-        completeWildExpansionsRef.current = completeWildExpansions
 
         // Function to update overlay language
         const updateOverlay = (newLanguage: 'en' | 'mk') => {
@@ -2256,717 +1773,10 @@ export default function Home() {
         }
         updateOverlayRef.current = updateOverlay
 
-        // Function to animate expanding wild
-        const animateExpandingWild = (wildSymbol: Sprite, reelIndex: number) => {
-          // Check if animation is already running for this reel
-          if (animationsRunningRef.current.has(reelIndex)) {
-            return
-          }
-          
-          // Mark animation as running for this reel
-          animationsRunningRef.current.add(reelIndex)
-          
-          // Create expand animation frames array
-          const expandFrames: import('pixi.js').Texture[] = []
-          for (let i = 0; i < 69; i++) {
-            const frameNumber = i.toString().padStart(3, '0')
-            const frameName = `expand_${frameNumber}.png`
-            if (expandAtlas.textures[frameName]) {
-              expandFrames.push(expandAtlas.textures[frameName])
-            }
-          }
-
-          if (expandFrames.length === 0) {
-            console.error('No expand frames found')
-            animationsRunningRef.current.delete(reelIndex)
-            return
-          }
-
-          const reel = wildSymbol.parent
-          
-          // Check if reel still exists
-          if (!reel) {
-            animationsRunningRef.current.delete(reelIndex)
-            return
-          }
-          
-          // Get all symbols in this reel (skip mask at 0 and overshoot at 1)
-          const reelSymbols: Sprite[] = []
-          for (let i = 2; i < reel.children.length; i++) {
-            reelSymbols.push(reel.children[i] as Sprite)
-          }
-
-          // Create expanding wild sprites only for non-wild symbols
-          const expandSprites: Sprite[] = []
-          const symbolsToHide: Sprite[] = []
-          
-          reelSymbols.forEach((symbol, pos) => {
-            // Only animate expansion on symbols that aren't already wild
-            if (symbol.texture !== reelAtlas.textures['08.png']) {
-              // Hide the original symbol
-              symbol.visible = false
-              symbolsToHide.push(symbol)
-              
-              // Create expand animation sprite for this position
-              const expandSprite = new Sprite(expandFrames[0])
-              expandSprite.width = SYMBOL_WIDTH
-              expandSprite.height = SYMBOL_HEIGHT
-              expandSprite.x = 0 // Relative to reel container
-              expandSprite.y = pos * SYMBOL_HEIGHT // Position for each row
-              
-              reel.addChild(expandSprite)
-              expandSprites.push(expandSprite)
-            }
-          })
-
-          // If no symbols need expansion, exit early
-          if (expandSprites.length === 0) {
-            return
-          }
-
-          // Animate through frames at half speed
-          let currentFrame = 0
-          const frameRate = 30 // 30 FPS (half of 60 FPS)
-          const animationSpeed = 1000 / frameRate // ~33.33ms per frame
-
-          const animateFrames = () => {
-            // Check if animation should continue (not interrupted by new spin or take win)
-            if (!animationsRunningRef.current.has(reelIndex)) {
-              // Animation was cancelled - clean up expansion sprites
-              expandSprites.forEach(sprite => {
-                if (sprite && !sprite.destroyed) {
-                  sprite.destroy()
-                }
-              })
-              
-              // Only restore original symbols if this is NOT a take win cancellation
-              // (take win should have already converted symbols to wilds)
-              if (!takeWinActiveRef.current) {
-                // Restore visibility of original symbols that were hidden (for new spin cancellation)
-                symbolsToHide.forEach(symbol => {
-                  if (symbol && !symbol.destroyed) {
-                    symbol.visible = true
-                  }
-                })
-              } else {
-              }
-              return
-            }
-            
-            if (currentFrame < expandFrames.length) {
-              // Update all expand sprites with current frame (with null checks)
-              expandSprites.forEach(sprite => {
-                if (sprite && !sprite.destroyed && sprite.texture) {
-                  sprite.texture = expandFrames[currentFrame]
-                }
-              })
-              currentFrame++
-              setTimeout(animateFrames, animationSpeed)
-            } else {
-              // Animation complete - clean up
-              expandSprites.forEach(sprite => {
-                if (sprite && !sprite.destroyed) {
-                  sprite.destroy()
-                }
-              })
-              
-              // Show symbols again but replace expanded ones with wilds (with null checks)
-              symbolsToHide.forEach(symbol => {
-                if (symbol && !symbol.destroyed && reelAtlas.textures['08.png']) {
-                  symbol.texture = reelAtlas.textures['08.png'] // Convert to wild
-                  symbol.visible = true
-                }
-              })
-              
-              // Mark animation as complete
-              animationsRunningRef.current.delete(reelIndex)
-              
-              // Check if all expanding wild animations are complete
-              if (animationsRunningRef.current.size === 0) {
-                // Note: Don't reset isWinAnimatingRef here as win counting might still be running
-                
-                // Trigger win sound sequence now that wild expansions are complete
-                // But only if not in gamble mode
-                if (pendingWinRef.current > 0 && sound && !isGambleModeRef.current) {
-                  const totalWinAmount = pendingWinRef.current
-                  const winLines = pendingWinLinesRef.current || []
-                  startWinSoundSequence(
-                    totalWinAmount, 
-                    currentBetRef.current, 
-                    winLines, 
-                    sound,
-                    true, // hasWildExpansion = true
-                    isGambleMode
-                  )
-                } else if (isGambleModeRef.current) {
-                }
-              }
-              
-            }
-          }
-
-          animateFrames()
-        }
         
-        // Track running win animations to stop them on new spins
-        const runningWinAnimations: { [key: string]: boolean } = {}
         
-        // Function to animate winning symbols (with pre-loaded assets)
-        const animateWinningSymbols = async (winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[], customSpeed?: number) => {
-          if (winningPositions.length === 0) {
-            return
-          }
-          
-          
-          winningPositions.forEach(({ reelIndex, rowIndex, symbolName }) => {
-            const animationKey = `${reelIndex}-${rowIndex}`
-            runningWinAnimations[animationKey] = true // Mark animation as running
-            
-            const reel = reelsRef.current[reelIndex]
-            if (!reel) {
-              delete runningWinAnimations[animationKey]
-              return
-            }
-            
-            // Get the symbol at this position (skip mask at 0 and overshoot at 1)
-            const symbolSprite = reel.children[rowIndex + 2] as Sprite
-            if (!symbolSprite) {
-              return
-            }
-            
-            // Convert symbol name to number (handle both "Wild" and "Wild.png")
-            const cleanSymbolName = symbolName.replace('.png', '') // Remove .png if present
-            
-            // Handle case where server sends clean name (like "Wild") vs filename (like "Wild.png")
-            const symbolNumber = symbolNameToNumber[cleanSymbolName] || cleanSymbolName
-            
-            // Special logging for wild symbols - check both the clean name and number
-            if (cleanSymbolName === 'Wild' || symbolNumber === '08' || symbolName === 'Wild') {
-            }
-            
-            // Special logging for grapes
-            if (cleanSymbolName === 'Grape' || symbolNumber === '05' || symbolName === 'Grape') {
-            }
-            
-            const winAtlas = winAtlases[symbolNumber]
-            
-            if (!winAtlas?.textures) {
-              console.warn(`❌ No pre-loaded animation atlas for symbol ${symbolNumber}, falling back to flash`)
-              // Fallback to flashing
-              let flashCount = 0
-              const flash = () => {
-                if (flashCount >= 6) {
-                  symbolSprite.tint = 0xFFFFFF
-                  return
-                }
-                symbolSprite.tint = flashCount % 2 === 0 ? 0xFF0000 : 0xFFFFFF
-                flashCount++
-                setTimeout(flash, 150)
-              }
-              flash()
-              return
-            }
-            
-            
-            // Additional debugging for wild symbols
-            if (symbolNumber === '08') {
-            }
-            
-            // Create animation frames array (use all frames for smoothest animation)
-            const winFrames: import('pixi.js').Texture[] = []
-            
-            // Use all 57 frames for complete smooth animation
-            for (let i = 0; i < 57; i++) {
-              const frameNumber = i.toString().padStart(3, '0')
-              const frameName = `${symbolNumber}_${frameNumber}.png`
-              const texture = winAtlas.textures[frameName]
-              if (texture && texture.source) {
-                winFrames.push(texture)
-              } else {
-                console.warn(`⚠️ Missing or invalid frame ${frameName} in ${symbolNumber} atlas`)
-              }
-            }
-            
-            
-            // Log missing frames for debugging
-            if (winFrames.length < 57) {
-              const missingFrames: number[] = []
-              for (let i = 0; i < 57; i++) {
-                const frameNumber = i.toString().padStart(3, '0')
-                const frameName = `${symbolNumber}_${frameNumber}.png`
-                if (!winAtlas.textures[frameName]) {
-                  missingFrames.push(i)
-                }
-              }
-              console.warn(`🚨 Missing frames for ${symbolNumber}:`, missingFrames.slice(0, 10), missingFrames.length > 10 ? `... and ${missingFrames.length - 10} more` : '')
-            }
-            
-            if (winFrames.length === 0) {
-              console.warn(`❌ No animation frames found for symbol ${symbolNumber}`)
-              return
-            }
-            
-            
-            // Hide the original symbol
-            symbolSprite.visible = false
-            
-            // Create win animation sprite with first valid frame
-            const firstFrame = winFrames[0]
-            if (!firstFrame || !firstFrame.source) {
-              console.error(`❌ Invalid first frame for ${symbolNumber} animation`)
-              return
-            }
-            
-            const winAnimSprite = new Sprite(firstFrame)
-            winAnimSprite.width = SYMBOL_WIDTH
-            winAnimSprite.height = SYMBOL_HEIGHT
-            winAnimSprite.x = 0
-            winAnimSprite.y = rowIndex * SYMBOL_HEIGHT
-            
-            reel.addChild(winAnimSprite)
-            
-            // Animate through frames at smooth speed
-            let currentFrame = 0
-            const animationSpeed = customSpeed || 80 // Use custom speed or default 80ms per frame (~12.5 FPS)
-            let isLooping = false
-            const loopStartFrame = Math.max(0, winFrames.length - 20) // Last 20 frames for loop
-            
-            const animateFrames = () => {
-              // Check if animation should continue (not stopped by new spin)
-              if (!runningWinAnimations[animationKey]) {
-                // Animation was stopped - clean up
-                if (winAnimSprite && !winAnimSprite.destroyed) {
-                  winAnimSprite.destroy()
-                }
-                if (symbolSprite && !symbolSprite.destroyed) {
-                  symbolSprite.visible = true
-                }
-                return
-              }
-              
-              if (currentFrame < winFrames.length) {
-                const frameTexture = winFrames[currentFrame]
-                if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
-                  winAnimSprite.texture = frameTexture
-                }
-                currentFrame++
-                setTimeout(animateFrames, animationSpeed)
-              } else if (!isLooping) {
-                // Animation complete - start looping the last 20 frames
-                isLooping = true
-                currentFrame = loopStartFrame
-                setTimeout(animateFrames, animationSpeed)
-              } else {
-                // Loop through last 20 frames - ensure currentFrame is within bounds
-                if (currentFrame >= 0 && currentFrame < winFrames.length) {
-                  const frameTexture = winFrames[currentFrame]
-                  if (frameTexture && frameTexture.source && !winAnimSprite.destroyed) {
-                    winAnimSprite.texture = frameTexture
-                  }
-                }
-                currentFrame++
-                if (currentFrame >= winFrames.length) {
-                  currentFrame = loopStartFrame // Reset to start of loop
-                }
-                setTimeout(animateFrames, animationSpeed)
-              }
-            }
-            
-            // Start the animation
-            animateFrames()
-          })
-        }
         
-        // Function to clear all win highlights
-        const clearWinHighlights = () => {
-          // Clear cycling interval if it exists
-          if (winCycleIntervalRef.current) {
-            clearInterval(winCycleIntervalRef.current)
-            winCycleIntervalRef.current = null
-          }
-          
-          winHighlightsRef.current.forEach(highlight => {
-            if (highlight && !highlight.destroyed && app) {
-              // Remove from main stage
-              if (app.stage.children.includes(highlight)) {
-                app.stage.removeChild(highlight)
-              }
-              highlight.destroy()
-            }
-          })
-          winHighlightsRef.current = []
-          
-          // Hide win line display
-          winLineDisplayContainer.visible = false
-          
-          // Hide win info display
-          if (winInfoDisplayRef.current) {
-            winInfoDisplayRef.current.style.display = 'none'
-          }
-        }
         
-        // Function to show win line display (e.g., "Line 3 3x [cherry icon] = 1.00 FUN")
-        const showWinLineDisplay = (winLine: { payline: number, symbols: string[], count: number, symbol: string, payout: number }) => {
-          // Clear existing content
-          winLineDisplayContainer.removeChildren()
-          
-          // Create container for the single line display
-          const lineContainer = new Container()
-          
-          // Get win type information for this specific line
-          const lineWinConfig = getWinConfig(winLine.payout, currentBet, [winLine])
-          const winTypeColor = getWinColor(lineWinConfig.type)
-          const winTypeText = formatWinType(lineWinConfig.type)
-          
-          let currentX = 0
-          
-          // Win type and line information
-          const lineText = new Text({
-            text: `${winTypeText} - Line ${winLine.payline} ${winLine.count}x`,
-            style: {
-              fontFamily: 'Arial',
-              fontSize: 18,
-              fill: winTypeColor,
-              fontWeight: 'bold',
-              stroke: { color: 0x000000, width: 1 }
-            }
-          })
-          lineText.x = currentX
-          lineText.y = 0
-          lineContainer.addChild(lineText)
-          currentX += lineText.width + 10 // 10px spacing
-          
-          // Symbol icon - convert to reelImages.json format (sXX.png)
-          let symbolTexture = null
-          
-          // Convert symbol name to number format used in reelImages.json
-          const cleanSymbolName = winLine.symbol.replace('.png', '')
-          const symbolNumber = symbolNameToNumber[cleanSymbolName] || cleanSymbolName
-          const reelImageSymbolName = `s${symbolNumber}.png`
-          
-          
-          // Try to find the symbol in reelImages.json format
-          if (reelAtlas.textures[reelImageSymbolName]) {
-            symbolTexture = reelAtlas.textures[reelImageSymbolName]
-          } else {
-          }
-          
-          if (symbolTexture) {
-            const symbolIcon = new Sprite(symbolTexture)
-            symbolIcon.width = 24 // Small icon size
-            symbolIcon.height = 24
-            symbolIcon.x = currentX
-            symbolIcon.y = -2 // Slight vertical adjustment to align with text
-            lineContainer.addChild(symbolIcon)
-            currentX += 30 // Icon width + spacing
-          } else {
-            // Add spacing even if no icon to maintain layout
-            currentX += 10
-          }
-          
-          // Payout text with win type color
-          const payoutText = new Text({
-            text: `= ${formatCurrency(winLine.payout)}`,
-            style: {
-              fontFamily: 'Arial',
-              fontSize: 18,
-              fill: winTypeColor,
-              fontWeight: 'bold',
-              stroke: { color: 0x000000, width: 1 }
-            }
-          })
-          payoutText.x = currentX
-          payoutText.y = 0
-          lineContainer.addChild(payoutText)
-          
-          // Center the entire line container
-          lineContainer.x = -(lineContainer.width / 2)
-          lineContainer.y = 0
-          
-          winLineDisplayContainer.addChild(lineContainer)
-          winLineDisplayContainer.visible = true
-        }
-        
-        // Function to show win highlights with cycling
-        const showWinHighlights = (winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => {
-          clearWinHighlights()
-          
-          if (winLines.length === 0) {
-            return
-          }
-
-          // Classify the win and get appropriate configuration
-          const totalWinAmount = pendingWinRef.current
-          const winConfig = getWinConfig(totalWinAmount, currentBetRef.current, winLines)
-          
-          // Trigger win sound sequence immediately if no wild expansions are happening
-          const hasWildExpansions = animationsRunningRef.current.size > 0
-          if (!hasWildExpansions && sound) {
-            startWinSoundSequence(
-              totalWinAmount, 
-              currentBetRef.current, 
-              winLines, 
-              sound,
-              false, // hasWildExpansion = false
-              isGambleMode
-            )
-          } else if (hasWildExpansions) {
-          }
-
-          // Start win count-up animation synchronized with payline animations
-          // But only if gamble mode is not active
-          if (pendingWinRef.current > 0 && animateWinRef.current && !isGambleMode) {
-            animateWinRef.current(pendingWinRef.current)
-          } else if (isGambleMode) {
-          }
-          
-          // First, collect all winning symbol positions from all winning lines
-          const winningPositions: { reelIndex: number, rowIndex: number, symbolName: string }[] = []
-          winLines.forEach(winLine => {
-            const paylineIndex = winLine.payline - 1 // Convert to 0-based
-            const positions = PAYLINES_VISUAL[paylineIndex]
-            
-            if (positions) {
-              // Only animate the winning symbols (based on count)
-              for (let i = 0; i < Math.min(winLine.count, positions.length); i++) {
-                const [reelIndex, rowIndex] = positions[i]
-                
-                // Check what symbol is actually displayed on the reel (might be Wild after expansion)
-                const reel = reelsRef.current[reelIndex]
-                const symbolSprite = reel?.children[rowIndex + 2] as Sprite // Skip mask and overshoot
-                let actualSymbolName = winLine.symbol // Default to base symbol
-                
-                // Check if this position shows a wild symbol
-                if (symbolSprite && symbolSprite.texture === reelAtlas.textures['08.png']) {
-                  actualSymbolName = 'Wild'
-                } else {
-                }
-                
-                winningPositions.push({ reelIndex, rowIndex, symbolName: `${actualSymbolName}.png` })
-              }
-            }
-          })
-          
-          // Enable win animations
-          const ENABLE_WIN_ANIMATIONS = true
-          
-          if (ENABLE_WIN_ANIMATIONS && winningPositions.length > 0) {
-            // Start win animations
-            
-            // Start animations with win-type-specific speed
-            const animationSpeed = getAnimationSpeed(winConfig.type)
-            
-            animateWinningSymbols(winningPositions, animationSpeed).then(() => {
-            }).catch(error => {
-              console.error('❌ Win animation error:', error)
-            })
-            
-            // Start payline highlights and win line display simultaneously with win animations
-            showWinHighlightsAfterAnimation(winLines)
-          } else {
-            // Show highlights immediately without animations
-            showWinHighlightsAfterAnimation(winLines)
-          }
-        }
-        
-        // Function to show win highlights after animations complete
-        const showWinHighlightsAfterAnimation = (winLines: { payline: number, symbols: string[], count: number, symbol: string, payout: number }[]) => {
-          let currentWinIndex = 0
-          
-          const showCurrentWin = () => {
-            // Clear previous highlights
-            winHighlightsRef.current.forEach(highlight => {
-              if (highlight && !highlight.destroyed && app) {
-                if (app.stage.children.includes(highlight)) {
-                  app.stage.removeChild(highlight)
-                }
-                highlight.destroy()
-              }
-            })
-            winHighlightsRef.current = []
-            
-            const winLine = winLines[currentWinIndex]
-            const paylineIndex = winLine.payline - 1 // Convert to 0-based
-            const color = PAYLINE_COLORS[paylineIndex] || 0xFFFFFF
-            const positions = PAYLINES_VISUAL[paylineIndex]
-            
-            if (!positions) return
-            
-            // Show win line display
-            showWinLineDisplay(winLine)
-            
-            // Create highlight container
-            const highlightContainer = new Container()
-            
-            // Calculate center points for complete payline (all 5 positions)
-            const pathPoints: { x: number, y: number }[] = []
-            for (let i = 0; i < positions.length; i++) {
-              const [reelIndex, rowIndex] = positions[i]
-              const centerX = reelIndex * (SYMBOL_WIDTH + REEL_GAP) + SYMBOL_WIDTH / 2
-              const centerY = rowIndex * SYMBOL_HEIGHT + SYMBOL_HEIGHT / 2
-              pathPoints.push({ x: centerX, y: centerY })
-            }
-            
-            const lineWidth = 8 // Match highlight border width
-            const borderRadius = lineWidth // Match border radius to line width
-            
-            // Draw complete payline path (below highlight boxes)
-            const paylinePath = new Graphics()
-            if (pathPoints.length > 1) {
-              for (let i = 0; i < pathPoints.length - 1; i++) {
-                const startCenter = pathPoints[i]
-                const endCenter = pathPoints[i + 1]
-                
-                // Calculate the vector from start to end
-                const dx = endCenter.x - startCenter.x
-                const dy = endCenter.y - startCenter.y
-                const distance = Math.sqrt(dx * dx + dy * dy)
-                
-                if (distance > 0) {
-                  // Normalize the direction vector
-                  const dirX = dx / distance
-                  const dirY = dy / distance
-                  
-                  // Calculate the distance from center to edge of rectangle in this direction
-                  // This finds the intersection of the direction ray with the rectangle boundary
-                  const halfWidth = SYMBOL_WIDTH / 2
-                  const halfHeight = SYMBOL_HEIGHT / 2
-                  
-                  // Calculate how far to move from center to reach rectangle edge
-                  let edgeDistance
-                  if (Math.abs(dirX) === 0) {
-                    // Vertical line
-                    edgeDistance = halfHeight
-                  } else if (Math.abs(dirY) === 0) {
-                    // Horizontal line
-                    edgeDistance = halfWidth
-                  } else {
-                    // Diagonal line - find intersection with rectangle boundary
-                    const tX = halfWidth / Math.abs(dirX)   // Distance to reach vertical edge
-                    const tY = halfHeight / Math.abs(dirY)  // Distance to reach horizontal edge
-                    edgeDistance = Math.min(tX, tY)         // Use whichever edge is reached first
-                  }
-                  
-                  // Determine start and end points based on winning status
-                  const startIsWinning = i < winLine.count
-                  const endIsWinning = i + 1 < winLine.count
-                  
-                  let startPoint, endPoint
-                  
-                  if (startIsWinning && endIsWinning) {
-                    // Both positions are winning - hide line inside both squares (edge to edge)
-                    startPoint = {
-                      x: startCenter.x + dirX * edgeDistance,
-                      y: startCenter.y + dirY * edgeDistance
-                    }
-                    endPoint = {
-                      x: endCenter.x - dirX * edgeDistance,
-                      y: endCenter.y - dirY * edgeDistance
-                    }
-                  } else if (startIsWinning && !endIsWinning) {
-                    // Start is winning, end is not - start from edge of winning symbol, end at center
-                    startPoint = {
-                      x: startCenter.x + dirX * edgeDistance,
-                      y: startCenter.y + dirY * edgeDistance
-                    }
-                    endPoint = { x: endCenter.x, y: endCenter.y }
-                  } else if (!startIsWinning && endIsWinning) {
-                    // Start is not winning, end is winning - start from center, end at edge
-                    startPoint = { x: startCenter.x, y: startCenter.y }
-                    endPoint = {
-                      x: endCenter.x - dirX * edgeDistance,
-                      y: endCenter.y - dirY * edgeDistance
-                    }
-                  } else {
-                    // Neither position is winning - draw center to center
-                    startPoint = { x: startCenter.x, y: startCenter.y }
-                    endPoint = { x: endCenter.x, y: endCenter.y }
-                  }
-                  
-                  paylinePath.moveTo(startPoint.x, startPoint.y)
-                  paylinePath.lineTo(endPoint.x, endPoint.y)
-                }
-              }
-              
-              // Add final segment from last symbol center to its right edge
-              // Only if the last symbol doesn't have a highlight box (isn't a winning symbol)
-              if (pathPoints.length > 0) {
-                const lastPoint = pathPoints[pathPoints.length - 1]
-                const lastSymbolIsWinning = pathPoints.length <= winLine.count
-                
-                // Only draw the final segment if the last symbol is NOT winning (no highlight box)
-                if (!lastSymbolIsWinning) {
-                  // Calculate right edge of the last symbol
-                  const rightEdgeX = lastPoint.x + SYMBOL_WIDTH / 2
-                  
-                  // Draw from center to right edge of last symbol
-                  paylinePath.moveTo(lastPoint.x, lastPoint.y)
-                  paylinePath.lineTo(rightEdgeX, lastPoint.y)
-                }
-              }
-              
-              paylinePath.stroke({ width: lineWidth, color: color, alpha: 1.0 })
-            }
-            
-            // Add payline path first (will be below highlight boxes)
-            highlightContainer.addChild(paylinePath)
-            
-            // Create highlight boxes (drawn on top)
-            for (let i = 0; i < Math.min(winLine.count, positions.length); i++) {
-              const [reelIndex, rowIndex] = positions[i]
-              
-              // Create highlight box with enhanced styling
-              const highlight = new Graphics()
-              highlight.roundRect(0, 0, SYMBOL_WIDTH, SYMBOL_HEIGHT, borderRadius) // Match border radius to line width
-              highlight.stroke({ width: 8, color: color }) // Thicker border
-              
-              // Position relative to reel container
-              highlight.x = reelIndex * (SYMBOL_WIDTH + REEL_GAP)
-              highlight.y = rowIndex * SYMBOL_HEIGHT
-              
-              highlightContainer.addChild(highlight)
-            }
-            
-            // Add to stage at correct z-index position (above border, below overlays)
-            if (app && app.stage) {
-              // Find insertion point - after border element
-              const borderChild = app.stage.children.find(child => 
-                child instanceof Sprite && child.texture?.label?.includes('reelBorder')
-              )
-              const borderIndex = borderChild ? app.stage.children.indexOf(borderChild) : -1
-              const insertIndex = borderIndex !== -1 ? borderIndex + 1 : app.stage.children.length - 1
-              
-              app.stage.addChildAt(highlightContainer, insertIndex)
-              
-              // Restore manual positioning since not inheriting from reelContainer
-              highlightContainer.x = REEL_OFFSET_X
-              highlightContainer.y = REEL_OFFSET_Y
-            }
-            
-            winHighlightsRef.current.push(highlightContainer)
-            
-            // Update win info display
-            if (winInfoDisplayRef.current) {
-              winInfoDisplayRef.current.innerHTML = `Line ${winLine.payline} ${winLine.count}x - ${winLine.payout} credits`
-              winInfoDisplayRef.current.style.display = 'block'
-            }
-          }
-          
-          // Show first win immediately
-          showCurrentWin()
-          
-          // If multiple wins, cycle through them continuously
-          if (winLines.length > 1) {
-            winCycleIntervalRef.current = setInterval(() => {
-              currentWinIndex = (currentWinIndex + 1) % winLines.length
-              showCurrentWin()
-            }, 1500) // Change every 1.5 seconds, cycle forever
-          }
-          // Single win stays visible (no timeout)
-        }
-        
-        // Set the ref for external access (take win feature)
-        showWinHighlightsRef.current = showWinHighlights
 
         window.addEventListener('keydown', keydownHandler)
 
@@ -3027,12 +1837,6 @@ export default function Home() {
     }
   }, [])
 
-  // Update UI when state changes
-  useEffect(() => {
-    if (uiUpdateRef.current) {
-      uiUpdateRef.current(totalBalance, currentBet, lastWin)
-    }
-  }, [totalBalance, currentBet, lastWin, denomination])
 
   // Update autostart indicator and ref when state changes
   useEffect(() => {

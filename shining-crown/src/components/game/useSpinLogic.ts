@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { Application, Container, Sprite, Assets } from 'pixi.js'
-import { SYMBOL_WIDTH, SYMBOL_HEIGHT, REEL_COUNT, SYMBOLS_PER_REEL } from './usePixiSetup'
+import { SYMBOL_WIDTH, SYMBOL_HEIGHT, REEL_COUNT, SYMBOLS_PER_REEL } from '../../config/pixiConstants'
 
 // Define the interface for props this hook needs
 export interface UseSpinLogicProps {
@@ -22,7 +22,6 @@ export interface UseSpinLogicProps {
   animationsRunningRef: React.RefObject<Set<number>>
   isAutoStartRef: React.RefObject<boolean>
   isGambleModeRef: React.RefObject<boolean>
-  isWinAnimatingRef: React.RefObject<boolean>
   wildExpansionTimeoutRef: React.RefObject<NodeJS.Timeout | null>
 
   // State setters
@@ -37,10 +36,8 @@ export interface UseSpinLogicProps {
 
   // Function refs
   collectWinRef: React.RefObject<(() => void) | null>
-  uiUpdateRef: React.RefObject<((balance: number, bet: number, win: number) => void) | null>
   playReelStopSoundRef: React.RefObject<(() => void) | null>
   playWildReelSoundRef: React.RefObject<(() => void) | null>
-  playWildExpandSoundRef: React.RefObject<(() => void) | null>
   showWinHighlightsRef: React.RefObject<((winLines: any[]) => void) | null>
   checkAndAnimateWildsRef: React.RefObject<((winResults: any) => void) | null>
   reelHasWildRef: React.RefObject<((reelIndex: number) => boolean) | null>
@@ -71,7 +68,6 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
     animationsRunningRef,
     isAutoStartRef,
     isGambleModeRef,
-    isWinAnimatingRef,
     wildExpansionTimeoutRef,
     setLastWin,
     setPendingWin,
@@ -80,10 +76,8 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
     flashInsufficientFunds,
     clearWinHighlights,
     collectWinRef,
-    uiUpdateRef,
     playReelStopSoundRef,
     playWildReelSoundRef,
-    playWildExpandSoundRef,
     showWinHighlightsRef,
     checkAndAnimateWildsRef,
     reelHasWildRef
@@ -129,10 +123,8 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
     animationsRunningRef.current.clear()
 
     // Clear win highlights when starting new spin
+    // (also stops all running win animations tracked by useWinAnimations)
     clearWinHighlights()
-
-    // Stop all running win animations
-    // Note: runningWinAnimations is managed elsewhere, this is a placeholder
 
     // Clear any pending win animation timeouts
     reelsRef.current.forEach((reel) => {
@@ -232,7 +224,6 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
     // Helper functions
     const playReelStopSound = playReelStopSoundRef.current || (() => {})
     const playWildReelSound = playWildReelSoundRef.current || (() => {})
-    const playWildExpandSound = playWildExpandSoundRef.current || (() => {})
     const showWinHighlights = showWinHighlightsRef.current || (() => {})
     const checkAndAnimateWilds = checkAndAnimateWildsRef.current || (() => {})
     const reelHasWild = reelHasWildRef.current || (() => false)
@@ -451,11 +442,6 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
             if (reelsStoppedCountRef.current === REEL_COUNT) {
               isSpinningRef.current = false
 
-              // Update UI displays with current values
-              if (uiUpdateRef.current) {
-                // Note: We'll need to get current state values externally
-              }
-
               // Check for autostart - trigger next spin after delay
               if (isAutoStartRef.current) {
                 const delay = serverResults?.winLines && serverResults.winLines.length > 0 ? 5000 : 300 // Longer delay for wins
@@ -530,7 +516,6 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
     animationsRunningRef,
     isAutoStartRef,
     isGambleModeRef,
-    isWinAnimatingRef,
     wildExpansionTimeoutRef,
     setLastWin,
     setPendingWin,
@@ -539,10 +524,8 @@ export function useSpinLogic(props: UseSpinLogicProps): SpinLogicReturn {
     flashInsufficientFunds,
     clearWinHighlights,
     collectWinRef,
-    uiUpdateRef,
     playReelStopSoundRef,
     playWildReelSoundRef,
-    playWildExpandSoundRef,
     showWinHighlightsRef,
     checkAndAnimateWildsRef,
     reelHasWildRef
