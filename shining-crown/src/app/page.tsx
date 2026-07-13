@@ -208,7 +208,6 @@ export default function Home() {
   const animationsRunningRef = useRef<Set<number>>(new Set())
   const lastWinRef = useRef(0)
   const winHighlightsRef = useRef<Container[]>([])
-  const winInfoDisplayRef = useRef<HTMLDivElement | null>(null)
   const wildExpansionSoundTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const winCycleIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const denomTextRef = useRef<Text | null>(null)
@@ -989,7 +988,6 @@ export default function Home() {
     takeWinActiveRef,
     winHighlightsRef,
     winCycleIntervalRef,
-    winInfoDisplayRef,
     animateWinRef,
     isGambleMode
   })

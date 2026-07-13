@@ -17,7 +17,7 @@ The game uses a **hybrid declarative/imperative architecture**:
 - **Declarative (PIXI React)**: Scene structure, UI elements, visual layout
 - **Imperative (vanilla PIXI)**: 60fps animations, win sequences, ticker-based control
 
-See [PIXI_REACT_SUMMARY.md](PIXI_REACT_SUMMARY.md) for details.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Getting Started
 
@@ -85,17 +85,7 @@ shining-crown/
 
 ## Documentation
 
-### Quick Start
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet for PIXI React
-
-### Integration Guides
-- **[INTEGRATION_EXAMPLE.md](INTEGRATION_EXAMPLE.md)** - Exact code changes for integration
-- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Step-by-step integration strategy
-
-### Technical Details
-- **[PIXI_REACT_SUMMARY.md](PIXI_REACT_SUMMARY.md)** - Executive summary of the migration
-- **[PIXI_REACT_MIGRATION_COMPLETE.md](PIXI_REACT_MIGRATION_COMPLETE.md)** - Complete migration details
-- **[PIXI_REACT_QUICK_START.md](PIXI_REACT_QUICK_START.md)** - Developer guide with examples
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Rendering architecture, game logic hooks, server-authoritative money flow, peripherals
 
 ## Development Scripts
 

@@ -21,7 +21,6 @@ export interface UseWinAnimationsProps {
   takeWinActiveRef: React.RefObject<boolean>
   winHighlightsRef: React.RefObject<Container[]>
   winCycleIntervalRef: React.RefObject<NodeJS.Timeout | null>
-  winInfoDisplayRef?: React.RefObject<HTMLDivElement | null>
 
   // Function refs
   animateWinRef: React.RefObject<((amount: number) => void) | null>
@@ -78,7 +77,6 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
     takeWinActiveRef,
     winHighlightsRef,
     winCycleIntervalRef,
-    winInfoDisplayRef,
     animateWinRef,
     isGambleMode
   } = props
@@ -137,16 +135,11 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
       }
     }
 
-    // Hide win info display
-    if (winInfoDisplayRef?.current) {
-      winInfoDisplayRef.current.style.display = 'none'
-    }
-
     // Stop all running win animations
     Object.keys(runningWinAnimations.current).forEach(key => {
       delete runningWinAnimations.current[key]
     })
-  }, [appRef, winHighlightsRef, winCycleIntervalRef, winInfoDisplayRef])
+  }, [appRef, winHighlightsRef, winCycleIntervalRef])
 
   /**
    * Animate winning symbols with frame-by-frame animation
@@ -892,12 +885,6 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
       highlightContainer.y = REEL_OFFSET_Y
 
       winHighlightsRef.current.push(highlightContainer)
-
-      // Update win info display
-      if (winInfoDisplayRef?.current) {
-        winInfoDisplayRef.current.innerHTML = `Line ${winLine.payline} ${winLine.count}x - ${winLine.payout} credits`
-        winInfoDisplayRef.current.style.display = 'block'
-      }
     }
 
     // Show first win immediately
@@ -918,7 +905,6 @@ export function useWinAnimations(props: UseWinAnimationsProps): WinAnimationsRet
     currentBetRef,
     winHighlightsRef,
     winCycleIntervalRef,
-    winInfoDisplayRef,
     animateWinRef,
     animationsRunningRef,
     isGambleMode,

@@ -35513,8 +35513,16 @@
       "balanceBefore": 661221,
       "balanceAfter": 660221,
       "timestamp": "2026-07-13T10:17:27.432Z"
+    },
+    {
+      "id": "2f181996-b89f-4792-9e29-934b795a6239",
+      "type": "adjustment",
+      "amount": -5,
+      "balanceBefore": 660221,
+      "balanceAfter": 660216,
+      "timestamp": "2026-07-13T10:31:08.198Z"
     }
   ],
-  "lastUpdated": "2026-07-13T10:17:27.435Z",
-  "totalTransactions": 4363
+  "lastUpdated": "2026-07-13T10:31:08.200Z",
+  "totalTransactions": 4364
 }
