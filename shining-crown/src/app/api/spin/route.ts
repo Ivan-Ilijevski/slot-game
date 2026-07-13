@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import fs from 'fs'
 import path from 'path'
-import { deductBalance, addBalance, validateBalance, readWallet } from '../../../utils/wallet'
+import { deductBalanceSync, addBalanceSync, enqueueMoneyOp, validateBalance, readWallet } from '../../../utils/wallet'
+import { incrementMetersSync } from '../../../utils/meters'
 import { formatCurrency } from '../../../config/currency'
 import { isValidBet } from '../../../config/gameConstants'
 import { secureRandom } from '../../../utils/secureRandom'
@@ -271,8 +272,12 @@ export async function POST(request: NextRequest) {
 
     const spinId = randomUUID()
 
-    // Deduct bet amount from wallet
-    const walletAfterBet = await deductBalance(betAmount, 'spin_bet', { spinId })
+    // Deduct bet and advance coin-in/games-played meters atomically
+    const walletAfterBet = await enqueueMoneyOp(() => {
+      const wallet = deductBalanceSync(betAmount, 'spin_bet', { spinId })
+      incrementMetersSync({ coinIn: betAmount, gamesPlayed: 1 })
+      return wallet
+    })
     console.log(`Bet deducted: ${formatCurrency(betAmount)}, new balance: ${formatCurrency(walletAfterBet.balance)}`)
     
     // Generate random stop positions for each reel
@@ -311,10 +316,14 @@ export async function POST(request: NextRequest) {
     // Calculate wins with expanded wilds and bet multiplier
     const { winLines, totalWin } = calculateWins(expandedResults, betAmount)
     
-    // Add winnings to wallet if any
+    // Add winnings to wallet if any, advancing coin-out/games-won meters atomically
     let finalWallet = walletAfterBet
     if (totalWin > 0) {
-      finalWallet = await addBalance(totalWin, 'spin_win', { spinId })
+      finalWallet = await enqueueMoneyOp(() => {
+        const wallet = addBalanceSync(totalWin, 'spin_win', { spinId })
+        incrementMetersSync({ coinOut: totalWin, gamesWon: 1 })
+        return wallet
+      })
       await setEligibleWin(totalWin, spinId)
       console.log(`Win added: ${formatCurrency(totalWin)}, new balance: ${formatCurrency(finalWallet.balance)}`)
     } else {

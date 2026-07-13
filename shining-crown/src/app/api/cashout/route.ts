@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readWallet, updateBalance } from '../../../utils/wallet'
+import { readWallet, updateBalanceSync, enqueueMoneyOp } from '../../../utils/wallet'
+import { incrementMetersSync } from '../../../utils/meters'
 import { printCashoutTicket, generateTicketId, CashoutTicket } from '../../../utils/thermalPrinter'
 import { printCashoutTicketRaw } from '../../../utils/rawPrinter'
 import { generateVoucher } from '../../../utils/voucherGenerator'
@@ -110,12 +111,16 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Deduct amount from balance (with transaction logging)
-    const updatedWallet = await updateBalance(-amount, 'cashout', {
-      ticketId,
-      voucherId: voucherResult.id,
-      machineId,
-      printedAt: timestamp.toISOString()
+    // Deduct amount and advance the voucher-out meter atomically
+    const updatedWallet = await enqueueMoneyOp(() => {
+      const wallet = updateBalanceSync(-amount, 'cashout', {
+        ticketId,
+        voucherId: voucherResult.id,
+        machineId,
+        printedAt: timestamp.toISOString()
+      })
+      incrementMetersSync({ voucherOut: amount })
+      return wallet
     })
     
     console.log(`Cashout processed: ${amount} ${wallet.currency}, Ticket: ${ticketId}`)

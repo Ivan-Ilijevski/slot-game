@@ -19,7 +19,9 @@ export default function VoucherInput({ onVoucherValidated, onError, className = 
     setCurrentInput('')
 
     try {
-      const response = await fetch('/api/voucher/validate', {
+      // Single server-side transaction: validates the voucher AND credits the
+      // wallet (in deni) atomically.
+      const response = await fetch('/api/voucher/redeem', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,29 +31,10 @@ export default function VoucherInput({ onVoucherValidated, onError, className = 
 
       const data = await response.json()
 
-      if (response.ok && data.valid) {
-        // Voucher server speaks denars; the wallet and all game code use deni
-        const creditDeni = Math.round(data.credit * 100)
-        onVoucherValidated?.(creditDeni)
-
-        try {
-          await fetch('/api/wallet', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              operation: 'add',
-              amount: creditDeni,
-              metadata: { voucherId, type: 'voucher_redemption' }
-            }),
-          })
-        } catch (walletError) {
-          console.error('Failed to update wallet:', walletError)
-          onError?.('Voucher validated but failed to update wallet')
-        }
+      if (response.ok && data.success) {
+        onVoucherValidated?.(data.credit)
       } else {
-        onError?.(data.reason || 'Invalid voucher')
+        onError?.(data.error || 'Invalid voucher')
       }
     } catch (error) {
       console.error('Voucher validation error:', error)

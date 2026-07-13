@@ -16,6 +16,7 @@ import {
   startGamble
 } from './gambleSession'
 import { readWallet } from '../utils/wallet'
+import { readMeters } from '../utils/meters'
 
 const originalCwd = process.cwd()
 let fixtureDir: string
@@ -66,6 +67,9 @@ describe('gamble session', () => {
     const result = await chooseColor('black')
     expect(result).toMatchObject({ won: false, currentAmount: 0, balance: 9000 })
     expect(isSessionActive()).toBe(false)
+    // Terminal-event metering: a lost stake counts as coin-in
+    expect(readMeters().meters.coinIn).toBe(1000)
+    expect(readMeters().meters.coinOut).toBe(0)
   })
 
   it('pays only the net win and closes on collect', async () => {
@@ -74,6 +78,9 @@ describe('gamble session', () => {
     await chooseColor('red')
     await expect(collect()).resolves.toEqual({ settled: true, netAmount: 1000, balance: 11000 })
     expect(isSessionActive()).toBe(false)
+    // Terminal-event metering: the collected net win counts as coin-out
+    expect(readMeters().meters.coinOut).toBe(1000)
+    expect(readMeters().meters.coinIn).toBe(0)
   })
 
   it('moves no money when collected before a round', async () => {

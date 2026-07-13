@@ -20,6 +20,7 @@ vi.mock('../../../utils/rawPrinter', () => ({
 import { POST } from './route'
 import { readWallet } from '../../../utils/wallet'
 import { readTransactionLog } from '../../../utils/transactionLogger'
+import { readMeters } from '../../../utils/meters'
 
 const originalCwd = process.cwd()
 let fixtureDir: string
@@ -67,6 +68,7 @@ describe('POST /api/cashout', () => {
     const cashout = readTransactionLog().transactions.find(t => t.type === 'cashout')
     expect(cashout).toBeDefined()
     expect(cashout!.amount).toBe(-52100)
+    expect(readMeters().meters.voucherOut).toBe(52100)
   })
 
   it('enforces the minimum cashout of 10.00 MKD in deni', async () => {

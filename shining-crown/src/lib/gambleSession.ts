@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import { addBalance, deductBalance, readWallet } from '../utils/wallet'
+import { addBalanceSync, deductBalanceSync, enqueueMoneyOp, readWallet } from '../utils/wallet'
+import { incrementMetersSync } from '../utils/meters'
 import { secureRandom } from '../utils/secureRandom'
 
 export type GambleColor = 'red' | 'black'
@@ -142,7 +143,12 @@ export function chooseColor(choice: GambleColor) {
         ...metadata({ ...session, currentAmount: 0 }),
         description: `Gamble loss: lost ${denars(session.stake)} MKD`
       }
-      const wallet = await deductBalance(session.stake, 'gamble_loss', lossMetadata)
+      // Terminal-event metering: the lost stake is coin-in
+      const wallet = await enqueueMoneyOp(() => {
+        const w = deductBalanceSync(session.stake, 'gamble_loss', lossMetadata)
+        incrementMetersSync({ coinIn: session.stake })
+        return w
+      })
       state.session = null
       writeState(state)
       return { won, card: { color: drawn, cardIndex }, currentAmount: 0, round: session.round, balance: wallet.balance }
@@ -151,7 +157,13 @@ export function chooseColor(choice: GambleColor) {
     session.currentAmount *= 2
     session.round += 1
     if (session.round === 5) {
-      const wallet = await addBalance(session.currentAmount - session.stake, 'gamble_win', metadata(session, true))
+      const netWin = session.currentAmount - session.stake
+      // Terminal-event metering: the collected net win is coin-out
+      const wallet = await enqueueMoneyOp(() => {
+        const w = addBalanceSync(netWin, 'gamble_win', metadata(session, true))
+        incrementMetersSync({ coinOut: netWin })
+        return w
+      })
       const result = { won, card: { color: drawn, cardIndex }, currentAmount: session.currentAmount, round: session.round, forceCollected: true, balance: wallet.balance }
       state.session = null
       writeState(state)
@@ -171,7 +183,14 @@ export function collect() {
     const session = state.session
     let balance = readWallet().balance
     const netAmount = session.currentAmount - session.stake
-    if (netAmount > 0) balance = (await addBalance(netAmount, 'gamble_win', metadata(session))).balance
+    if (netAmount > 0) {
+      // Terminal-event metering: the collected net win is coin-out
+      balance = (await enqueueMoneyOp(() => {
+        const w = addBalanceSync(netAmount, 'gamble_win', metadata(session))
+        incrementMetersSync({ coinOut: netAmount })
+        return w
+      })).balance
+    }
     state.session = null
     writeState(state)
     return { settled: true, netAmount, balance }

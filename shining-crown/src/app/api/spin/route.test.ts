@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server'
 
 import { POST } from './route'
 import { readTransactionLog } from '../../../utils/transactionLogger'
+import { readMeters } from '../../../utils/meters'
 
 const originalCwd = process.cwd()
 let fixtureDir: string
@@ -76,6 +77,17 @@ describe('POST /api/spin', () => {
     } else {
       expect(transactions.some(t => t.type === 'spin_win')).toBe(false)
     }
+  })
+
+  it('advances the accounting meters', async () => {
+    const response = await POST(spinRequest({ bet: 500 }))
+    const payload = await response.json()
+
+    const { meters } = readMeters()
+    expect(meters.coinIn).toBe(500)
+    expect(meters.gamesPlayed).toBe(1)
+    expect(meters.coinOut).toBe(payload.totalWin)
+    expect(meters.gamesWon).toBe(payload.totalWin > 0 ? 1 : 0)
   })
 
   it('rejects a bet exceeding the balance', async () => {
