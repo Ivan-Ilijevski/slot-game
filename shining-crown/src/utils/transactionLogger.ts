@@ -3,7 +3,7 @@ import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 
 // Transaction types
-export type TransactionType = 
+export type TransactionType =
   | 'spin_bet'      // Bet placed for spin
   | 'spin_win'      // Win from spin
   | 'gamble_bet'    // Gamble feature bet
@@ -11,6 +11,8 @@ export type TransactionType =
   | 'gamble_loss'   // Gamble feature loss
   | 'credit_add'    // Credits added to wallet
   | 'cashout'       // Money withdrawn from wallet
+  | 'aft_in'        // SAS AFT transfer to the machine
+  | 'aft_out'       // SAS AFT transfer from the machine (host cashout)
   | 'bonus'         // Bonus credits added
   | 'adjustment'    // Manual balance adjustment
 
@@ -32,8 +34,10 @@ export interface Transaction {
   }
 }
 
-// Transaction log structure
+// Transaction log structure (schema v2: amounts are integer deni)
 export interface TransactionLog {
+  schemaVersion: 2
+  unit: 'deni'
   transactions: Transaction[]
   lastUpdated: string
   totalTransactions: number
@@ -44,40 +48,51 @@ function getTransactionLogPath(): string {
   return path.join(process.cwd(), 'src', 'data', 'transactions.json')
 }
 
-// Read transaction log from JSON file
+function emptyLog(): TransactionLog {
+  return {
+    schemaVersion: 2,
+    unit: 'deni',
+    transactions: [],
+    lastUpdated: new Date().toISOString(),
+    totalTransactions: 0
+  }
+}
+
+// Read transaction log from JSON file. A legacy whole-MKD journal is archived
+// untouched and a fresh deni journal is started — units are never mixed.
 export function readTransactionLog(): TransactionLog {
   try {
     const logPath = getTransactionLogPath()
-    
+
     // Check if log file exists
     if (!fs.existsSync(logPath)) {
-      // Create default log if doesn't exist
-      const defaultLog: TransactionLog = {
-        transactions: [],
-        lastUpdated: new Date().toISOString(),
-        totalTransactions: 0
-      }
+      const defaultLog = emptyLog()
       writeTransactionLog(defaultLog)
       return defaultLog
     }
-    
+
     const logData = fs.readFileSync(logPath, 'utf8')
-    const log: TransactionLog = JSON.parse(logData)
-    
+    const log = JSON.parse(logData)
+
     // Validate log structure
     if (!Array.isArray(log.transactions)) {
       throw new Error('Invalid transaction log structure')
     }
-    
-    return log
+
+    if (log.schemaVersion !== 2) {
+      const archivePath = path.join(path.dirname(logPath), 'transactions.mkd-legacy.json')
+      fs.copyFileSync(logPath, archivePath)
+      const fresh = emptyLog()
+      writeTransactionLog(fresh)
+      console.log(`Legacy MKD transaction journal archived to ${archivePath}; started fresh deni journal`)
+      return fresh
+    }
+
+    return log as TransactionLog
   } catch (error) {
     console.error('Error reading transaction log:', error)
     // Return empty log on error
-    return {
-      transactions: [],
-      lastUpdated: new Date().toISOString(),
-      totalTransactions: 0
-    }
+    return emptyLog()
   }
 }
 
@@ -93,8 +108,10 @@ export function writeTransactionLog(log: TransactionLog): void {
     }
     
     // Update timestamp and total count
-    const updatedLog = {
+    const updatedLog: TransactionLog = {
       ...log,
+      schemaVersion: 2,
+      unit: 'deni',
       lastUpdated: new Date().toISOString(),
       totalTransactions: log.transactions.length
     }

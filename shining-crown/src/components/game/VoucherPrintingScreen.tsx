@@ -72,7 +72,7 @@ export default function VoucherPrintingScreen({
       <div className="bg-gray-900 rounded-lg p-8 max-w-lg w-full mx-4 text-center border-2 border-yellow-500">
         <h2 className="text-3xl font-bold text-white mb-4">CASHOUT</h2>
         <div className="text-4xl font-bold text-yellow-400 mb-6">
-          {formatCurrency(amount)} {currency}
+          {formatCurrency(amount)}
         </div>
 
         <div className="mb-6">

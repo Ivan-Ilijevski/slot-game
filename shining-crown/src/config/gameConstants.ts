@@ -14,10 +14,13 @@ import gameConfigJson from '../../public/assets/gameConfig.json'
 export const GAME_CONFIG = gameConfigJson
 
 /**
- * Available bet options in MKD currency
- * These are the preset bet amounts players can choose from
+ * Available bet options in integer deni (100 deni = 1.00 MKD).
+ * gameConfig.json stays in human-friendly denars and is converted here once;
+ * all game code works in deni.
  */
-export const BET_OPTIONS = GAME_CONFIG.betOptions as readonly number[]
+export const BET_OPTIONS: readonly number[] = (GAME_CONFIG.betOptions as readonly number[]).map(
+  bet => Math.round(bet * 100)
+)
 
 /**
  * Available denomination options for the game
@@ -29,8 +32,8 @@ export const DENOMINATION_OPTIONS = GAME_CONFIG.denominationOptions as readonly 
  * Default game values
  */
 export const DEFAULT_VALUES = {
-  /** Default bet amount when game starts */
-  BET: GAME_CONFIG.defaultValues.bet,
+  /** Default bet amount when game starts (deni) */
+  BET: Math.round(GAME_CONFIG.defaultValues.bet * 100),
 
   /** Default denomination when game starts */
   DENOMINATION: GAME_CONFIG.defaultValues.denomination,
@@ -38,8 +41,8 @@ export const DEFAULT_VALUES = {
   /** Default language */
   LANGUAGE: GAME_CONFIG.defaultValues.language as 'en' | 'mk',
 
-  /** Default balance (loaded from server) */
-  BALANCE: GAME_CONFIG.defaultValues.balance,
+  /** Default balance (loaded from server, deni) */
+  BALANCE: Math.round(GAME_CONFIG.defaultValues.balance * 100),
 } as const
 
 /**

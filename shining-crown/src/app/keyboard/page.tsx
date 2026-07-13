@@ -29,11 +29,12 @@ interface GameState {
   currentLanguage: 'en' | 'mk'
   balance: number
   isAutoStart: boolean
+  isMuted: boolean
 }
 
 export default function KeyboardPage() {
   const [gameState, setGameState] = useState<GameState>({
-    currentBet: 5.00,
+    currentBet: 500,
     denomination: 0.01,
     isGambleMode: false,
     gambleStage: 'choice',
@@ -42,11 +43,11 @@ export default function KeyboardPage() {
     pendingWin: 0,
     currentLanguage: 'en',
     balance: 0,
-    isAutoStart: false
+    isAutoStart: false,
+    isMuted: false
   })
   const [isLoading, setIsLoading] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
-  const [isMuted, setIsMuted] = useState(false)
   const [showDebugPanel, setShowDebugPanel] = useState(false)
   const wsClient = useRef<WebSocketClient | null>(null)
 
@@ -67,8 +68,8 @@ export default function KeyboardPage() {
     loadWalletBalance()
   }, [])
 
-  // Bet options available in the game
-  const BET_OPTIONS = [5.00, 10.00, 20.00, 50.00, 100.00, 200.00, 500.00, 1000.00]
+  // Bet options in integer deni (100 deni = 1.00 MKD), matching the server
+  const BET_OPTIONS = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
 
   // WebSocket connection and message handling
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function KeyboardPage() {
       if (message.data) {
         const gameStateData = message.data as Record<string, unknown>
         setGameState({
-          currentBet: (gameStateData.currentBet as number) || 5.00,
+          currentBet: (gameStateData.currentBet as number) || 500,
           denomination: (gameStateData.denomination as number) || 0.01,
           isGambleMode: (gameStateData.isGambleMode as boolean) || false,
           gambleStage: (gameStateData.gambleStage as 'choice' | 'reveal' | 'result') || 'choice',
@@ -94,7 +95,8 @@ export default function KeyboardPage() {
           pendingWin: (gameStateData.pendingWin as number) || 0,
           currentLanguage: (gameStateData.currentLanguage as 'en' | 'mk') || 'en',
           balance: (gameStateData.balance as number) || 0,
-          isAutoStart: (gameStateData.isAutoStart as boolean) || false
+          isAutoStart: (gameStateData.isAutoStart as boolean) || false,
+          isMuted: (gameStateData.isMuted as boolean) || false
         })
       }
     })
@@ -215,8 +217,8 @@ export default function KeyboardPage() {
 
 
   const handleVolumeToggle = () => {
-    setIsMuted(prev => !prev)
-    sendCommand('volume-toggle')
+    // Stateful command: request the opposite of the state we display
+    sendCommand('set-muted', { muted: !gameState.isMuted })
   }
 
   const handleStartSpin = () => {
@@ -269,14 +271,20 @@ export default function KeyboardPage() {
           <div className="text-xs font-bold mt-1">{gameState.denomination.toFixed(2)} MKD</div>
         </button>
 
-        {/* Volume Icon */}
+        {/* Volume Icon (reflects live game state) */}
         <button
           onClick={handleVolumeToggle}
           disabled={isLoading}
-          className="w-20 h-20 rounded-xl bg-transparent border-2 border-cyan-300 shadow-[0_0_15px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center text-cyan-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation"
-          aria-label={isMuted ? "Unmute sound" : "Mute sound"}
+          className={`
+            w-20 h-20 rounded-xl bg-transparent border-2 disabled:border-gray-600 disabled:opacity-50 flex items-center justify-center disabled:text-gray-600 transition-all active:scale-95 touch-manipulation
+            ${gameState.isMuted
+              ? 'border-red-400 text-red-400 shadow-[0_0_15px_rgba(248,113,113,0.4)]'
+              : 'border-cyan-300 text-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.4)]'
+            }
+          `}
+          aria-label={gameState.isMuted ? "Unmute sound" : "Mute sound"}
         >
-          {isMuted ? <VolumeOff size={28} /> : <Volume2 size={28} />}
+          {gameState.isMuted ? <VolumeOff size={28} /> : <Volume2 size={28} />}
         </button>
 
         {/* Language Icon */}
@@ -302,13 +310,13 @@ export default function KeyboardPage() {
                 {/* Left Corner - Current Win */}
                 <div className="bg-transparent border-2 border-green-400 rounded-xl p-4 shadow-lg">
                   <p className="text-green-400 font-bold text-sm">Current Win</p>
-                  <p className="text-white text-2xl font-bold">${gameState.pendingWin.toFixed(2)}</p>
+                  <p className="text-white text-2xl font-bold">{(gameState.pendingWin / 100).toFixed(2)} MKD</p>
                 </div>
                 
                 {/* Right Corner - Gamble Amount */}
                 <div className="bg-transparent border-2 border-yellow-400 rounded-xl p-4 shadow-lg">
                   <p className="text-yellow-400 font-bold text-sm">Gamble to Win</p>
-                  <p className="text-white text-2xl font-bold">${(gameState.gambleAmount * 2).toFixed(2)}</p>
+                  <p className="text-white text-2xl font-bold">{(gameState.gambleAmount * 2 / 100).toFixed(2)} MKD</p>
                 </div>
               </div>
 
@@ -370,7 +378,7 @@ export default function KeyboardPage() {
                       }
                     `}
                   >
-                    {bet.toFixed(0)} MKD
+                    {(bet / 100).toFixed(0)} MKD
                   </button>
                 ))}
               </div>

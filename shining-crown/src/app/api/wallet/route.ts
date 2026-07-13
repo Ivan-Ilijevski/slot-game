@@ -30,13 +30,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { amount, operation } = body
     
-    // Validate input
-    if (typeof amount !== 'number' || amount <= 0) {
+    // Validate input (integer deni)
+    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid amount. Must be a positive number.' 
-        }, 
+        {
+          success: false,
+          error: 'Invalid amount. Must be a positive integer deni amount.'
+        },
         { status: 400 }
       )
     }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Update balance with transaction logging
     const amountToUpdate = operation === 'add' ? amount : -amount
     const transactionType = operation === 'add' ? 'credit_add' : 'cashout'
-    const updatedWallet = updateBalance(amountToUpdate, transactionType, { operation })
+    const updatedWallet = await updateBalance(amountToUpdate, transactionType, { operation })
     
     return NextResponse.json({
       success: true,

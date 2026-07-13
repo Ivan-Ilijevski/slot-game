@@ -30,17 +30,19 @@ export default function VoucherInput({ onVoucherValidated, onError, className = 
       const data = await response.json()
 
       if (response.ok && data.valid) {
-        onVoucherValidated?.(data.credit)
-        
+        // Voucher server speaks denars; the wallet and all game code use deni
+        const creditDeni = Math.round(data.credit * 100)
+        onVoucherValidated?.(creditDeni)
+
         try {
           await fetch('/api/wallet', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-              operation: 'add', 
-              amount: data.credit,
+            body: JSON.stringify({
+              operation: 'add',
+              amount: creditDeni,
               metadata: { voucherId, type: 'voucher_redemption' }
             }),
           })

@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { deductBalance, addBalance, validateBalance, readWallet } from '../../../utils/wallet'
 import { formatCurrency } from '../../../config/currency'
+import { isValidBet } from '../../../config/gameConstants'
 import { secureRandom } from '../../../utils/secureRandom'
 import { clearEligibleWin, isSessionActive, setEligibleWin } from '../../../lib/gambleSession'
 
@@ -244,32 +245,34 @@ export async function POST(request: NextRequest) {
     }
 
     loadGameData()
-    
-    // Parse request body to get bet amount
+
+    // Parse request body to get bet amount (integer deni)
     const body = await request.json()
-    const betAmount = body.bet || 1 // Default to 1 if no bet specified
-    
+    const betAmount = body.bet
+
     if (!virtualReels || !symbolMapping) {
       return NextResponse.json({ error: 'Game data not loaded' }, { status: 500 })
     }
-    
-    // Validate bet amount
-    if (typeof betAmount !== 'number' || betAmount <= 0) {
+
+    // Validate bet against the configured bet list
+    if (typeof betAmount !== 'number' || !isValidBet(betAmount)) {
       return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 })
     }
-    
+
     // Check if player has sufficient funds
     if (!validateBalance(betAmount)) {
       const currentBalance = readWallet().balance
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Insufficient funds',
         currentBalance,
         requiredAmount: betAmount
       }, { status: 400 })
     }
-    
+
+    const spinId = randomUUID()
+
     // Deduct bet amount from wallet
-    const walletAfterBet = deductBalance(betAmount)
+    const walletAfterBet = await deductBalance(betAmount, 'spin_bet', { spinId })
     console.log(`Bet deducted: ${formatCurrency(betAmount)}, new balance: ${formatCurrency(walletAfterBet.balance)}`)
     
     // Generate random stop positions for each reel
@@ -311,8 +314,8 @@ export async function POST(request: NextRequest) {
     // Add winnings to wallet if any
     let finalWallet = walletAfterBet
     if (totalWin > 0) {
-      finalWallet = addBalance(totalWin)
-      await setEligibleWin(totalWin, randomUUID())
+      finalWallet = await addBalance(totalWin, 'spin_win', { spinId })
+      await setEligibleWin(totalWin, spinId)
       console.log(`Win added: ${formatCurrency(totalWin)}, new balance: ${formatCurrency(finalWallet.balance)}`)
     } else {
       await clearEligibleWin()

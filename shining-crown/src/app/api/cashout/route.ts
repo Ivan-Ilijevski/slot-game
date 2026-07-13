@@ -14,47 +14,47 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { amount, useUSB = false, machineId = 'SHINING-CROWN-001' } = body
-    
-    // Validate amount
-    if (typeof amount !== 'number' || amount <= 0) {
+
+    // Validate amount (integer deni)
+    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid cashout amount. Must be a positive number.' 
-        }, 
+        {
+          success: false,
+          error: 'Invalid cashout amount. Must be a positive integer deni amount.'
+        },
         { status: 400 }
       )
     }
-    
+
     // Check if amount is reasonable (not more than balance)
     const wallet = readWallet()
     if (amount > wallet.balance) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Cashout amount exceeds current balance.' 
-        }, 
+        {
+          success: false,
+          error: 'Cashout amount exceeds current balance.'
+        },
         { status: 400 }
       )
     }
-    
+
     // Minimum cashout validation (optional)
-    const minCashout = 10 // Minimum 10 MKD
+    const minCashout = 1000 // Minimum 10.00 MKD, in deni
     if (amount < minCashout) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Minimum cashout amount is ${minCashout} ${wallet.currency}.` 
-        }, 
+        {
+          success: false,
+          error: `Minimum cashout amount is ${minCashout / 100} ${wallet.currency}.`
+        },
         { status: 400 }
       )
     }
-    
+
     // Note: Cashout notifications are now handled by the tablet interface
-    
-    // Generate voucher code from server
+
+    // Generate voucher code from server (voucher server speaks denars)
     console.log('🎫 Generating voucher code...')
-    const voucherResult = await generateVoucher(amount)
+    const voucherResult = await generateVoucher(amount / 100)
     
     if (!voucherResult.success) {
       // Note: Cashout failure notification will be handled by tablet based on API response
@@ -73,15 +73,15 @@ export async function POST(request: NextRequest) {
     const ticketId = generateTicketId()
     const timestamp = new Date()
     
-    // Prepare ticket data
+    // Prepare ticket data (printers format denars, not deni)
     const ticketData: CashoutTicket = {
-      amount,
+      amount: amount / 100,
       currency: wallet.currency,
       ticketId,
       voucherId: voucherResult.id, // Add voucher ID from server
       machineId,
       timestamp,
-      balanceAfter: wallet.balance - amount
+      balanceAfter: (wallet.balance - amount) / 100
     }
     
     // Try printing with node-thermal-printer first, then fallback to raw printing
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Deduct amount from balance (with transaction logging)
-    const updatedWallet = updateBalance(-amount, 'cashout', {
+    const updatedWallet = await updateBalance(-amount, 'cashout', {
       ticketId,
       voucherId: voucherResult.id,
       machineId,
@@ -205,9 +205,9 @@ export async function GET(request: NextRequest) {
         currency: wallet.currency
       },
       cashout: {
-        minAmount: 10, // Minimum cashout
+        minAmount: 1000, // Minimum cashout in deni (10.00 MKD)
         maxAmount: wallet.balance, // Maximum is current balance
-        available: wallet.balance >= 10
+        available: wallet.balance >= 1000
       }
     }
     

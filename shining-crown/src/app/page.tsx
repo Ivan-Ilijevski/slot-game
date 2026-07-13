@@ -33,6 +33,8 @@ let sound: {
   play: (alias: string, options?: { start?: number; end?: number; volume?: number }) => void;
   stop: (alias: string) => void;
   stopAll: () => void;
+  muteAll: () => void;
+  unmuteAll: () => void;
 } | null = null
 
 if (typeof window !== 'undefined') {
@@ -111,6 +113,7 @@ export default function Home() {
   const [lastWin, setLastWin] = useState(0)
   const [animatedWinAmount, setAnimatedWinAmount] = useState(0) // Animated display amount
   const [isAutoStart, setIsAutoStart] = useState(false) // Autostart feature toggle
+  const [isMuted, setIsMuted] = useState(false) // Global sound mute
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'mk'>('en') // Language for UI overlay
 
   // Gamble feature state (kept in main component - tightly coupled to PIXI)
@@ -143,9 +146,9 @@ export default function Home() {
   const [showPrintingScreen, setShowPrintingScreen] = useState(false)
   const [printingAmount, setPrintingAmount] = useState(0)
 
-  // Helper function to convert currency to credits for UI display
-  const currencyToCredits = useCallback((amount: number): number => {
-    return Math.round(amount / denomination) // Credits based on denomination
+  // Helper function to convert deni amounts to credits for UI display
+  const currencyToCredits = useCallback((amountDeni: number): number => {
+    return Math.round(amountDeni / (denomination * 100)) // Credits based on denomination (denars per credit)
   }, [denomination])
   
   // Message popup helper
@@ -222,6 +225,7 @@ export default function Home() {
   const autoStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const autoStartTextRef = useRef<Text | null>(null)
   const isAutoStartRef = useRef<boolean>(false)
+  const isMutedRef = useRef<boolean>(false)
   const autoCollectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const creditFlashTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingWinRef = useRef<number>(0)
@@ -1085,6 +1089,22 @@ export default function Home() {
     }
   }, [])
 
+  // Global mute, shared by the tablet remote (stateful set-muted command)
+  // and any future local control. Undefined toggles.
+  const setMuted = useCallback((muted?: boolean) => {
+    const next = muted ?? !isMutedRef.current
+    if (next === isMutedRef.current) return
+    isMutedRef.current = next
+    setIsMuted(next)
+    if (sound) {
+      if (next) {
+        sound.muteAll()
+      } else {
+        sound.unmuteAll()
+      }
+    }
+  }, [])
+
   useKeyboardHandler({
     isSpinning: isSpinningRef.current,
     isGambleMode: isGambleModeRef.current,
@@ -1111,6 +1131,7 @@ export default function Home() {
     gambleStage,
     gambleAmount,
     isAutoStart,
+    isMuted,
     isSpinningRef,
     isGambleModeRef,
     pendingWinRef,
@@ -1124,6 +1145,7 @@ export default function Home() {
     setDenomination: denomManager.setDenomination,
     setPendingWin,
     setAutoStart,
+    setMuted,
     setPrintingAmount,
     setShowPrintingScreen,
     isBetControlsDisabled,
@@ -1139,7 +1161,8 @@ export default function Home() {
   // Update denomination display when denomination changes
   useEffect(() => {
     if (denomTextRef.current) {
-      denomTextRef.current.text = formatCurrency(denomination)
+      // denomination is denars-per-credit (e.g. 0.01), not a deni amount
+      denomTextRef.current.text = formatCurrency(Math.round(denomination * 100))
     } else {
     }
   }, [denomination])

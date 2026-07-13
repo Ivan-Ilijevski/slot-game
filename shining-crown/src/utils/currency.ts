@@ -19,50 +19,50 @@ export const formatNumberWithSpaces = (num: number): string => {
 }
 
 /**
- * Convert currency amount to credits based on denomination
- * @param amount - The currency amount
- * @param denomination - The denomination value (e.g., 0.01, 0.10, 1.00)
+ * Convert a deni amount to credits based on denomination
+ * @param amountDeni - The amount in integer deni (100 deni = 1.00 MKD)
+ * @param denomination - Denars per credit (e.g., 0.01, 0.10, 1.00)
  * @returns Number of credits
- * @example currencyToCredits(100, 0.01) // 10000 credits
- * @example currencyToCredits(50, 1.00) // 50 credits
+ * @example currencyToCredits(10000, 0.01) // 10000 credits (100.00 MKD)
+ * @example currencyToCredits(5000, 1.00) // 50 credits (50.00 MKD)
  */
-export const currencyToCredits = (amount: number, denomination: number): number => {
-  return Math.round(amount / denomination)
+export const currencyToCredits = (amountDeni: number, denomination: number): number => {
+  return Math.round(amountDeni / (denomination * 100))
 }
 
 /**
- * Convert credits to currency amount based on denomination
+ * Convert credits to a deni amount based on denomination
  * @param credits - The number of credits
- * @param denomination - The denomination value (e.g., 0.01, 0.10, 1.00)
- * @returns Currency amount
- * @example creditsToCurrency(10000, 0.01) // 100.00
- * @example creditsToCurrency(50, 1.00) // 50.00
+ * @param denomination - Denars per credit (e.g., 0.01, 0.10, 1.00)
+ * @returns Amount in integer deni
+ * @example creditsToCurrency(10000, 0.01) // 10000 deni (100.00 MKD)
+ * @example creditsToCurrency(50, 1.00) // 5000 deni (50.00 MKD)
  */
 export const creditsToCurrency = (credits: number, denomination: number): number => {
-  return credits * denomination
+  return Math.round(credits * denomination * 100)
 }
 
 /**
- * Format currency amount with the configured currency symbol
- * @param amount - The amount to format
- * @returns Formatted currency string
- * @example formatCurrency(100.50) // "100.50 MKD"
+ * Format a deni amount with the configured currency symbol
+ * @param amountDeni - The amount in integer deni
+ * @returns Formatted currency string in denars
+ * @example formatCurrency(10050) // "100.50 MKD"
  */
-export const formatCurrency = (amount: number): string => {
-  const formatted = amount.toFixed(2)
+export const formatCurrency = (amountDeni: number): string => {
+  const formatted = (amountDeni / 100).toFixed(2)
   return CURRENCY_CONFIG.position === 'before'
     ? `${CURRENCY_CONFIG.symbol}${formatted}`
     : `${formatted}${CURRENCY_CONFIG.symbol}`
 }
 
 /**
- * Format currency with spaces for credits display
- * @param amount - The currency amount
+ * Format a deni amount as denars with thousand-space separators
+ * @param amountDeni - The amount in integer deni
  * @returns Formatted string with spaces
- * @example formatCurrencyWithSpaces(1000.50) // "1 000.50 MKD"
+ * @example formatCurrencyWithSpaces(1000050) // "10 000.50 MKD"
  */
-export const formatCurrencyWithSpaces = (amount: number): string => {
-  const formatted = amount.toFixed(2)
+export const formatCurrencyWithSpaces = (amountDeni: number): string => {
+  const formatted = (amountDeni / 100).toFixed(2)
   const withSpaces = formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
   return CURRENCY_CONFIG.position === 'before'
     ? `${CURRENCY_CONFIG.symbol}${withSpaces}`
@@ -71,14 +71,13 @@ export const formatCurrencyWithSpaces = (amount: number): string => {
 
 /**
  * Format credits display with denomination-based formatting
- * @param amount - The currency amount
- * @param denomination - The denomination value
+ * @param amountDeni - The amount in integer deni
+ * @param denomination - Denars per credit
  * @returns Formatted credits string with spaces
- * @example formatCreditsDisplay(100, 0.01) // "10 000"
- * @example formatCreditsDisplay(50, 1.00) // "50"
+ * @example formatCreditsDisplay(10000, 0.01) // "10 000"
  */
-export const formatCreditsDisplay = (amount: number, denomination: number): string => {
-  const credits = currencyToCredits(amount, denomination)
+export const formatCreditsDisplay = (amountDeni: number, denomination: number): string => {
+  const credits = currencyToCredits(amountDeni, denomination)
   return formatNumberWithSpaces(credits)
 }
 

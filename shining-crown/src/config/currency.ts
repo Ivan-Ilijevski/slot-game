@@ -5,10 +5,10 @@ export const CURRENCY_CONFIG = {
   position: 'after' // 'before' or 'after' the amount
 }
 
-// Format currency amount based on config
-export const formatCurrency = (amount: number): string => {
-  const formatted = amount.toFixed(2)
-  return CURRENCY_CONFIG.position === 'before' 
+// Format a deni amount (integer, 100 deni = 1.00 MKD) as denars
+export const formatCurrency = (amountDeni: number): string => {
+  const formatted = (amountDeni / 100).toFixed(2)
+  return CURRENCY_CONFIG.position === 'before'
     ? `${CURRENCY_CONFIG.symbol}${formatted}`
     : `${formatted}${CURRENCY_CONFIG.symbol}`
 }

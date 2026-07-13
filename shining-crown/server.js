@@ -22,15 +22,15 @@ const port = 3000
 const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()
 
-// Game controller for managing state
+// Game controller for managing state (money fields are integer deni)
 let gameState = {
-  currentBet: 5.00,
+  currentBet: 500,
   denomination: 0.01,
   isGambleMode: false,
   canEnterGamble: false,
   pendingWin: 0,
   currentLanguage: 'en',
-  balance: 1000,
+  balance: 0,
   isSpinning: false,
   lastUpdated: Date.now()
 }

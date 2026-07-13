@@ -28,8 +28,8 @@ export default function TabletCashoutButton({
 }: TabletCashoutButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // Check if cashout is available
-  const minCashout = 10
+  // Check if cashout is available (balance is integer deni; min 10.00 MKD)
+  const minCashout = 1000
   const canCashout = balance >= minCashout && !disabled && !isProcessing
 
   // Process cashout
@@ -124,7 +124,7 @@ export default function TabletCashoutButton({
         ${isProcessing ? 'animate-pulse' : ''}
         ${className}
       `}
-      aria-label={canCashout ? `Cash out ${balance.toFixed(2)} ${currency}` : 'Cashout unavailable'}
+      aria-label={canCashout ? `Cash out ${(balance / 100).toFixed(2)} ${currency}` : 'Cashout unavailable'}
     >
       {isProcessing ? (
         <div className="text-xs">⏳</div>

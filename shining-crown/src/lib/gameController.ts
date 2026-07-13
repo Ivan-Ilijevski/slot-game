@@ -43,12 +43,13 @@ class GameController {
 
   private constructor() {
     // Initialize with default state
+    // Money fields are integer deni (100 deni = 1.00 MKD)
     this.gameState = {
-      currentBet: 5.00,
+      currentBet: 500,
       denomination: 0.01,
-      availableBets: [5.00, 10.00, 20.00, 50.00, 100.00, 200.00, 500.00, 1000.00],
+      availableBets: [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
       availableDenoms: [0.01, 0.10, 0.50, 1.00],
-      balance: 1000,
+      balance: 0,
       pendingWin: 0,
       lastWin: 0,
       isGambleMode: false,

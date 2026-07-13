@@ -29,6 +29,7 @@ export interface UseTouchKeyboardConnectionProps {
   gambleStage: 'choice' | 'reveal' | 'result'
   gambleAmount: number
   isAutoStart: boolean
+  isMuted: boolean
 
   // Refs for immediate access (needed for WebSocket handlers)
   isSpinningRef: React.MutableRefObject<boolean>
@@ -46,6 +47,7 @@ export interface UseTouchKeyboardConnectionProps {
   setDenomination: (denom: number) => void
   setPendingWin: (amount: number) => void
   setAutoStart: (enabled?: boolean) => void
+  setMuted: (muted?: boolean) => void
   setPrintingAmount: (amount: number) => void
   setShowPrintingScreen: (show: boolean) => void
 
@@ -74,6 +76,7 @@ export function useTouchKeyboardConnection({
   gambleStage,
   gambleAmount,
   isAutoStart,
+  isMuted,
   isSpinningRef,
   isGambleModeRef,
   pendingWinRef,
@@ -87,6 +90,7 @@ export function useTouchKeyboardConnection({
   setDenomination,
   setPendingWin,
   setAutoStart,
+  setMuted,
   setPrintingAmount,
   setShowPrintingScreen,
   isBetControlsDisabled,
@@ -220,9 +224,14 @@ export function useTouchKeyboardConnection({
             }
             break
 
+          case 'set-muted':
+            // Stateful command: the tablet sends the state it wants
+            setMuted(Boolean((payload as { muted?: boolean } | undefined)?.muted))
+            break
+
           case 'volume-toggle':
-            // Volume toggle logic would go here
-            console.log('🎰 [Main Game] Volume toggle requested')
+            // Legacy blind toggle, kept for older remote clients
+            setMuted()
             break
 
           case 'start-spin':
@@ -356,7 +365,8 @@ export function useTouchKeyboardConnection({
         isGambleMode,
         gambleStage,
         gambleAmount,
-        isAutoStart
+        isAutoStart,
+        isMuted
       }
 
       wsClient.current.sendGameState(gameState)
@@ -371,7 +381,8 @@ export function useTouchKeyboardConnection({
     isGambleMode,
     gambleStage,
     gambleAmount,
-    isAutoStart
+    isAutoStart,
+    isMuted
   ])
 
   // Return the WebSocket client for manual control if needed
