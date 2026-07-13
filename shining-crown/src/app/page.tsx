@@ -15,7 +15,16 @@ import { useKeyboardHandler } from '../components/game/useKeyboardHandler'
 import { useTouchKeyboardConnection } from '../components/game/useTouchKeyboardConnection'
 import { useSpinLogic } from '../components/game/useSpinLogic'
 import { useWinAnimations, WinResults } from '../components/game/useWinAnimations'
+import { useGameControlKeys } from '../components/game/useGameControlKeys'
+import { createGambleUI } from '../components/game/gambleUI'
 import { playReelStopSound as playReelStopSoundEffect, playWildReelSound as playWildReelSoundEffect } from '../utils/gameSounds'
+import dynamic from 'next/dynamic'
+
+// PIXI must never render on the server
+const PixiGameIntegration = dynamic(
+  () => import('../components/game/PixiGameIntegration'),
+  { ssr: false }
+)
 import { getWinConfig, getAnimationSpeed, formatWinType, getWinColor, startWinSoundSequence, stopWinSoundSequence, updateGambleModeState, startWinCountingSound, stopWinCountingSound } from '../utils/winSystem'
 import walletData from '../data/wallet.json'
 
@@ -187,7 +196,6 @@ export default function Home() {
     setShowPrintingScreen(false)
   }, [])
 
-  const pixiContainer = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const reelsRef = useRef<Container[]>([])
   const reelContainerRef = useRef<Container | null>(null)
@@ -1134,705 +1142,66 @@ export default function Home() {
     refreshBalance()
   }, [refreshBalance])
 
+  // Swap the cabinet overlay texture when the language changes
   useEffect(() => {
-    let app: Application | null = null
-    let destroyed = false
-    let keydownHandler: ((event: KeyboardEvent) => void) | null = null
-    let handleResize: (() => void) | null = null
-
-    const init = async () => {
-      app = new Application()
-      
-      // Get viewport dimensions
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
-      
-      // Calculate scale to fit 1920x1080 design into viewport while maintaining aspect ratio
-      const designWidth = 1920
-      const designHeight = 1080
-      const scaleX = viewportWidth / designWidth
-      const scaleY = viewportHeight / designHeight
-      const scale = Math.min(scaleX, scaleY)
-      
-      const canvasWidth = designWidth * scale
-      const canvasHeight = designHeight * scale
-      
-      await app.init({
-        width: canvasWidth,
-        height: canvasHeight,
-        backgroundColor: 0x1a1a2e,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-      })
-
-      appRef.current = app
-
-      if (pixiContainer.current && app.canvas) {
-        pixiContainer.current.innerHTML = ''
-        pixiContainer.current.appendChild(app.canvas)
-        
-        // Center the canvas
-        app.canvas.style.display = 'block'
-        app.canvas.style.margin = 'auto'
-      }
-      
-      // Scale the entire stage to match the canvas scaling
-      app.stage.scale.set(scale)
-      
-      // Add resize handler
-      handleResize = () => {
-        if (!app || destroyed) return
-        
-        const newViewportWidth = window.innerWidth
-        const newViewportHeight = window.innerHeight
-        const newScaleX = newViewportWidth / designWidth
-        const newScaleY = newViewportHeight / designHeight
-        const newScale = Math.min(newScaleX, newScaleY)
-        
-        const newCanvasWidth = designWidth * newScale
-        const newCanvasHeight = designHeight * newScale
-        
-        app.renderer.resize(newCanvasWidth, newCanvasHeight)
-        app.stage.scale.set(newScale)
-      }
-      
-      window.addEventListener('resize', handleResize)
-
-      try {
-        await Assets.load([
-          '/assets/mainResources.json', 
-          '/assets/reelImages.json', 
-          '/assets/background.json', 
-          '/assets/expand-0.json', 
-          '/assets/08-0.json', // Wild expanding animation
-          // Load all symbol win animations
-          '/assets/00-0.json', // Cherry win animation
-          '/assets/01-0.json', // Lemon win animation  
-          '/assets/02-0.json', // Orange win animation
-          '/assets/03-0.json', // Plum win animation
-          '/assets/04-0.json', // Bell win animation
-          '/assets/05-0.json', // Grapes win animation
-          '/assets/06-0.json', // Watermelon win animation
-          '/assets/07-0.json', // Seven win animation
-          '/assets/09-0.json', // Star win animation
-          '/assets/10-0.json', // Crown win animation
-          '/assets/ui-cabinet-overlay.png', // UI cabinet overlay (English)
-          '/assets/ui-cabinet-overlay-mk.png', // UI cabinet overlay (Macedonian)
-          '/assets/gambleResources.json', // Gamble assets
-          // Sound assets
-          { alias: 'reelSound', src: '/assets/mobileMainSounds.mp3' },
-          { alias: 'winSound', src: '/assets/winSounds.mp3' },
-          { alias: 'shortSound', src: '/assets/shortSounds.mp3' }
-        ])
-
-        // Load sounds via PIXI Sound - they are already loaded with Assets.load above
-        // No need for separate HTML Audio objects - PIXI sound handles everything
-        
-
-        const mainAtlas = Assets.cache.get('/assets/mainResources.json')
-        const reelAtlas = Assets.cache.get('/assets/reelImages.json')
-        const backgroundAtlas = Assets.cache.get('/assets/background.json')
-        
-        
-        
-        
-
-        // Main background - use full screen
-        const mainBackground = new Sprite(backgroundAtlas.textures['background.png'])
-        mainBackground.width = 1920
-        mainBackground.height = 1080
-        mainBackground.x = 0
-        mainBackground.y = 0
-        app.stage.addChild(mainBackground)
-
-        // Reel background - centered
-        const reelBackground = new Sprite(mainAtlas.textures['reelBackground.png'])
-        reelBackground.x = (1920 - reelBackground.width) / 2
-        reelBackground.y = (1080 - reelBackground.height) / 2
-        app.stage.addChild(reelBackground)
-
-        // === Reels Setup === (Make larger to fill more screen space)
-        const SYMBOL_WIDTH = 260 // Increased from 198
-        const SYMBOL_HEIGHT = 260 // Increased from 198
-        const REEL_COUNT = 5
-        const SYMBOLS_PER_REEL = 3
-        const REEL_GAP = 28 // Reduced by 5px from 32
-
-        // Calculate total reel area dimensions
-        const totalReelWidth = REEL_COUNT * SYMBOL_WIDTH + (REEL_COUNT - 1) * REEL_GAP
-        const totalReelHeight = SYMBOLS_PER_REEL * SYMBOL_HEIGHT
-        
-        // Position reels to center them exactly with the border (960, 470)
-        const REEL_OFFSET_X = (1920 / 2) - (totalReelWidth / 2)
-        const REEL_OFFSET_Y = (1080 / 2 - 70) - (totalReelHeight / 2)
-        
-        // Payline colors for highlighting wins
-        const PAYLINE_COLORS = [
-          0xFFD700, // Payline 1 - Gold
-          0xFFFF00, // Payline 2 - Yellow  
-          0x00FF00, // Payline 3 - Green
-          0xFF0000, // Payline 4 - Red
-          0xFF0000, // Payline 5 - Red
-          0x00FFFF, // Payline 6 - Cyan
-          0x00FFFF, // Payline 7 - Cyan
-          0xFF8C00, // Payline 8 - Orange
-          0x00FF00, // Payline 9 - Green
-          0x0000FF  // Payline 10 - Blue
-        ]
-        
-        // Paylines definition for highlighting (reel, row)
-        const PAYLINES_VISUAL = [
-          [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]], // Payline 1
-          [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], // Payline 2
-          [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]], // Payline 3
-          [[0, 0], [1, 1], [2, 2], [3, 1], [4, 0]], // Payline 4
-          [[0, 2], [1, 1], [2, 0], [3, 1], [4, 2]], // Payline 5
-          [[0, 0], [1, 0], [2, 1], [3, 2], [4, 2]], // Payline 6
-          [[0, 2], [1, 2], [2, 1], [3, 0], [4, 0]], // Payline 7
-          [[0, 1], [1, 2], [2, 2], [3, 2], [4, 1]], // Payline 8
-          [[0, 1], [1, 0], [2, 0], [3, 0], [4, 1]], // Payline 9
-          [[0, 0], [1, 1], [2, 1], [3, 1], [4, 0]]  // Payline 10
-        ]
-
-        const reelContainer = new Container()
-        reelContainer.x = REEL_OFFSET_X
-        reelContainer.y = REEL_OFFSET_Y
-        reelContainerRef.current = reelContainer
-        app.stage.addChild(reelContainer)
-
-        // Define specific symbol sequence to match screenshot
-        const symbolSequence = [
-          ['00.png', '00.png', '00.png'], // Cherries column
-          ['01.png', '01.png', '01.png'], // Lemons column  
-          ['02.png', '02.png', '02.png'], // Oranges column
-          ['03.png', '03.png', '03.png'], // Plums column
-          ['04.png', '04.png', '04.png']  // Bells column
-        ]
-
-        for (let i = 0; i < REEL_COUNT; i++) {
-          const reel = new Container()
-          reel.x = i * (SYMBOL_WIDTH + REEL_GAP)
-
-          // Create mask for this reel to hide overflow
-          const mask = new Graphics()
-          mask.rect(0, 0, SYMBOL_WIDTH, SYMBOLS_PER_REEL * SYMBOL_HEIGHT)
-          mask.fill(0xFFFFFF)
-          reel.mask = mask
-          reel.addChild(mask)
-
-          // Create overshoot symbol container (positioned above visible area)
-          const overshootSymbol = new Sprite()
-          overshootSymbol.width = SYMBOL_WIDTH
-          overshootSymbol.height = SYMBOL_HEIGHT
-          overshootSymbol.x = 0
-          overshootSymbol.y = -SYMBOL_HEIGHT // Above the visible area
-          overshootSymbol.visible = false // Initially hidden
-          reel.addChild(overshootSymbol)
-
-          for (let j = 0; j < SYMBOLS_PER_REEL; j++) {
-            const textureName = symbolSequence[i][j]
-            const texture = reelAtlas.textures[textureName]
-            if (texture) {
-              const symbol = new Sprite(texture)
-              symbol.width = SYMBOL_WIDTH 
-              symbol.height = SYMBOL_HEIGHT 
-              symbol.x = 0//(SYMBOL_WIDTH - symbol.width) / 2
-              symbol.y = j * (SYMBOL_HEIGHT)
-              reel.addChild(symbol)
-            }
-          }
-
-          reelsRef.current[i] = reel
-          reelContainer.addChild(reel)
-        }
-
-        // Logo removed - will be replaced with reference graphics
-        
-        // All UI will be created within PIXI canvas - remove HTML overlay
-        
-        // Create win line display container - positioned below reels
-        // (labeled so useWinAnimations can find the scene-owned container)
-        const winLineDisplayContainer = new Container()
-        winLineDisplayContainer.label = 'winLineDisplay'
-        const winLineDisplayY = REEL_OFFSET_Y + totalReelHeight + 20 // 20px below reels
-        winLineDisplayContainer.x = 1920 / 2 // Center horizontally
-        winLineDisplayContainer.y = winLineDisplayY
-        winLineDisplayContainer.visible = false // Initially hidden
-        app.stage.addChild(winLineDisplayContainer)
-        
-        // UI text styles are now defined inline for each element
-        
-        // Based on reference image - bottom UI should be much lower and larger
-        const UI_Y_BASE = 980 // Move much lower to bottom of screen
-        
-        // UI positioning helpers for overlay alignment
-        const OVERLAY_POSITIONS = {
-          CREDIT: { x: 600, y: UI_Y_BASE -20 },    // Adjust these coordinates to match overlay
-          BET: { x: 950, y: UI_Y_BASE -20 },       // Adjust these coordinates to match overlay  
-          WIN: { x: 1340, y: UI_Y_BASE-20},      // Adjust these coordinates to match overlay
-          MORE_GAMES: { x: 100, y: UI_Y_BASE }, // Adjust these coordinates to match overlay
-          DENOM: { x: 275, y: UI_Y_BASE + 4 }     // Adjust these coordinates to match overlay
-        }
-        
-        // Create PIXI-based UI elements container (will be added to stage after overlay)
-        const uiContainer = new Container()
-        
-        // Change Denomination button (no panel - using overlay)
-        
-        // Large denomination number (top)
-        const denomNumberText = new Text(formatCurrency(denomination), { 
-          fontFamily: 'Arial', 
-          fontSize: 32, // Larger font for denomination number
-          fill: 0xFFFFFF, 
-          fontWeight: 'bold' as const,
-          align: 'center'
-        })
-        denomNumberText.anchor.set(0.5)
-        denomNumberText.x = OVERLAY_POSITIONS.DENOM.x
-        denomNumberText.y = OVERLAY_POSITIONS.DENOM.y - 12 // Position higher
-        denomTextRef.current = denomNumberText
-        uiContainer.addChild(denomNumberText)
-        
-        // Smaller "CHANGE DENOM" label (bottom)
-        const denomLabelText = new Text(currentLanguage === 'en' ? 'CHANGE DENOM' : 'СМЕНИ ЈА ДЕНОМИНАЦИЈАТА', { 
-          fontFamily: 'Arial', 
-          fontSize: 18, // Smaller font for label
-          fill: 0xFFFFFF, 
-          fontWeight: 'normal' as const,
-          align: 'center'
-        })
-        denomLabelText.anchor.set(0.5)
-        denomLabelText.x = OVERLAY_POSITIONS.DENOM.x
-        denomLabelText.y = OVERLAY_POSITIONS.DENOM.y + 20 // Position lower
-        denomLabelTextRef.current = denomLabelText
-        uiContainer.addChild(denomLabelText)
-        
-        // CENTER: CREDIT display (no panel - using overlay)
-        
-        // Yellow dollar amount on top
-        const creditDollarText = new Text(`${formatCurrency(totalBalance)}`, {
-          fontFamily: 'Arial Black',
-          fontSize: 40,
-          fill: 0xFFFF00, // Yellow
-          fontWeight: '900' as const, // Extra-bold for thickness
-          stroke: { color: 0x000000, width: 3 } // Small black stroke
-        })
-        creditDollarText.anchor.set(0.5, 0)
-        creditDollarTextRef.current = creditDollarText
-        creditDollarText.x = OVERLAY_POSITIONS.CREDIT.x
-        creditDollarText.y = OVERLAY_POSITIONS.CREDIT.y - 25
-        uiContainer.addChild(creditDollarText)
-        
-        // Large white credit amount (converted from currency)
-        
-        const creditAmountText = new Text(formatNumberWithSpaces(currencyToCredits(totalBalance)), {
-          fontFamily: 'Arial Black',
-          fontSize: 50,
-          fill: 0xFFFFFF, // White
-          fontWeight: '900' as const // Extra-bold for thickness
-        })
-        creditAmountText.anchor.set(0.5, 0)
-        creditAmountTextRef.current = creditAmountText
-        creditAmountText.x = OVERLAY_POSITIONS.CREDIT.x - 2
-        creditAmountText.y = OVERLAY_POSITIONS.CREDIT.y +10
-        uiContainer.addChild(creditAmountText)
-
-        
-        // BET display (no panel - using overlay)
-        
-        // Yellow dollar amount on top
-        const betDollarText = new Text(`${formatCurrency(currentBet)}`, {
-          fontFamily: 'Arial Black',
-          fontSize: 40,
-          fill: 0xFFFF00, // Yellow
-          fontWeight: '900' as const, // Extra-bold for thickness
-          stroke: { color: 0x000000, width: 3 } // Small black stroke
-        })
-        betDollarText.anchor.set(0.5, 0)
-        betDollarTextRef.current = betDollarText
-        betDollarText.x = OVERLAY_POSITIONS.BET.x
-        betDollarText.y = OVERLAY_POSITIONS.BET.y - 25
-        uiContainer.addChild(betDollarText)
-        
-        // Large white bet amount (converted from currency)
-        const betAmountText = new Text(formatNumberWithSpaces(currencyToCredits(currentBet)), {
-          fontFamily: 'Arial Black',
-          fontSize: 50,
-          fill: 0xFFFFFF, // White
-          fontWeight: '900' as const // Extra-bold for thickness
-        })
-        betAmountText.anchor.set(0.5, 0)
-        betAmountTextRef.current = betAmountText
-        betAmountText.x = OVERLAY_POSITIONS.BET.x
-        betAmountText.y = OVERLAY_POSITIONS.BET.y +10
-        uiContainer.addChild(betAmountText)
-        
-        // Bet up/down arrows (larger and positioned on the right edge)
-        const betUpArrow = new Text('▲', {
-          fontFamily: 'Arial',
-          fontSize: 24,
-          fill: 0xFFFFFF,
-          fontWeight: 'bold' as const
-        })
-        betUpArrow.anchor.set(0.5)
-        betUpArrow.x = 840
-        betUpArrow.y = UI_Y_BASE + 25
-        betUpArrow.interactive = true
-        betUpArrow.cursor = 'pointer'
-        betUpArrow.on('pointerdown', increaseBet)
-        uiContainer.addChild(betUpArrow)
-        
-        const betDownArrow = new Text('▼', {
-          fontFamily: 'Arial',
-          fontSize: 24,
-          fill: 0xFFFFFF,
-          fontWeight: 'bold' as const
-        })
-        betDownArrow.anchor.set(0.5)
-        betDownArrow.x = 1100
-        betDownArrow.y = UI_Y_BASE +25
-        betDownArrow.interactive = true
-        betDownArrow.cursor = 'pointer'
-        betDownArrow.on('pointerdown', decreaseBet)
-        uiContainer.addChild(betDownArrow)
-        
-        // WIN display (no panel - using overlay)
-        
-        // Yellow dollar amount on top
-        const winDollarText = new Text(`${formatCurrency(lastWin)}`, {
-          fontFamily: 'Arial Black',
-          fontSize: 40,
-          fill: 0xFFFF00, // Yellow
-          fontWeight: '900' as const, // Extra-bold for thickness
-          stroke: { color: 0x000000, width: 3 } // Small black stroke
-        })
-        winDollarText.anchor.set(0.5, 0)
-        winDollarTextRef.current = winDollarText
-        winDollarText.x = OVERLAY_POSITIONS.WIN.x
-        winDollarText.y = OVERLAY_POSITIONS.WIN.y - 25
-        uiContainer.addChild(winDollarText)
-        
-        // Large white win amount (converted from currency)
-        const winAmountText = new Text(formatNumberWithSpaces(currencyToCredits(lastWin)), {
-          fontFamily: 'Arial Black',
-          fontSize: 50,
-          fill: 0xFFFFFF, // White
-          fontWeight: '900' as const // Extra-bold for thickness
-        })
-        winAmountText.anchor.set(0.5, 0)
-        winAmountTextRef.current = winAmountText
-        winAmountText.x = OVERLAY_POSITIONS.WIN.x
-        winAmountText.y = OVERLAY_POSITIONS.WIN.y +10
-        uiContainer.addChild(winAmountText)
-        
-        
-        
-        // Autostart indicator
-        const autoStartText = new Text('AUTO', {
-          fontFamily: 'Arial Black',
-          fontSize: 24,
-          fill: 0x666666, // Start gray, will be updated by useEffect
-          fontWeight: 'bold' as const,
-          stroke: { color: 0x000000, width: 2 }
-        })
-        autoStartText.anchor.set(0.5)
-        autoStartText.x = 100 // Top left area
-        autoStartText.y = 100
-        autoStartText.visible = false // Hidden by default, shown only when active
-        autoStartTextRef.current = autoStartText
-        uiContainer.addChild(autoStartText)
-        
-        // Function to update UI displays will be set in useEffect below
-
-        // Lines indicators on both sides of reels (like in reference image)
-        const leftLinesIndicator = new Sprite(mainAtlas.textures['linesIndicator.png'])
-        leftLinesIndicator.x = REEL_OFFSET_X - leftLinesIndicator.width - 35
-        leftLinesIndicator.y = REEL_OFFSET_Y + (SYMBOLS_PER_REEL * SYMBOL_HEIGHT - leftLinesIndicator.height) / 2
-        app.stage.addChild(leftLinesIndicator)
-        
-        // Right side lines indicator (same orientation as left, not mirrored)
-        const rightLinesIndicator = new Sprite(mainAtlas.textures['linesIndicator.png'])
-        rightLinesIndicator.x = REEL_OFFSET_X + (REEL_COUNT * SYMBOL_WIDTH + (REEL_COUNT - 1) * REEL_GAP) + 35
-        rightLinesIndicator.y = REEL_OFFSET_Y + (SYMBOLS_PER_REEL * SYMBOL_HEIGHT - rightLinesIndicator.height) / 2
-        app.stage.addChild(rightLinesIndicator)
-
-        // UI Cabinet overlay - full screen overlay (loaded directly as PNG) - ADD BEFORE UI ELEMENTS
-        const overlayPath = currentLanguage === 'en' ? '/assets/ui-cabinet-overlay.png' : '/assets/ui-cabinet-overlay-mk.png'
-        const uiCabinetTexture = Assets.cache.get(overlayPath)
-        const uiCabinetOverlay = new Sprite(uiCabinetTexture)
-        uiCabinetOverlay.width = 1920
-        uiCabinetOverlay.height = 1080
-        uiCabinetOverlay.x = 0
-        uiCabinetOverlay.y = 0
-        uiCabinetOverlayRef.current = uiCabinetOverlay
-        app.stage.addChild(uiCabinetOverlay)
-
-        // Reel border overlay - centered and scaled
-        const border = new Sprite(mainAtlas.textures['reelBorder.png'])
-        border.anchor.set(0.5) // Set anchor to center
-        border.scale.set(1.30) // Scale from center
-        border.x = 1920 / 2  // Center horizontally
-        border.y = 1080 / 2 - 70 // Center vertically
-        app.stage.addChild(border)
-
-        // Add UI container to stage AFTER overlay - so text appears on top
-        app.stage.addChild(uiContainer)
-
-        // Add keyboard event listener for space key and 'p' for autostart
-        keydownHandler = (event: KeyboardEvent) => {
-          
-          // Prevent space in gamble mode
-          if (isGambleModeRef.current) {
-            return
-          }
-          
-          if (event.code === 'Space') {
-            event.preventDefault()
-            if (!isSpinningRef.current && pendingWinRef.current > 0 && (isWinAnimatingRef.current || animationsRunningRef.current.size > 0)) {
-              // Take win feature - skip slow animations during wins
-              if (takeWinRef.current) {
-                takeWinRef.current()
-              }
-            } else if (!isSpinningRef.current) {
-              spinReelsRef.current?.()
-            } else if (!stopRequestedRef.current) {
-              // Request stop during spinning (only if not already requested)
-              stopRequestedRef.current = true
-
-              // Play single sound immediately if all reels will stop together
-              if (reelsStoppedCountRef.current === 0) {
-                playReelStopSoundRef.current?.()
-              }
-            }
-          } else if (event.code === 'KeyP') {
-            event.preventDefault()
-            // Toggle autostart feature
-            setIsAutoStart(prev => {
-              const newAutoStart = !prev
-              isAutoStartRef.current = newAutoStart
-              
-              if (newAutoStart && !isSpinningRef.current) {
-                // Start autostart immediately if not spinning
-                if (sound) {
-                  sound.play('reelSound', {
-                    start: 14.0,
-                    end: 14.8, // 400ms = 0.4 seconds
-                    volume: 0.9
-                  })
-                }
-                spinReelsRef.current?.()
-              } else if (!newAutoStart && autoStartTimeoutRef.current) {
-                // Stop autostart
-                if (sound) {
-                  sound.play('reelSound', {
-                    start: 14.9,
-                    end: 15.3, // 400ms = 0.4 seconds
-                    volume: 0.9
-                  })
-                }
-                clearTimeout(autoStartTimeoutRef.current)
-                autoStartTimeoutRef.current = null
-                
-              }
-              
-              return newAutoStart
-            })
-          }
-        }
-
-        // Setup gamble container and UI elements
-        const setupGambleUI = () => {
-          if (!app) return
-          
-          const gambleAtlas = Assets.get('/assets/gambleResources.json')
-          
-          // Create gamble container (initially hidden)
-          const gambleContainer = new Container()
-          gambleContainer.visible = false
-          gambleContainerRef.current = gambleContainer
-          app.stage.addChild(gambleContainer)
-          
-          // Create semi-transparent background overlay
-          const overlay = new Graphics()
-          overlay.rect(0, 0, 1920, 1080)
-          overlay.fill({ color: 0x000000, alpha: 0.7 }) // Black with 70% opacity
-          gambleContainer.addChild(overlay)
-          
-          // Card display area - center of screen
-          const cardX = 1920 / 2
-          const cardY = 1080 / 2 - 50
-          
-          // Face-down card (initially visible)
-          const faceDownCard = new Sprite(gambleAtlas.textures['cardBackRed.png'])
-          faceDownCard.anchor.set(0.5)
-          faceDownCard.x = cardX
-          faceDownCard.y = cardY
-          faceDownCard.scale.set(1.5)
-          gambleContainer.addChild(faceDownCard)
-          
-          // Face-up card (initially hidden)
-          const faceUpCard = new Sprite(gambleAtlas.textures['cardFront0.png'])
-          faceUpCard.anchor.set(0.5)
-          faceUpCard.x = cardX
-          faceUpCard.y = cardY
-          faceUpCard.scale.set(1.5)
-          faceUpCard.visible = false
-          gambleCardRef.current = faceUpCard
-          gambleContainer.addChild(faceUpCard)
-          
-          // Button container
-          const buttonsContainer = new Container()
-          gambleButtonsRef.current = buttonsContainer
-          gambleContainer.addChild(buttonsContainer)
-          
-          // Red and black buttons removed - using mobile/keyboard controls instead
-          
-          // Gamble amount text (top left)
-          const gambleAmountText = new Text({
-            text: 'GAMBLE AMOUNT\n0',
-            style: {
-              fontFamily: 'Arial Black',
-              fontSize: 48,
-              fill: 0xFFFFFF,
-              stroke: { color: 0x000000, width: 3 }
-            }
-          })
-          gambleAmountText.anchor.set(0, 0.5)
-          gambleAmountText.x = cardX - 800
-          gambleAmountText.y = cardY - 200
-          gambleContainer.addChild(gambleAmountText)
-          
-          // Gamble to win text (top right)
-          const gambleToWinText = new Text({
-            text: 'GAMBLE TO WIN\n0',
-            style: {
-              fontFamily: 'Arial Black',
-              fontSize: 48,
-              fill: 0xFFFFFF,
-              stroke: { color: 0x000000, width: 3 },
-              align: 'right'
-            }
-          })
-          gambleToWinText.anchor.set(1, 0.5)
-          gambleToWinText.x = cardX + 800
-          gambleToWinText.y = cardY - 200
-          gambleContainer.addChild(gambleToWinText)
-          
-          // Instructions text
-          const instructionsText = new Text({
-            text: 'Choose RED or BLACK',
-            style: {
-              fontFamily: 'Arial',
-              fontSize: 24,
-              fill: 0xFFFFFF,
-              align: 'center'
-            }
-          })
-          instructionsText.anchor.set(0.5)
-          instructionsText.x = cardX
-          instructionsText.y = cardY + 250
-          gambleContainer.addChild(instructionsText)
-          
-          // History container for showing previous gamble results
-          const historyContainer = new Container()
-          historyContainer.x = cardX
-          historyContainer.y = cardY - 350
-          gambleContainer.addChild(historyContainer)
-          
-          // Store references for updates using type assertion
-          ;(gambleContainer as Container & { gambleElements: GambleElements }).gambleElements = {
-            faceDownCard,
-            faceUpCard,
-            gambleAmountText,
-            gambleToWinText,
-            instructionsText,
-            historyContainer
-          }
-        }
-
-        setupGambleUI()
-
-
-
-
-        // Function to update overlay language
-        const updateOverlay = (newLanguage: 'en' | 'mk') => {
-          
-          if (uiCabinetOverlayRef.current && app && Assets.cache) {
-            const overlayPath = newLanguage === 'en' ? '/assets/ui-cabinet-overlay.png' : '/assets/ui-cabinet-overlay-mk.png'
-            const newTexture = Assets.cache.get(overlayPath)
-            
-            if (newTexture) {
-              uiCabinetOverlayRef.current.texture = newTexture
-            } else {
-              console.error('❌ Failed to load overlay texture for language:', newLanguage, 'from path:', overlayPath)
-            }
-          } else {
-            console.error('❌ Missing required refs/objects for overlay update')
-          }
-        }
-        updateOverlayRef.current = updateOverlay
-
-        
-        
-        
-        
-
-        window.addEventListener('keydown', keydownHandler)
-
-      } catch (err) {
-        console.error('❌ Asset loading failed:', err)
+    updateOverlayRef.current = (newLanguage: 'en' | 'mk') => {
+      const overlayPath = newLanguage === 'en' ? '/assets/ui-cabinet-overlay.png' : '/assets/ui-cabinet-overlay-mk.png'
+      const newTexture = Assets.cache.get(overlayPath)
+      if (uiCabinetOverlayRef.current && newTexture) {
+        uiCabinetOverlayRef.current.texture = newTexture
+      } else {
+        console.error('\u274c Missing overlay texture or sprite for language:', newLanguage)
       }
     }
+  }, [])
 
-    init()
+  // Space (spin/stop/take-win) and P (autostart) keys
+  useGameControlKeys({
+    isGambleModeRef,
+    isSpinningRef,
+    pendingWinRef,
+    isWinAnimatingRef,
+    animationsRunningRef,
+    stopRequestedRef,
+    reelsStoppedCountRef,
+    isAutoStartRef,
+    autoStartTimeoutRef,
+    takeWinRef,
+    spinReelsRef,
+    playReelStopSoundRef,
+    setIsAutoStart
+  })
 
+  // Mount the gamble UI on the PixiGame stage once the scene is ready
+  const handlePixiReady = useCallback((app: Application) => {
+    if (gambleContainerRef.current && !gambleContainerRef.current.destroyed &&
+        gambleContainerRef.current.parent === app.stage) {
+      return
+    }
+    const gambleContainer = createGambleUI(app.stage)
+    gambleContainerRef.current = gambleContainer
+    gambleCardRef.current = gambleContainer.gambleElements.faceUpCard
+  }, [])
+
+  // Clear game timers and sounds on unmount (PIXI teardown is owned by PixiGame)
+  useEffect(() => {
     return () => {
-      if (!destroyed && appRef.current) {
-        // Clean up keyboard event listener
-        if (keydownHandler) {
-          window.removeEventListener('keydown', keydownHandler)
+      const timeoutRefs = [autoStartTimeoutRef, creditFlashTimeoutRef, gambleWinTimeoutRef, gambleLoseTimeoutRef, wildExpansionTimeoutRef, soundTimeoutRef, autoCollectTimeoutRef]
+      timeoutRefs.forEach(ref => {
+        if (ref.current) {
+          clearTimeout(ref.current)
+          ref.current = null
         }
-        // Clean up resize event listener
-        if (handleResize) {
-          window.removeEventListener('resize', handleResize)
+      })
+      const intervalRefs = [cardFlashIntervalRef, gambleSoundLoopIntervalRef, winCycleIntervalRef]
+      intervalRefs.forEach(ref => {
+        if (ref.current) {
+          clearInterval(ref.current)
+          ref.current = null
         }
-        // Clean up autostart timeout
-        if (autoStartTimeoutRef.current) {
-          clearTimeout(autoStartTimeoutRef.current)
-          autoStartTimeoutRef.current = null
-        }
-        // Clean up credit flash timeout
-        if (creditFlashTimeoutRef.current) {
-          clearTimeout(creditFlashTimeoutRef.current)
-          creditFlashTimeoutRef.current = null
-        }
-        // Clean up card flash interval
-        if (cardFlashIntervalRef.current) {
-          clearInterval(cardFlashIntervalRef.current)
-          cardFlashIntervalRef.current = null
-        }
-        // Clean up gamble flash sound
-        if (gambleSoundLoopIntervalRef.current) {
-          clearInterval(gambleSoundLoopIntervalRef.current)
-          gambleSoundLoopIntervalRef.current = null
-        }
-        // Clean up gamble timeouts
-        if (gambleWinTimeoutRef.current) {
-          clearTimeout(gambleWinTimeoutRef.current)
-          gambleWinTimeoutRef.current = null
-        }
-        if (gambleLoseTimeoutRef.current) {
-          clearTimeout(gambleLoseTimeoutRef.current)
-          gambleLoseTimeoutRef.current = null
-        }
-        // Clean up PIXI sounds on unmount
-        if (sound) {
-          sound.stopAll()
-        }
-        appRef.current.destroy(true, { children: true })
-        destroyed = true
-        appRef.current = null
+      })
+      if (sound) {
+        sound.stopAll()
       }
     }
   }, [])
@@ -1885,7 +1254,6 @@ export default function Home() {
       }}
     >
       <div
-        ref={pixiContainer}
         style={{
           position: 'absolute',
           top: '0',
@@ -1893,7 +1261,31 @@ export default function Home() {
           width: '100%',
           height: '100%',
         }}
-      />
+      >
+        <PixiGameIntegration
+          denomination={denomination}
+          totalBalance={totalBalance}
+          currentBet={currentBet}
+          lastWin={lastWin}
+          currentLanguage={currentLanguage}
+          onIncreaseBet={increaseBet}
+          onDecreaseBet={decreaseBet}
+          onReady={handlePixiReady}
+          appRef={appRef}
+          reelsRef={reelsRef}
+          reelContainerRef={reelContainerRef}
+          uiCabinetOverlayRef={uiCabinetOverlayRef}
+          denomTextRef={denomTextRef}
+          denomLabelTextRef={denomLabelTextRef}
+          creditDollarTextRef={creditDollarTextRef}
+          creditAmountTextRef={creditAmountTextRef}
+          betDollarTextRef={betDollarTextRef}
+          betAmountTextRef={betAmountTextRef}
+          winDollarTextRef={winDollarTextRef}
+          winAmountTextRef={winAmountTextRef}
+          autoStartTextRef={autoStartTextRef}
+        />
+      </div>
       <MobileController
         gameState={{
           isSpinning,

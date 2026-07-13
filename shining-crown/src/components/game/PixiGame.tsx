@@ -221,6 +221,19 @@ function GameContent(props: GameContentProps) {
     currentLanguage: props.currentLanguage
   })
 
+  // The stage itself carries the responsive scale (matching the vanilla
+  // setup): scene elements are direct stage children, so the animation
+  // hooks can insert highlight containers at stage level in the same
+  // coordinate space and find the border / winLineDisplay by lookup.
+  // Resize is handled imperatively like the vanilla setup - the renderer
+  // and the stage scale must change together.
+  useEffect(() => {
+    if (isInitialised && app?.renderer && app.stage) {
+      app.renderer.resize(DESIGN_WIDTH * props.scale, DESIGN_HEIGHT * props.scale)
+      app.stage.scale.set(props.scale)
+    }
+  }, [isInitialised, app, props.scale])
+
   const readyFiredRef = useRef(false)
   useEffect(() => {
     if (!isInitialised || readyFiredRef.current) return
@@ -244,16 +257,14 @@ function GameContent(props: GameContentProps) {
   }, [isInitialised, app])
 
   return (
-    <pixiContainer scale={props.scale}>
-      <SceneOnce
-        initial={initialRef.current}
-        reelsContainerRef={reelsContainerRef}
-        reelsRef={reelsRef}
-        textRefs={textRefs}
-        overlayRef={overlayRef}
-        callbacksRef={callbacksRef}
-      />
-    </pixiContainer>
+    <SceneOnce
+      initial={initialRef.current}
+      reelsContainerRef={reelsContainerRef}
+      reelsRef={reelsRef}
+      textRefs={textRefs}
+      overlayRef={overlayRef}
+      callbacksRef={callbacksRef}
+    />
   )
 }
 
