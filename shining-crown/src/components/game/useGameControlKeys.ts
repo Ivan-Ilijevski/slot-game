@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { getSound } from '../../utils/gameSounds'
 
 // Space (spin / slam-stop / take-win) and P (autostart) key handling,
 // lifted verbatim from the page.tsx monolith's keydown handler. Runs
@@ -14,12 +13,10 @@ export interface UseGameControlKeysProps {
   animationsRunningRef: React.RefObject<Set<number>>
   stopRequestedRef: React.RefObject<boolean>
   reelsStoppedCountRef: React.RefObject<number>
-  isAutoStartRef: React.RefObject<boolean>
-  autoStartTimeoutRef: React.RefObject<NodeJS.Timeout | null>
   takeWinRef: React.RefObject<(() => void) | null>
   spinReelsRef: React.RefObject<(() => void) | null>
   playReelStopSoundRef: React.RefObject<(() => void) | null>
-  setIsAutoStart: React.Dispatch<React.SetStateAction<boolean>>
+  setAutoStart: (enabled?: boolean) => void
 }
 
 export function useGameControlKeys({
@@ -30,12 +27,10 @@ export function useGameControlKeys({
   animationsRunningRef,
   stopRequestedRef,
   reelsStoppedCountRef,
-  isAutoStartRef,
-  autoStartTimeoutRef,
   takeWinRef,
   spinReelsRef,
   playReelStopSoundRef,
-  setIsAutoStart
+  setAutoStart
 }: UseGameControlKeysProps) {
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
@@ -64,37 +59,11 @@ export function useGameControlKeys({
         }
       } else if (event.code === 'KeyP') {
         event.preventDefault()
-        // Toggle autostart feature
-        setIsAutoStart(prev => {
-          const newAutoStart = !prev
-          isAutoStartRef.current = newAutoStart
-          const sound = getSound()
-
-          if (newAutoStart && !isSpinningRef.current) {
-            // Start autostart immediately if not spinning
-            sound?.play('reelSound', {
-              start: 14.0,
-              end: 14.8,
-              volume: 0.9
-            })
-            spinReelsRef.current?.()
-          } else if (!newAutoStart && autoStartTimeoutRef.current) {
-            // Stop autostart
-            sound?.play('reelSound', {
-              start: 14.9,
-              end: 15.3,
-              volume: 0.9
-            })
-            clearTimeout(autoStartTimeoutRef.current)
-            autoStartTimeoutRef.current = null
-          }
-
-          return newAutoStart
-        })
+        setAutoStart()
       }
     }
 
     window.addEventListener('keydown', keydownHandler)
     return () => window.removeEventListener('keydown', keydownHandler)
-  }, [isGambleModeRef, isSpinningRef, pendingWinRef, isWinAnimatingRef, animationsRunningRef, stopRequestedRef, reelsStoppedCountRef, isAutoStartRef, autoStartTimeoutRef, takeWinRef, spinReelsRef, playReelStopSoundRef, setIsAutoStart])
+  }, [isGambleModeRef, isSpinningRef, pendingWinRef, isWinAnimatingRef, animationsRunningRef, stopRequestedRef, reelsStoppedCountRef, takeWinRef, spinReelsRef, playReelStopSoundRef, setAutoStart])
 }

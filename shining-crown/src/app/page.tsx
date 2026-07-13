@@ -1052,6 +1052,39 @@ export default function Home() {
   }, [])
 
   // ===== NEW: Keyboard handler hook (replaces lines 883-940) =====
+  // Single source of truth for switching autostart on/off, shared by the
+  // P key, the mobile controller, and the tablet remote. Undefined toggles;
+  // an explicit value makes remote commands stateful and idempotent.
+  const setAutoStart = useCallback((enabled?: boolean) => {
+    const next = enabled ?? !isAutoStartRef.current
+    if (next === isAutoStartRef.current) return
+    isAutoStartRef.current = next
+    setIsAutoStart(next)
+
+    if (next && !isSpinningRef.current) {
+      // Start autostart immediately if not spinning
+      if (sound) {
+        sound.play('reelSound', {
+          start: 14.0,
+          end: 14.8,
+          volume: 0.9
+        })
+      }
+      spinReelsRef.current?.()
+    } else if (!next && autoStartTimeoutRef.current) {
+      // Stop autostart
+      if (sound) {
+        sound.play('reelSound', {
+          start: 14.9,
+          end: 15.3,
+          volume: 0.9
+        })
+      }
+      clearTimeout(autoStartTimeoutRef.current)
+      autoStartTimeoutRef.current = null
+    }
+  }, [])
+
   useKeyboardHandler({
     isSpinning: isSpinningRef.current,
     isGambleMode: isGambleModeRef.current,
@@ -1090,7 +1123,7 @@ export default function Home() {
     setCurrentBet: betManager.setBet,
     setDenomination: denomManager.setDenomination,
     setPendingWin,
-    setIsAutoStart,
+    setAutoStart,
     setPrintingAmount,
     setShowPrintingScreen,
     isBetControlsDisabled,
@@ -1162,12 +1195,10 @@ export default function Home() {
     animationsRunningRef,
     stopRequestedRef,
     reelsStoppedCountRef,
-    isAutoStartRef,
-    autoStartTimeoutRef,
     takeWinRef,
     spinReelsRef,
     playReelStopSoundRef,
-    setIsAutoStart
+    setAutoStart
   })
 
   // Mount the gamble UI on the PixiGame stage once the scene is ready
@@ -1342,7 +1373,7 @@ export default function Home() {
             }
           },
           toggleAutoStart: () => {
-            setIsAutoStart(prev => !prev)
+            setAutoStart()
           },
           toggleLanguage: () => {
             setCurrentLanguage(prev => {

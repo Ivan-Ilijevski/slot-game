@@ -45,7 +45,7 @@ export interface UseTouchKeyboardConnectionProps {
   setCurrentBet: (bet: number) => void
   setDenomination: (denom: number) => void
   setPendingWin: (amount: number) => void
-  setIsAutoStart: (enabled: boolean) => void
+  setAutoStart: (enabled?: boolean) => void
   setPrintingAmount: (amount: number) => void
   setShowPrintingScreen: (show: boolean) => void
 
@@ -86,7 +86,7 @@ export function useTouchKeyboardConnection({
   setCurrentBet,
   setDenomination,
   setPendingWin,
-  setIsAutoStart,
+  setAutoStart,
   setPrintingAmount,
   setShowPrintingScreen,
   isBetControlsDisabled,
@@ -234,8 +234,14 @@ export function useTouchKeyboardConnection({
             }
             break
 
+          case 'set-autostart':
+            // Stateful command: the tablet sends the state it wants
+            setAutoStart(Boolean((payload as { enabled?: boolean } | undefined)?.enabled))
+            break
+
           case 'toggle-autostart':
-            setIsAutoStart(!isAutoStart)
+            // Legacy blind toggle, kept for older remote clients
+            setAutoStart()
             break
 
           case 'cashout-started':

@@ -28,6 +28,7 @@ interface GameState {
   pendingWin: number
   currentLanguage: 'en' | 'mk'
   balance: number
+  isAutoStart: boolean
 }
 
 export default function KeyboardPage() {
@@ -40,7 +41,8 @@ export default function KeyboardPage() {
     canEnterGamble: false,
     pendingWin: 0,
     currentLanguage: 'en',
-    balance: 0
+    balance: 0,
+    isAutoStart: false
   })
   const [isLoading, setIsLoading] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
@@ -91,7 +93,8 @@ export default function KeyboardPage() {
           canEnterGamble: (gameStateData.canEnterGamble as boolean) || false,
           pendingWin: (gameStateData.pendingWin as number) || 0,
           currentLanguage: (gameStateData.currentLanguage as 'en' | 'mk') || 'en',
-          balance: (gameStateData.balance as number) || 0
+          balance: (gameStateData.balance as number) || 0,
+          isAutoStart: (gameStateData.isAutoStart as boolean) || false
         })
       }
     })
@@ -221,7 +224,9 @@ export default function KeyboardPage() {
   }
 
   const handleToggleAutostart = () => {
-    sendCommand('toggle-autostart')
+    // Stateful command: request the opposite of the state we display,
+    // so the button and the game can never get stuck out of sync
+    sendCommand('set-autostart', { enabled: !gameState.isAutoStart })
   }
 
   // Debug: Log game state changes
@@ -423,15 +428,21 @@ export default function KeyboardPage() {
             {/* Right spacer for corner button */}
             <div className="w-24 h-24"></div>
 
-            {/* Autostart - Overflowing Bottom Left */}
+            {/* Autostart - Overflowing Bottom Left (reflects live game state) */}
             <button
               onClick={handleToggleAutostart}
               disabled={isLoading}
-              className="absolute bottom-0 left-[-100px] w-50 h-50 rounded-full bg-transparent border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.4)] disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center text-blue-400 disabled:text-gray-600 transition-all active:scale-95 touch-manipulation z-10"
-              aria-label="Toggle autostart"
+              className={`
+                absolute bottom-0 left-[-80px] w-50 h-50 rounded-full bg-transparent border-2 disabled:border-gray-600 disabled:opacity-50 flex flex-col items-center justify-center disabled:text-gray-600 transition-all active:scale-95 touch-manipulation z-10
+                ${gameState.isAutoStart
+                  ? 'border-cyan-300 text-cyan-300 bg-cyan-400/10 shadow-[0_0_35px_rgba(0,255,255,0.8)]'
+                  : 'border-cyan-700 text-cyan-600 shadow-none'
+                }
+              `}
+              aria-label={gameState.isAutoStart ? 'Disable autostart' : 'Enable autostart'}
             >
-              <RotateCcw size={32} />
-              <div className="text-sm font-bold mt-1">AUTO</div>
+              <RotateCcw size={32} className={gameState.isAutoStart ? 'animate-spin [animation-duration:3s]' : ''} />
+              <div className="text-sm font-bold mt-1">{gameState.isAutoStart ? 'AUTO ON' : 'AUTO'}</div>
             </button>
 
             {/* Start - Overflowing Bottom Right */}
