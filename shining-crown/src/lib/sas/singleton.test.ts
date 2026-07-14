@@ -9,6 +9,7 @@ import { crc16Kermit } from './crc16'
 import { CH_SAS, MuxParser, muxFrame } from './muxCodec'
 import { __resetSasServiceForTests, getSasService, startSasService } from './singleton'
 import { EXC_GAME_STARTED } from './types'
+import { getWalletEmitter, onWalletChanged } from '../walletEvents'
 
 const originalCwd = process.cwd()
 let fixtureDir: string
@@ -30,6 +31,7 @@ beforeEach(() => {
 
 afterEach(() => {
   __resetSasServiceForTests()
+  getWalletEmitter().removeAllListeners()
   process.chdir(originalCwd)
   fs.rmSync(fixtureDir, { recursive: true, force: true })
 })
@@ -96,6 +98,20 @@ describe('SAS service singleton', () => {
       fs.readFileSync(path.join(fixtureDir, 'src', 'data', 'wallet.json'), 'utf8')
     )
     expect(wallet.balance).toBe(53100) // 52100 + 1000
+  })
+
+  it('fires a wallet-changed event when the SMIB moves money onto the machine', async () => {
+    const input = new PassThrough()
+    const output = new PassThrough()
+    const service = startSasService({ testStream: { input, output } })
+
+    let fired = 0
+    onWalletChanged(() => { fired += 1 })
+
+    input.write(muxFrame(CH_SAS, buildAftToEgm(1000, 'NOTIFY-1')))
+    await service.aft.whenSettled()
+
+    expect(fired).toBe(1)
   })
 
   it('reflects a 0x74 lock in isLockedForPlay via the facade', async () => {

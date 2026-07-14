@@ -3,6 +3,7 @@ import { addBalanceSync, deductBalanceSync, enqueueMoneyOp, getBalance } from '.
 import { incrementMetersSync, readMeters } from '../../utils/meters'
 import { hasTransactionWithSasTxnId } from '../../utils/transactionLogger'
 import { isSessionActive } from '../gambleSession'
+import { emitWalletChanged } from '../walletEvents'
 import { AftEngine, readAftState, writeAftState } from './aft'
 import { CmsBridge } from './cmsBridge'
 import { SasEngine } from './engine'
@@ -97,6 +98,10 @@ export class SasService {
         enqueueMoneyOp(() => {
           addBalanceSync(amountDeni, 'aft_in', { sasTxnId: txn })
           incrementMetersSync({ aftIn: amountDeni })
+        }).then(() => {
+          // Tell the game UI to refresh — this money moved without any user
+          // action, so the frontend has no other way to know.
+          emitWalletChanged()
         }),
       applyFromEgm: (amountDeni, txn) =>
         enqueueMoneyOp(() => {
@@ -107,6 +112,8 @@ export class SasService {
           }
           deductBalanceSync(amountDeni, 'aft_out', { sasTxnId: txn })
           incrementMetersSync({ aftOut: amountDeni })
+        }).then(() => {
+          emitWalletChanged()
         }),
       onSettled: record => {
         if (record.type === AFT_TYPE_FROM_EGM && record.status === AFT_STATUS_FULL_OK) {

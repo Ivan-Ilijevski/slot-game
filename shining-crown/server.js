@@ -2,6 +2,20 @@ const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
 const { WebSocketServer } = require('ws')
+const { EventEmitter } = require('events')
+
+// Shared wallet-change bus (see src/lib/walletEvents.ts). The SAS engine runs
+// in the Next server bundle; this custom server is the same OS process but a
+// different module scope, so both sides meet on this global-symbol emitter.
+const WALLET_EVENTS_KEY = Symbol.for('shining-crown.walletEvents')
+function getWalletEmitter() {
+  if (!globalThis[WALLET_EVENTS_KEY]) {
+    const emitter = new EventEmitter()
+    emitter.setMaxListeners(0)
+    globalThis[WALLET_EVENTS_KEY] = emitter
+  }
+  return globalThis[WALLET_EVENTS_KEY]
+}
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {
@@ -243,6 +257,27 @@ app.prepare().then(() => {
         break
     }
   }
+
+  // When the SAS engine moves money on its own (AFT transfer to/from the
+  // machine driven by the SMIB), nudge the main game to refresh its balance.
+  // It already handles the 'balance-updated' command (calls refreshBalance),
+  // and its game-state broadcast then updates the tablet too.
+  getWalletEmitter().on('changed', () => {
+    if (mainGameSocket && mainGameSocket.readyState === 1) {
+      try {
+        mainGameSocket.send(JSON.stringify({
+          type: 'execute-command',
+          data: {
+            commandId: `sas-bal-${++commandIdCounter}`,
+            action: 'balance-updated',
+            payload: {}
+          }
+        }))
+      } catch (error) {
+        console.error('Failed to push balance-updated to main game:', error)
+      }
+    }
+  })
 
   server.listen(port, (err) => {
     if (err) throw err
