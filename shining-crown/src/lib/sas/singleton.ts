@@ -3,7 +3,7 @@ import { addBalanceSync, deductBalanceSync, enqueueMoneyOp, getBalance } from '.
 import { incrementMetersSync, readMeters } from '../../utils/meters'
 import { hasTransactionWithSasTxnId } from '../../utils/transactionLogger'
 import { isSessionActive } from '../gambleSession'
-import { AftEngine, readAftState } from './aft'
+import { AftEngine, readAftState, writeAftState } from './aft'
 import { CmsBridge } from './cmsBridge'
 import { SasEngine } from './engine'
 import { ExceptionQueue } from './exceptionQueue'
@@ -11,7 +11,16 @@ import { LockController } from './lock'
 import { readSasSettings, SAS_CONSTANTS, type SasSettings } from './sasConfig'
 import { SerialTransport } from './serialTransport'
 import { StreamTransport } from './transport'
-import { CMD_AFT_TRANSFER, CMD_AFT_LOCK } from './types'
+import {
+  AFT_STATUS_FULL_OK,
+  AFT_TYPE_FROM_EGM,
+  CMD_AFT_LOCK,
+  CMD_AFT_TRANSFER,
+  EXC_CASHOUT_BUTTON,
+  EXC_HOST_CASHOUT_REQUEST
+} from './types'
+
+export type HostCashoutResult = 'aft' | 'timeout'
 
 export interface SasStatus {
   running: boolean
@@ -42,6 +51,10 @@ export class SasService {
   private stream: StreamTransport | null = null
   private settings: SasSettings | null = null
   private running = false
+
+  // Host cashout coordinator state
+  private cashoutResolve: ((r: HostCashoutResult) => void) | null = null
+  private cashoutTimer: NodeJS.Timeout | null = null
 
   constructor() {
     this.exceptions = new ExceptionQueue()
@@ -87,9 +100,19 @@ export class SasService {
         }),
       applyFromEgm: (amountDeni, txn) =>
         enqueueMoneyOp(() => {
+          // Re-check the latch inside the money critical section so a
+          // concurrent voucher commit can't be bypassed.
+          if (readAftState().cashoutLatch?.state === 'voucher-committed') {
+            throw new Error('cashout committed to voucher')
+          }
           deductBalanceSync(amountDeni, 'aft_out', { sasTxnId: txn })
           incrementMetersSync({ aftOut: amountDeni })
-        })
+        }),
+      onSettled: record => {
+        if (record.type === AFT_TYPE_FROM_EGM && record.status === AFT_STATUS_FULL_OK) {
+          this.finishCashout('aft')
+        }
+      }
     })
 
     this.engine.registerHandler(CMD_AFT_TRANSFER, body => this.aft.handle072(body))
@@ -98,6 +121,77 @@ export class SasService {
 
   isLockedForPlay(): boolean {
     return this.lock.isLockedForPlay()
+  }
+
+  // Player pressed cash-out for the full balance with the link up: arm the
+  // AFT window, tell the host (0x66 cash-out button + 0x6A host-cashout
+  // request), and wait for either the host to pull the credits (-> 'aft') or
+  // the window to expire (-> 'timeout', fall back to voucher).
+  requestHostCashout(amountDeni: number, windowMs: number): Promise<HostCashoutResult> {
+    const state = readAftState()
+    state.cashoutLatch = {
+      state: 'aft-window',
+      amountDeni,
+      expiresAt: new Date(Date.now() + windowMs).toISOString()
+    }
+    writeAftState(state)
+
+    this.exceptions.push(EXC_CASHOUT_BUTTON)
+    this.exceptions.push(EXC_HOST_CASHOUT_REQUEST)
+
+    return new Promise<HostCashoutResult>(resolve => {
+      this.cashoutResolve = resolve
+      this.armCashoutTimer(windowMs)
+    })
+  }
+
+  // Commit the current cash-out to the voucher path: refuse any further
+  // from-EGM transfer and report the balance at commit time (0 means the host
+  // already pulled it, so the caller should treat it as a card payout).
+  commitVoucherCashout(): Promise<number> {
+    return enqueueMoneyOp(() => {
+      const state = readAftState()
+      state.cashoutLatch = {
+        state: 'voucher-committed',
+        amountDeni: state.cashoutLatch?.amountDeni ?? 0,
+        expiresAt: null
+      }
+      writeAftState(state)
+      return getBalance()
+    })
+  }
+
+  releaseCashout(): void {
+    const state = readAftState()
+    state.cashoutLatch = { state: 'idle', amountDeni: 0, expiresAt: null }
+    writeAftState(state)
+  }
+
+  private armCashoutTimer(ms: number): void {
+    if (this.cashoutTimer) clearTimeout(this.cashoutTimer)
+    this.cashoutTimer = setTimeout(() => this.onCashoutWindowExpire(), ms)
+    this.cashoutTimer.unref?.()
+  }
+
+  private onCashoutWindowExpire(): void {
+    // If a from-EGM transfer is still mid-flight, wait for it rather than
+    // racing it to the voucher.
+    const inFlight = readAftState().inFlight
+    if (inFlight && inFlight.type === AFT_TYPE_FROM_EGM) {
+      this.armCashoutTimer(500)
+      return
+    }
+    this.finishCashout('timeout')
+  }
+
+  private finishCashout(result: HostCashoutResult): void {
+    if (this.cashoutTimer) {
+      clearTimeout(this.cashoutTimer)
+      this.cashoutTimer = null
+    }
+    const resolve = this.cashoutResolve
+    this.cashoutResolve = null
+    resolve?.(result)
   }
 
   start(opts: StartOptions = {}): void {
@@ -212,6 +306,9 @@ export interface SasFacade {
   queueException(code: number): void
   isLinkUp(): boolean
   isLockedForPlay(): boolean
+  requestHostCashout(amountDeni: number, windowMs: number): Promise<HostCashoutResult>
+  commitVoucherCashout(): Promise<number>
+  releaseCashout(): void
   status(): SasStatus
   reload(): void
 }
@@ -233,6 +330,10 @@ export function getSasService(): SasFacade {
     queueException: () => {},
     isLinkUp: () => false,
     isLockedForPlay: () => false,
+    // SAS off: no card payout possible, always fall back to voucher.
+    requestHostCashout: () => Promise.resolve('timeout'),
+    commitVoucherCashout: () => Promise.resolve(getBalance()),
+    releaseCashout: () => {},
     status: () => ({ ...NOOP_STATUS }),
     reload: () => {}
   }

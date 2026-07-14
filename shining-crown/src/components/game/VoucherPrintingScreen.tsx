@@ -9,6 +9,9 @@ interface VoucherPrintingScreenProps {
   onComplete: () => void
   onError: (error: string) => void
   isVisible: boolean
+  // How the cash-out is being paid: 'voucher' prints a ticket, 'aft' sends the
+  // credits to the player's card via the SAS host.
+  method?: 'voucher' | 'aft'
 }
 
 export default function VoucherPrintingScreen({
@@ -16,7 +19,8 @@ export default function VoucherPrintingScreen({
   currency,
   onComplete,
   onError,
-  isVisible
+  isVisible,
+  method = 'voucher'
 }: VoucherPrintingScreenProps) {
   const [stage, setStage] = useState<'preparing' | 'generating' | 'printing' | 'complete' | 'error'>('preparing')
   const [message, setMessage] = useState('')
@@ -30,6 +34,8 @@ export default function VoucherPrintingScreen({
       return
     }
 
+    const isCard = method === 'aft'
+
     const simulateProcess = async () => {
       try {
         setStage('preparing')
@@ -38,32 +44,32 @@ export default function VoucherPrintingScreen({
         await new Promise(resolve => setTimeout(resolve, 500))
 
         setStage('generating')
-        setMessage('Generating voucher code...')
+        setMessage(isCard ? 'Transferring to card...' : 'Generating voucher code...')
         setProgress(40)
         await new Promise(resolve => setTimeout(resolve, 1000))
 
         setStage('printing')
-        setMessage('Printing voucher ticket...')
+        setMessage(isCard ? 'Confirming transfer...' : 'Printing voucher ticket...')
         setProgress(80)
         await new Promise(resolve => setTimeout(resolve, 1500))
 
         setStage('complete')
-        setMessage('Voucher printed successfully!')
+        setMessage(isCard ? 'Credits sent to card!' : 'Voucher printed successfully!')
         setProgress(100)
-        
+
         setTimeout(() => {
           onComplete()
         }, 2000)
 
       } catch (error) {
         setStage('error')
-        setMessage('Printing failed. Please try again.')
-        onError('Voucher printing failed')
+        setMessage(isCard ? 'Card transfer failed. Please try again.' : 'Printing failed. Please try again.')
+        onError(isCard ? 'Card transfer failed' : 'Voucher printing failed')
       }
     }
 
     simulateProcess()
-  }, [isVisible, onComplete, onError])
+  }, [isVisible, method, onComplete, onError])
 
   if (!isVisible) return null
 
@@ -101,7 +107,7 @@ export default function VoucherPrintingScreen({
 
         {stage === 'complete' && (
           <div className="mt-6 text-green-400 text-lg">
-            Present ticket to cashier
+            {method === 'aft' ? 'Credits added to your card' : 'Present ticket to cashier'}
           </div>
         )}
       </div>

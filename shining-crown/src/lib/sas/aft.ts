@@ -82,6 +82,9 @@ export interface AftDeps {
   hasJournalTxn: (txn: string) => boolean
   applyToEgm: (amountDeni: number, txn: string) => Promise<void>
   applyFromEgm: (amountDeni: number, txn: string) => Promise<void>
+  // Notified after a transfer settles (success or failure). Used by the host
+  // cashout coordinator to resolve a pending cash-out window.
+  onSettled?: (record: { txn: string; type: number; amountDeni: number; status: number }) => void
   now?: () => Date
 }
 
@@ -207,6 +210,7 @@ export class AftEngine {
     }
     this.finalize({ ...record, phase: 'applied', status }, status)
     this.deps.exceptions.push(EXC_AFT_TRANSFER_COMPLETE)
+    this.deps.onSettled?.({ txn: record.txn, type: record.type, amountDeni: record.amountDeni, status })
   }
 
   private finalize(record: AftInFlight, status: number): void {

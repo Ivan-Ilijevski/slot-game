@@ -32,6 +32,8 @@ export interface CashoutResult {
 
   /** Response data from server if successful */
   data?: {
+    /** How the cash-out was paid: 'aft' = to card via SAS, 'voucher' = ticket */
+    method?: 'voucher' | 'aft'
     ticket?: {
       ticketId: string
       amount: number

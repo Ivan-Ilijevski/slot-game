@@ -145,6 +145,7 @@ export default function Home() {
   // Printing screen state
   const [showPrintingScreen, setShowPrintingScreen] = useState(false)
   const [printingAmount, setPrintingAmount] = useState(0)
+  const [cashoutMethod, setCashoutMethod] = useState<'voucher' | 'aft'>('voucher')
 
   // Helper function to convert deni amounts to credits for UI display
   const currencyToCredits = useCallback((amountDeni: number): number => {
@@ -175,8 +176,10 @@ export default function Home() {
 
   // Cashout function (updated to use wallet hook)
   const performCashout = useCallback(async (amount: number) => {
-    // Show printing screen
+    // Show printing screen (defaults to voucher wording until the server
+    // reports how it actually paid out)
     setPrintingAmount(amount)
+    setCashoutMethod('voucher')
     setShowPrintingScreen(true)
 
     // Use wallet hook's cashout method
@@ -185,6 +188,10 @@ export default function Home() {
       useUSB: true,
       machineId: 'SHINING-CROWN-001'
     })
+
+    if (result.success && result.data?.method === 'aft') {
+      setCashoutMethod('aft')
+    }
 
     return result
   }, [wallet])
@@ -1428,6 +1435,7 @@ export default function Home() {
       <VoucherPrintingScreen
         amount={printingAmount}
         currency="MKD"
+        method={cashoutMethod}
         onComplete={handlePrintingComplete}
         onError={handlePrintingError}
         isVisible={showPrintingScreen}

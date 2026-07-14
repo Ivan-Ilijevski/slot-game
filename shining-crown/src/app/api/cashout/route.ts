@@ -5,6 +5,30 @@ import { printCashoutTicket, generateTicketId, CashoutTicket } from '../../../ut
 import { printCashoutTicketRaw } from '../../../utils/rawPrinter'
 import { generateVoucher } from '../../../utils/voucherGenerator'
 import { isSessionActive } from '../../../lib/gambleSession'
+import { getSasService } from '../../../lib/sas/singleton'
+import { SAS_CONSTANTS } from '../../../lib/sas/sasConfig'
+
+// Response for a cash-out that was paid to the player's card via SAS AFT.
+// The AFT engine has already debited the wallet, metered aftOut, and queued
+// the 0x69 completion exception.
+function cardPayoutResponse(previousBalance: number, machineId: string) {
+  const after = readWallet()
+  return NextResponse.json({
+    success: true,
+    method: 'aft',
+    cashout: {
+      amount: previousBalance,
+      currency: after.currency,
+      timestamp: new Date().toISOString(),
+      machineId
+    },
+    balance: {
+      previous: previousBalance,
+      current: after.balance,
+      currency: after.currency
+    }
+  })
+}
 
 // POST /api/cashout - Process cashout and print ticket
 export async function POST(request: NextRequest) {
@@ -51,6 +75,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const sas = getSasService()
+
+    // Reject the button press if the machine is already locked for a transfer.
+    if (sas.isLockedForPlay()) {
+      return NextResponse.json({ success: false, error: 'Machine locked for transfer' }, { status: 409 })
+    }
+
+    // Full-balance cash-out with the SAS link up: offer it to the host first
+    // (credits go to the player's card via AFT). The host pulls the whole
+    // balance, so only a full-balance request can ride AFT; partial amounts and
+    // link-down go straight to the voucher.
+    let latchArmed = false
+    if (amount === wallet.balance && sas.isLinkUp()) {
+      latchArmed = true
+      const result = await sas.requestHostCashout(amount, SAS_CONSTANTS.hostCashoutWindowMs)
+      if (result === 'aft') {
+        sas.releaseCashout()
+        return cardPayoutResponse(wallet.balance, machineId)
+      }
+      // Window expired: commit to voucher (refuses any late transfer). If the
+      // host pulled the credits at the last moment, the balance is now short.
+      const committedBalance = await sas.commitVoucherCashout()
+      if (committedBalance < amount) {
+        sas.releaseCashout()
+        return cardPayoutResponse(wallet.balance, machineId)
+      }
+    }
+
     // Note: Cashout notifications are now handled by the tablet interface
 
     // Generate voucher code from server (voucher server speaks denars)
@@ -59,13 +111,13 @@ export async function POST(request: NextRequest) {
     
     if (!voucherResult.success) {
       // Note: Cashout failure notification will be handled by tablet based on API response
-      
+      if (latchArmed) sas.releaseCashout()
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: `Voucher generation failed: ${voucherResult.message}`,
           voucherError: true
-        }, 
+        },
         { status: 500 }
       )
     }
@@ -100,13 +152,13 @@ export async function POST(request: NextRequest) {
     
     if (!printResult.success) {
       // Note: Cashout failure notification will be handled by tablet based on API response
-      
+      if (latchArmed) sas.releaseCashout()
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: `Printer error: ${printResult.error}`,
           printerError: true
-        }, 
+        },
         { status: 500 }
       )
     }
@@ -124,11 +176,15 @@ export async function POST(request: NextRequest) {
     })
     
     console.log(`Cashout processed: ${amount} ${wallet.currency}, Ticket: ${ticketId}`)
-    
+
+    // Voucher printed and balance debited: release the cashout latch.
+    if (latchArmed) sas.releaseCashout()
+
     // Note: Cashout success notification will be handled by tablet based on API response
-    
+
     return NextResponse.json({
       success: true,
+      method: 'voucher',
       cashout: {
         amount,
         currency: wallet.currency,
@@ -152,7 +208,7 @@ export async function POST(request: NextRequest) {
         redeemable: true
       }
     })
-    
+
   } catch (error) {
     console.error('Cashout error:', error)
     
