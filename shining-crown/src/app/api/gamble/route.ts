@@ -7,6 +7,7 @@ import {
   getState,
   startGamble
 } from '../../../lib/gambleSession'
+import { getSasService } from '../../../lib/sas/singleton'
 
 export async function GET() {
   return NextResponse.json(getState())
@@ -27,6 +28,9 @@ export async function POST(request: NextRequest) {
 
     const { action } = body as { action?: unknown }
     if (action === 'start') {
+      if (getSasService().isLockedForPlay()) {
+        return NextResponse.json({ success: false, error: 'Machine locked for transfer' }, { status: 409 })
+      }
       return NextResponse.json({ success: true, ...(await startGamble()) })
     }
     if (action === 'collect') {

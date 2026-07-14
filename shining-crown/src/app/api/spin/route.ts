@@ -247,6 +247,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Gamble in progress' }, { status: 409 })
     }
 
+    if (getSasService().isLockedForPlay()) {
+      return NextResponse.json({ error: 'Machine locked for transfer' }, { status: 409 })
+    }
+
     loadGameData()
 
     // Parse request body to get bet amount (integer deni)

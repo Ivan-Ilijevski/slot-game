@@ -169,6 +169,18 @@ export function logTransaction(
   }
 }
 
+// Whether any journal row carries the given SAS transaction id. Used by AFT
+// crash recovery to decide whether an accepted-but-unconfirmed transfer
+// actually moved money.
+export function hasTransactionWithSasTxnId(sasTxnId: string): boolean {
+  try {
+    return readTransactionLog().transactions.some(t => t.metadata?.sasTxnId === sasTxnId)
+  } catch (error) {
+    console.error('Error searching transactions by sasTxnId:', error)
+    return false
+  }
+}
+
 // Get recent transactions (default: last 100)
 export function getRecentTransactions(limit: number = 100): Transaction[] {
   try {

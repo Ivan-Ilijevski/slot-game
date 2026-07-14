@@ -1,12 +1,17 @@
 import type { Readable, Writable } from 'stream'
-import { getBalance } from '../../utils/wallet'
-import { readMeters } from '../../utils/meters'
+import { addBalanceSync, deductBalanceSync, enqueueMoneyOp, getBalance } from '../../utils/wallet'
+import { incrementMetersSync, readMeters } from '../../utils/meters'
+import { hasTransactionWithSasTxnId } from '../../utils/transactionLogger'
+import { isSessionActive } from '../gambleSession'
+import { AftEngine, readAftState } from './aft'
 import { CmsBridge } from './cmsBridge'
 import { SasEngine } from './engine'
 import { ExceptionQueue } from './exceptionQueue'
+import { LockController } from './lock'
 import { readSasSettings, SAS_CONSTANTS, type SasSettings } from './sasConfig'
 import { SerialTransport } from './serialTransport'
 import { StreamTransport } from './transport'
+import { CMD_AFT_TRANSFER, CMD_AFT_LOCK } from './types'
 
 export interface SasStatus {
   running: boolean
@@ -30,6 +35,8 @@ type GlobalWithService = typeof globalThis & { [SERVICE_KEY]?: SasService }
 export class SasService {
   readonly engine: SasEngine
   readonly exceptions: ExceptionQueue
+  readonly aft: AftEngine
+  readonly lock: LockController
   private serial: SerialTransport | null = null
   private bridge: CmsBridge | null = null
   private stream: StreamTransport | null = null
@@ -56,6 +63,41 @@ export class SasService {
       },
       exceptions: this.exceptions
     })
+
+    this.lock = new LockController({
+      assetNumber: SAS_CONSTANTS.assetNumber,
+      getCreditsDeni: () => getBalance(),
+      isPlayBusy: () => isSessionActive()
+    })
+
+    this.aft = new AftEngine({
+      assetNumber: SAS_CONSTANTS.assetNumber,
+      maxCreditsDeni: SAS_CONSTANTS.maxCreditsDeni,
+      exceptions: this.exceptions,
+      isGambleActive: () => isSessionActive(),
+      // The host may pull credits any time unless the game has committed the
+      // current cash-out to the voucher path (Phase 5 latch).
+      canFromEgm: () => readAftState().cashoutLatch?.state !== 'voucher-committed',
+      getCreditsDeni: () => getBalance(),
+      hasJournalTxn: txn => hasTransactionWithSasTxnId(txn),
+      applyToEgm: (amountDeni, txn) =>
+        enqueueMoneyOp(() => {
+          addBalanceSync(amountDeni, 'aft_in', { sasTxnId: txn })
+          incrementMetersSync({ aftIn: amountDeni })
+        }),
+      applyFromEgm: (amountDeni, txn) =>
+        enqueueMoneyOp(() => {
+          deductBalanceSync(amountDeni, 'aft_out', { sasTxnId: txn })
+          incrementMetersSync({ aftOut: amountDeni })
+        })
+    })
+
+    this.engine.registerHandler(CMD_AFT_TRANSFER, body => this.aft.handle072(body))
+    this.engine.registerHandler(CMD_AFT_LOCK, body => this.lock.handle074(body))
+  }
+
+  isLockedForPlay(): boolean {
+    return this.lock.isLockedForPlay()
   }
 
   start(opts: StartOptions = {}): void {
@@ -77,6 +119,13 @@ export class SasService {
     if (!this.settings.enabled) {
       console.log('[SAS] disabled in sasSettings.json; engine idle')
       return
+    }
+
+    // Reconcile any AFT transaction left in-flight by a crash before serving.
+    try {
+      this.aft.recoverOnBoot()
+    } catch (error) {
+      console.error('[SAS] AFT boot recovery failed:', error)
     }
 
     this.bridge = new CmsBridge({
@@ -162,6 +211,7 @@ export class SasService {
 export interface SasFacade {
   queueException(code: number): void
   isLinkUp(): boolean
+  isLockedForPlay(): boolean
   status(): SasStatus
   reload(): void
 }
@@ -182,6 +232,7 @@ export function getSasService(): SasFacade {
   return {
     queueException: () => {},
     isLinkUp: () => false,
+    isLockedForPlay: () => false,
     status: () => ({ ...NOOP_STATUS }),
     reload: () => {}
   }

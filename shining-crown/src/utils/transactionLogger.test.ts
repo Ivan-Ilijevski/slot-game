@@ -3,7 +3,7 @@ import os from 'os'
 import path from 'path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { logTransaction, readTransactionLog } from './transactionLogger'
+import { hasTransactionWithSasTxnId, logTransaction, readTransactionLog } from './transactionLogger'
 
 const originalCwd = process.cwd()
 let fixtureDir: string
@@ -61,5 +61,12 @@ describe('transaction log v2', () => {
     const log = readTransactionLog()
     expect(log.transactions[0].type).toBe('aft_in')
     expect(log.transactions[0].metadata?.sasTxnId).toBe('TXN-0001')
+  })
+
+  it('finds a transaction by its SAS txn id (AFT recovery join)', () => {
+    logTransaction('spin_bet', -500, 10000, 9500, { spinId: 's1' })
+    logTransaction('aft_in', 2500, 9500, 12000, { sasTxnId: 'TXN-0042' })
+    expect(hasTransactionWithSasTxnId('TXN-0042')).toBe(true)
+    expect(hasTransactionWithSasTxnId('TXN-9999')).toBe(false)
   })
 })
