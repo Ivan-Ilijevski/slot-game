@@ -8,6 +8,8 @@ import { formatCurrency } from '../../../config/currency'
 import { isValidBet } from '../../../config/gameConstants'
 import { secureRandom } from '../../../utils/secureRandom'
 import { clearEligibleWin, isSessionActive, setEligibleWin } from '../../../lib/gambleSession'
+import { getSasService } from '../../../lib/sas/singleton'
+import { EXC_GAME_ENDED, EXC_GAME_STARTED } from '../../../lib/sas/types'
 
 // Types
 interface VirtualReels {
@@ -279,6 +281,7 @@ export async function POST(request: NextRequest) {
       return wallet
     })
     console.log(`Bet deducted: ${formatCurrency(betAmount)}, new balance: ${formatCurrency(walletAfterBet.balance)}`)
+    getSasService().queueException(EXC_GAME_STARTED)
     
     // Generate random stop positions for each reel
     const results: SpinResult[] = []
@@ -329,6 +332,8 @@ export async function POST(request: NextRequest) {
     } else {
       await clearEligibleWin()
     }
+
+    getSasService().queueException(EXC_GAME_ENDED)
 
     // Add small delay to simulate server processing
     await new Promise(resolve => setTimeout(resolve, 100))

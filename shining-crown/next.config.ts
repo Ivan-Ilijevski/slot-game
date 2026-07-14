@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Native module used by the SAS serial link; must stay external to the
+  // server bundle.
+  serverExternalPackages: ["serialport"],
 };
 
 export default nextConfig;
