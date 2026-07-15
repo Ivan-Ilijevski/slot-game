@@ -10,6 +10,11 @@ interface MessagePopupProps {
   message: string
   onClose: () => void
   autoCloseDelay?: number // milliseconds, 0 = manual close only
+  // Passing onConfirm turns the popup into a confirmation dialog: it never
+  // auto-closes, renders Confirm/Cancel, and commits on Enter.
+  onConfirm?: () => void
+  confirmLabel?: string
+  cancelLabel?: string
 }
 
 export default function MessagePopup({
@@ -18,40 +23,52 @@ export default function MessagePopup({
   title,
   message,
   onClose,
-  autoCloseDelay = 3000
+  autoCloseDelay = 3000,
+  onConfirm,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel'
 }: MessagePopupProps) {
   const [isAnimating, setIsAnimating] = useState(false)
+  const isConfirm = Boolean(onConfirm)
+  // A confirmation must never disappear on its own
+  const effectiveAutoCloseDelay = isConfirm ? 0 : autoCloseDelay
 
   useEffect(() => {
     if (isVisible) {
       setIsAnimating(true)
-      
+
       // Auto-close after delay if specified
-      if (autoCloseDelay > 0) {
+      if (effectiveAutoCloseDelay > 0) {
         const timer = setTimeout(() => {
           onClose()
-        }, autoCloseDelay)
-        
+        }, effectiveAutoCloseDelay)
+
         return () => clearTimeout(timer)
       }
     } else {
       setIsAnimating(false)
     }
-  }, [isVisible, autoCloseDelay, onClose])
+  }, [isVisible, effectiveAutoCloseDelay, onClose])
 
-  // Handle keyboard events
+  // Handle keyboard events (the cabinet has no pointer - Enter commits)
   useEffect(() => {
     if (!isVisible) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
         onClose()
+      } else if (isConfirm && event.key === 'Enter') {
+        event.preventDefault()
+        event.stopPropagation()
+        onConfirm?.()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isVisible, onClose])
+  }, [isVisible, onClose, onConfirm, isConfirm])
 
   if (!isVisible) return null
 
@@ -98,10 +115,11 @@ export default function MessagePopup({
   const IconComponent = styles.icon
 
   return (
-    <div 
+    <div
       className={`
         fixed inset-0 z-50 flex items-center justify-center
         transition-all duration-300 ease-in-out
+        ${isConfirm ? 'bg-black/60' : ''}
         ${isAnimating ? 'opacity-100' : 'opacity-0'}
       `}
       onClick={onClose}
@@ -148,8 +166,32 @@ export default function MessagePopup({
           </div>
         </div>
 
+        {/* Confirmation actions */}
+        {isConfirm && (
+          <div className="mt-6 flex gap-3 justify-end">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 rounded-lg border-2 border-white/30 text-sm font-bold transition-colors hover:bg-white/10"
+            >
+              {cancelLabel}
+              <span className="ml-2 opacity-60 font-normal">ESC</span>
+            </button>
+            <button
+              onClick={onConfirm}
+              autoFocus
+              className={`
+                px-5 py-2 rounded-lg border-2 text-sm font-bold transition-colors
+                ${styles.borderColor} ${styles.iconColor} hover:bg-white/10
+              `}
+            >
+              {confirmLabel}
+              <span className="ml-2 opacity-60 font-normal">ENTER</span>
+            </button>
+          </div>
+        )}
+
         {/* Progress bar for auto-close */}
-        {autoCloseDelay > 0 && (
+        {effectiveAutoCloseDelay > 0 && (
           <div className="mt-4 w-full bg-white/20 rounded-full h-1 overflow-hidden">
             <div 
               className={`
@@ -160,7 +202,7 @@ export default function MessagePopup({
               `}
               style={{
                 width: '100%',
-                animation: `shrink ${autoCloseDelay}ms linear`
+                animation: `shrink ${effectiveAutoCloseDelay}ms linear`
               }}
             />
           </div>

@@ -30,6 +30,8 @@
     "gambleBlack": "KeyB",
     "gambleCollect": "Space",
     "enterGamble": ["KeyR", "KeyB"],
-    "spin": "Space"
+    "spin": "Space",
+    "autostart": "KeyP",
+    "cashout": "KeyC"
   }
 }

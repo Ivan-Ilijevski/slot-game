@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Application, Assets, Sprite, Container, Graphics, Text } from 'pixi.js'
 import { formatCurrency } from '../config/currency'
 import { formatNumberWithSpaces } from '../utils/currency'
+import { MIN_CASHOUT_DENI } from '../config/gameConstants'
 import MobileController from '../components/game/MobileController'
 import VoucherInput from '../components/game/VoucherInput'
 import VoucherPrintingScreen from '../components/game/VoucherPrintingScreen'
@@ -147,6 +148,11 @@ export default function Home() {
   const [printingAmount, setPrintingAmount] = useState(0)
   const [cashoutMethod, setCashoutMethod] = useState<'voucher' | 'aft'>('voucher')
 
+  // Cashout confirmation (machine-initiated cashout is irreversible - it
+  // prints a real voucher - so it always asks first)
+  const [cashoutConfirm, setCashoutConfirm] = useState<{ open: boolean; amount: number }>({ open: false, amount: 0 })
+  const cashoutConfirmOpenRef = useRef(false)
+
   // Helper function to convert deni amounts to credits for UI display
   const currencyToCredits = useCallback((amountDeni: number): number => {
     return Math.round(amountDeni / (denomination * 100)) // Credits based on denomination (denars per credit)
@@ -182,11 +188,13 @@ export default function Home() {
     setCashoutMethod('voucher')
     setShowPrintingScreen(true)
 
-    // Use wallet hook's cashout method
+    // Use wallet hook's cashout method. Started at the machine, so the payout
+    // is always a printed voucher - never a card transfer via the host.
     const result = await wallet.cashout({
       amount,
       useUSB: true,
-      machineId: 'SHINING-CROWN-001'
+      machineId: 'SHINING-CROWN-001',
+      forceVoucher: true
     })
 
     if (result.success && result.data?.method === 'aft') {
@@ -236,6 +244,7 @@ export default function Home() {
   const autoCollectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const creditFlashTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingWinRef = useRef<number>(0)
+  const walletBalanceRef = useRef<number>(wallet.balance)
   const animateWinRef = useRef<((amount: number) => void) | null>(null)
   const collectWinRef = useRef<(() => void) | null>(null)
   const isWinAnimatingRef = useRef(false)
@@ -1112,6 +1121,54 @@ export default function Home() {
     }
   }, [])
 
+  // Keep the balance readable from the key handlers without stale closures
+  useEffect(() => {
+    walletBalanceRef.current = wallet.balance
+  }, [wallet.balance])
+
+  useEffect(() => {
+    cashoutConfirmOpenRef.current = cashoutConfirm.open
+  }, [cashoutConfirm.open])
+
+  // Cashout requested at the machine (C key). Validates locally so the player
+  // gets a reason instead of a silent no-op, then asks for confirmation - the
+  // payout prints a real voucher and cannot be undone.
+  const requestCashout = useCallback(() => {
+    if (isSpinningRef.current || isGambleModeRef.current) return
+
+    if (pendingWinRef.current > 0) {
+      showMessage('warning', 'Collect Your Win', 'Collect or gamble your win before cashing out.')
+      return
+    }
+
+    const amount = walletBalanceRef.current
+    if (amount < MIN_CASHOUT_DENI) {
+      showMessage('warning', 'Cashout Unavailable', `Minimum cashout is ${formatCurrency(MIN_CASHOUT_DENI)}.`)
+      return
+    }
+
+    setCashoutConfirm({ open: true, amount })
+  }, [showMessage])
+
+  const cancelCashout = useCallback(() => {
+    setCashoutConfirm({ open: false, amount: 0 })
+  }, [])
+
+  const confirmCashout = useCallback(async () => {
+    // Commit exactly once: Enter can reach both the key handler and the
+    // focused button, and paying out twice would print two vouchers
+    if (!cashoutConfirmOpenRef.current) return
+    cashoutConfirmOpenRef.current = false
+
+    const amount = cashoutConfirm.amount
+    setCashoutConfirm({ open: false, amount: 0 })
+
+    const result = await performCashout(amount)
+    if (!result.success) {
+      showMessage('error', 'Cashout Failed', result.error || 'Could not complete the cashout.')
+    }
+  }, [cashoutConfirm.amount, performCashout, showMessage])
+
   useKeyboardHandler({
     isSpinning: isSpinningRef.current,
     isGambleMode: isGambleModeRef.current,
@@ -1123,7 +1180,8 @@ export default function Home() {
     toggleLanguage,
     chooseGambleColor,
     collectGambleWin,
-    enterGambleMode
+    enterGambleMode,
+    disabled: cashoutConfirm.open
   })
 
   // ===== NEW: Touch keyboard WebSocket connection hook (replaces lines 2930-3201) =====
@@ -1216,7 +1274,7 @@ export default function Home() {
     }
   }, [])
 
-  // Space (spin/stop/take-win) and P (autostart) keys
+  // Space (spin/stop/take-win), P (autostart) and C (cashout) keys
   useGameControlKeys({
     isGambleModeRef,
     isSpinningRef,
@@ -1225,10 +1283,12 @@ export default function Home() {
     animationsRunningRef,
     stopRequestedRef,
     reelsStoppedCountRef,
+    cashoutConfirmOpenRef,
     takeWinRef,
     spinReelsRef,
     playReelStopSoundRef,
-    setAutoStart
+    setAutoStart,
+    requestCashout
   })
 
   // Mount the gamble UI on the PixiGame stage once the scene is ready
@@ -1431,6 +1491,16 @@ export default function Home() {
         message={messagePopupMessage}
         onClose={() => setShowMessagePopup(false)}
         autoCloseDelay={3000}
+      />
+      <MessagePopup
+        isVisible={cashoutConfirm.open}
+        type="warning"
+        title="Cash Out?"
+        message={`Pay out ${formatCurrency(cashoutConfirm.amount)} and print a voucher?\nThis cannot be undone.`}
+        onClose={cancelCashout}
+        onConfirm={confirmCashout}
+        confirmLabel="Cash Out"
+        cancelLabel="Cancel"
       />
       <VoucherPrintingScreen
         amount={printingAmount}

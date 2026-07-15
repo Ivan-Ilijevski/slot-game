@@ -21,6 +21,9 @@ export interface CashoutOptions {
 
   /** Machine identifier for the ticket */
   machineId?: string
+
+  /** Always pay out as a voucher, never offer the balance to the host via AFT */
+  forceVoucher?: boolean
 }
 
 export interface CashoutResult {
@@ -177,7 +180,8 @@ export function useWallet({
   const cashout = useCallback(async ({
     amount,
     useUSB = true,
-    machineId = 'SHINING-CROWN-001'
+    machineId = 'SHINING-CROWN-001',
+    forceVoucher = false
   }: CashoutOptions): Promise<CashoutResult> => {
 
     // Validation
@@ -201,7 +205,7 @@ export function useWallet({
     setError(null)
 
     try {
-      if (debug) console.log('[useWallet] Processing cashout:', { amount, useUSB, machineId })
+      if (debug) console.log('[useWallet] Processing cashout:', { amount, useUSB, machineId, forceVoucher })
 
       const response = await fetch(`${apiBaseUrl}/cashout`, {
         method: 'POST',
@@ -211,7 +215,8 @@ export function useWallet({
         body: JSON.stringify({
           amount,
           useUSB,
-          machineId
+          machineId,
+          forceVoucher
         }),
       })
 

@@ -5,6 +5,7 @@ import { printCashoutTicket, generateTicketId, CashoutTicket } from '../../../ut
 import { printCashoutTicketRaw } from '../../../utils/rawPrinter'
 import { generateVoucher } from '../../../utils/voucherGenerator'
 import { isSessionActive } from '../../../lib/gambleSession'
+import { MIN_CASHOUT_DENI } from '../../../config/gameConstants'
 import { getSasService } from '../../../lib/sas/singleton'
 import { SAS_CONSTANTS } from '../../../lib/sas/sasConfig'
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { amount, useUSB = false, machineId = 'SHINING-CROWN-001' } = body
+    const { amount, useUSB = false, machineId = 'SHINING-CROWN-001', forceVoucher = false } = body
 
     // Validate amount (integer deni)
     if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0) {
@@ -63,13 +64,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Minimum cashout validation (optional)
-    const minCashout = 1000 // Minimum 10.00 MKD, in deni
-    if (amount < minCashout) {
+    // Minimum cashout validation
+    if (amount < MIN_CASHOUT_DENI) {
       return NextResponse.json(
         {
           success: false,
-          error: `Minimum cashout amount is ${minCashout / 100} ${wallet.currency}.`
+          error: `Minimum cashout amount is ${MIN_CASHOUT_DENI / 100} ${wallet.currency}.`
         },
         { status: 400 }
       )
@@ -86,16 +86,23 @@ export async function POST(request: NextRequest) {
     // (credits go to the player's card via AFT). The host pulls the whole
     // balance, so only a full-balance request can ride AFT; partial amounts and
     // link-down go straight to the voucher.
+    //
+    // forceVoucher (cash-out started at the machine itself rather than through
+    // the SMIB) skips the host offer entirely: the player always gets a printed
+    // voucher, never a card payout. The latch is still committed so a transfer
+    // already in flight can't take the credits out from under the voucher.
     let latchArmed = false
     if (amount === wallet.balance && sas.isLinkUp()) {
       latchArmed = true
-      const result = await sas.requestHostCashout(amount, SAS_CONSTANTS.hostCashoutWindowMs)
-      if (result === 'aft') {
-        sas.releaseCashout()
-        return cardPayoutResponse(wallet.balance, machineId)
+      if (!forceVoucher) {
+        const result = await sas.requestHostCashout(amount, SAS_CONSTANTS.hostCashoutWindowMs)
+        if (result === 'aft') {
+          sas.releaseCashout()
+          return cardPayoutResponse(wallet.balance, machineId)
+        }
       }
-      // Window expired: commit to voucher (refuses any late transfer). If the
-      // host pulled the credits at the last moment, the balance is now short.
+      // Commit to voucher (refuses any late transfer). If the host pulled the
+      // credits at the last moment, the balance is now short.
       const committedBalance = await sas.commitVoucherCashout()
       if (committedBalance < amount) {
         sas.releaseCashout()

@@ -46,6 +46,13 @@ export const DEFAULT_VALUES = {
 } as const
 
 /**
+ * Smallest balance that may be cashed out (deni).
+ * Enforced by /api/cashout; the UI checks it too so the player gets told why
+ * the button did nothing.
+ */
+export const MIN_CASHOUT_DENI = 1000
+
+/**
  * Win collection timing configuration
  */
 export const WIN_COLLECTION_CONFIG = {
@@ -210,6 +217,12 @@ export const KEY_BINDINGS = {
 
   /** Spin the reels */
   SPIN: GAME_CONFIG.keyBindings.spin,
+
+  /** Toggle autostart */
+  AUTOSTART: GAME_CONFIG.keyBindings.autostart,
+
+  /** Cash out the balance to a voucher */
+  CASHOUT: GAME_CONFIG.keyBindings.cashout,
 } as const
 
 export type KeyBinding = keyof typeof KEY_BINDINGS
