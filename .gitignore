@@ -7,3 +7,6 @@ shining-crown/public/assets/*.webp
 shining-crown/public/assets/*.svg
 # playwright mcp artifacts
 .playwright-mcp/
+
+# dependencies
+node_modules/
