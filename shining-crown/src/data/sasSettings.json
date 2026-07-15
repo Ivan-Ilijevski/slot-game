@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "serialPort": "/dev/cu.wchusbserial10",
+  "cmsHost": "127.0.0.1",
+  "cmsPort": 9020
+}

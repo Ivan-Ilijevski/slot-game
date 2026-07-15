@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "inFlight": null,
+  "lastCompleted": {
+    "txn": "SMIB-000004",
+    "type": 128,
+    "amountDeni": 100000,
+    "status": 0,
+    "at": "2026-07-15T18:23:30.092Z"
+  },
+  "cashoutLatch": {
+    "state": "idle",
+    "amountDeni": 0,
+    "expiresAt": null
+  },
+  "history": [
+    {
+      "txn": "SMIB-000004",
+      "type": 128,
+      "amountDeni": 100000,
+      "status": 0,
+      "at": "2026-07-15T18:23:30.092Z"
+    },
+    {
+      "txn": "SMIB-000003",
+      "type": 0,
+      "amountDeni": 100000,
+      "status": 0,
+      "at": "2026-07-15T18:23:23.779Z"
+    },
+    {
+      "txn": "SMIB-000002",
+      "type": 128,
+      "amountDeni": 69000,
+      "status": 0,
+      "at": "2026-07-15T18:19:54.567Z"
+    },
+    {
+      "txn": "SMIB-000001",
+      "type": 0,
+      "amountDeni": 50000,
+      "status": 0,
+      "at": "2026-07-15T18:17:42.112Z"
+    },
+    {
+      "txn": "SMIB-000011",
+      "type": 128,
+      "amountDeni": 60000,
+      "status": 0,
+      "at": "2026-07-14T18:29:50.491Z"
+    },
+    {
+      "txn": "SMIB-000010",
+      "type": 0,
+      "amountDeni": 10000,
+      "status": 0,
+      "at": "2026-07-14T18:29:28.689Z"
+    },
+    {
+      "txn": "SMIB-000009",
+      "type": 0,
+      "amountDeni": 50000,
+      "status": 0,
+      "at": "2026-07-14T18:29:19.513Z"
+    },
+    {
+      "txn": "SMIB-000008",
+      "type": 128,
+      "amountDeni": 68505600,
+      "status": 0,
+      "at": "2026-07-14T18:29:08.204Z"
+    },
+    {
+      "txn": "SMIB-000007",
+      "type": 0,
+      "amountDeni": 68505600,
+      "status": 0,
+      "at": "2026-07-14T18:28:51.590Z"
+    },
+    {
+      "txn": "SMIB-000006",
+      "type": 128,
+      "amountDeni": 67265600,
+      "status": 0,
+      "at": "2026-07-14T18:27:50.361Z"
+    },
+    {
+      "txn": "SMIB-000005",
+      "type": 0,
+      "amountDeni": 10000,
+      "status": 0,
+      "at": "2026-07-14T18:27:34.413Z"
+    },
+    {
+      "txn": "SMIB-000004",
+      "type": 0,
+      "amountDeni": 67257600,
+      "status": 0,
+      "at": "2026-07-14T17:46:12.143Z"
+    },
+    {
+      "txn": "SMIB-000003",
+      "type": 128,
+      "amountDeni": 66027600,
+      "status": 0,
+      "at": "2026-07-14T17:45:47.601Z"
+    },
+    {
+      "txn": "SMIB-000002",
+      "type": 0,
+      "amountDeni": 10000,
+      "status": 0,
+      "at": "2026-07-14T17:45:19.490Z"
+    },
+    {
+      "txn": "SMIB-000001",
+      "type": 0,
+      "amountDeni": 10000,
+      "status": 0,
+      "at": "2026-07-14T17:44:42.590Z"
+    }
+  ]
+}

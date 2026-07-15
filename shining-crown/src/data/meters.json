@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "unit": "deni",
+  "meters": {
+    "coinIn": 54000,
+    "coinOut": 67500,
+    "drop": 0,
+    "jackpot": 0,
+    "gamesPlayed": 29,
+    "gamesWon": 8,
+    "aftIn": 136003200,
+    "aftOut": 202027800,
+    "voucherIn": 0,
+    "voucherOut": 0
+  },
+  "lastUpdated": "2026-07-15T18:23:30.091Z"
+}
